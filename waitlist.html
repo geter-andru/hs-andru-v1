@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Your 3 Revenue Tools - H&S</title>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #e5e7eb;
+            background: #000000;
+            font-weight: 300;
+            font-feature-settings: "kern" 1, "liga" 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        /* Enhanced Hero Section */
+        .hero {
+            padding: 80px 0 100px;
+            text-align: center;
+            background: linear-gradient(135deg, #000000 0%, #111827 100%);
+            border-bottom: 1px solid #1f2937;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 20%, rgba(8, 145, 178, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .assessment-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            color: #000000;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 400;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 20px rgba(8, 145, 178, 0.3);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            animation: slideInDown 0.6s ease-out;
+        }
+        
+        .assessment-badge::before {
+            content: "⚡";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 54px);
+            font-weight: 400;
+            margin-bottom: 24px;
+            color: #ffffff;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            animation: slideInUp 0.8s ease-out 0.2s both;
+        }
+        
+        .hero .subhead {
+            font-size: clamp(18px, 2.5vw, 24px);
+            color: #9ca3af;
+            margin-bottom: 40px;
+            font-weight: 300;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: slideInUp 0.8s ease-out 0.4s both;
+        }
+        
+        .founder-note {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 32px auto 40px;
+            max-width: 580px;
+            backdrop-filter: blur(10px);
+            animation: slideInUp 0.8s ease-out 0.6s both;
+        }
+        
+        .founder-note p {
+            font-size: 16px;
+            color: #d1d5db;
+            font-style: italic;
+            line-height: 1.5;
+        }
+        
+        .founder-note strong {
+            color: #0891b2;
+            font-weight: 400;
+        }
+        
+        .assessment-results {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin: 48px 0;
+            flex-wrap: wrap;
+            animation: slideInUp 0.8s ease-out 0.8s both;
+        }
+        
+        .result-item {
+            text-align: center;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            padding: 24px 32px;
+            border-radius: 16px;
+            border: 1px solid #374151;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0891b2, #10b981);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-4px);
+            border-color: #0891b2;
+            box-shadow: 0 12px 40px rgba(8, 145, 178, 0.2);
+        }
+        
+        .result-item:hover::before {
+            opacity: 1;
+        }
+        
+        .result-number {
+            font-size: 42px;
+            font-weight: 400;
+            color: #0891b2;
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+        
+        .result-label {
+            font-size: 13px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            font-weight: 300;
+        }
+        
+        /* Enhanced CTA Button */
+        .cta-button {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            color: #000000;
+            padding: 24px 48px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 32px 0;
+            font-family: 'Red Hat Display', sans-serif;
+            box-shadow: 0 8px 32px rgba(8, 145, 178, 0.3);
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .cta-button:hover {
+            background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(8, 145, 178, 0.4);
+        }
+        
+        .cta-button:hover::before {
+            left: 100%;
+        }
+        
+        .cta-button:active {
+            transform: translateY(-1px);
+        }
+        
+        /* Enhanced Tools Section */
+        .tools {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-bottom: 1px solid #1f2937;
+            position: relative;
+        }
+        
+        .tools::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .tools-header {
+            text-align: center;
+            margin-bottom: 64px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tools h2 {
+            font-size: clamp(32px, 4vw, 42px);
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+        }
+        
+        .tools-subtitle {
+            font-size: 18px;
+            color: #9ca3af;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .prerequisite-note {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 32px auto 0;
+            max-width: 700px;
+            text-align: center;
+        }
+        
+        .prerequisite-note p {
+            font-size: 16px;
+            color: #d1d5db;
+            margin: 0;
+        }
+        
+        .prerequisite-note strong {
+            color: #10b981;
+            font-weight: 400;
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 64px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tool-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #374151;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-8px);
+            border-color: #0891b2;
+            box-shadow: 0 20px 60px rgba(8, 145, 178, 0.15);
+        }
+        
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+        
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tool-number {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            color: #000000;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 400;
+            font-size: 18px;
+            margin-right: 16px;
+            box-shadow: 0 4px 16px rgba(8, 145, 178, 0.3);
+        }
+        
+        .tool-card h3 {
+            font-size: 22px;
+            color: #ffffff;
+            font-weight: 400;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+        
+        .tool-description {
+            color: #9ca3af;
+            font-size: 16px;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tool-card ul {
+            list-style: none;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tool-card li {
+            padding: 12px 0;
+            color: #d1d5db;
+            font-size: 15px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            line-height: 1.4;
+        }
+        
+        .tool-card li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: 700;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        /* Enhanced Guarantee Section */
+        .guarantee {
+            padding: 80px 0;
+            text-align: center;
+            background: #000000;
+            position: relative;
+        }
+        
+        .guarantee::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(8, 145, 178, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .guarantee-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .guarantee-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+        }
+        
+        .guarantee-badge span {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 18px;
+            margin-left: 8px;
+        }
+        
+        .founding-member-section {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid #374151;
+            border-radius: 16px;
+            padding: 32px;
+            margin: 40px auto;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .spots-remaining {
+            font-size: 28px;
+            color: #ef4444;
+            font-weight: 700;
+            margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .price-lock {
+            font-size: 16px;
+            color: #10b981;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        
+        .enterprise-trust {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid #374151;
+        }
+        
+        .enterprise-trust p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        
+        .trust-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .trust-item {
+            color: #9ca3af;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .trust-item::before {
+            content: "🔒";
+            font-size: 14px;
+        }
+        
+        /* Animations */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            
+            .hero {
+                padding: 60px 0 80px;
+            }
+            
+            .tools {
+                padding: 80px 0;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .assessment-results {
+                gap: 16px;
+            }
+            
+            .result-item {
+                padding: 20px 24px;
+                min-width: 120px;
+            }
+            
+            .result-number {
+                font-size: 32px;
+            }
+            
+            .cta-button {
+                padding: 20px 32px;
+                font-size: 16px;
+                width: 100%;
+                max-width: 320px;
+            }
+            
+            .tool-card {
+                padding: 32px 24px;
+            }
+            
+            .tool-number {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .founder-note,
+            .prerequisite-note {
+                padding: 16px 20px;
+            }
+            
+            .founding-member-section {
+                padding: 24px 20px;
+            }
+            
+            .trust-indicators {
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .assessment-results {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .result-item {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen 1: Enhanced Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="assessment-badge" id="assessmentBadge">Assessment Complete</div>
+                
+                <h1 id="heroHeadline">Your Assessment Identified Revenue Gaps</h1>
+                <p class="subhead" id="heroSubhead">Get 3 personalized tools to fix them. Today.</p>
+                
+                <div class="founder-note">
+                    <p><strong>For Series A technical founders:</strong> Before AI agents or sales acceleration tools can help, you need the foundational buyer intelligence that makes acceleration meaningful rather than just faster bad decisions.</p>
+                </div>
+                
+                <div class="assessment-results" id="assessmentResults">
+                    <div class="result-item">
+                        <span class="result-number" id="scoreDisplay">--</span>
+                        <span class="result-label">Score</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-number" id="challengesDisplay">--</span>
+                        <span class="result-label">Challenges</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-number" id="revenueDisplay">--</span>
+                        <span class="result-label">Opportunity</span>
+                    </div>
+                </div>
+                
+                <button class="cta-button" onclick="goToPayment()">Get Your 3 Tools Now - $497</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Screen 2: Enhanced Three Tools -->
+    <section class="tools">
+        <div class="container">
+            <div class="tools-header">
+                <h2>Your 3 Personalized Revenue Tools</h2>
+                <p class="tools-subtitle">Transform technical capabilities into enterprise value propositions that convert prospects into strategic partnerships</p>
+                
+                <div class="prerequisite-note">
+                    <p>The <strong>essential prerequisite</strong> that creates the "good customer data" your future sales acceleration tools will need</p>
+                </div>
+            </div>
+            
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-header">
+                        <div class="tool-number">1</div>
+                        <h3>Discovery Frameworks</h3>
+                    </div>
+                    <p class="tool-description">Transform technical conversations into strategic business discussions</p>
+                    <ul>
+                        <li>Executive discovery scripts tailored to your product</li>
+                        <li>Technical buyer → business buyer translation guides</li>
+                        <li>Feature → value mapping for enterprise conversations</li>
+                        <li>Competitive differentiation frameworks</li>
+                    </ul>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="tool-header">
+                        <div class="tool-number">2</div>
+                        <h3>ROI Calculator</h3>
+                    </div>
+                    <p class="tool-description">Quantify business impact with enterprise-grade financial modeling</p>
+                    <ul>
+                        <li>Your pricing & value props pre-configured</li>
+                        <li>Industry benchmarks and cost models included</li>
+                        <li>Live demo ready (Excel + web versions)</li>
+                        <li>C-suite presentation templates included</li>
+                    </ul>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="tool-header">
+                        <div class="tool-number">3</div>
+                        <h3>Pilot-to-Contract System</h3>
+                    </div>
+                    <p class="tool-description">Convert "paid pilots" into strategic enterprise partnerships</p>
+                    <ul>
+                        <li>Pilot success measurement frameworks</li>
+                        <li>Scaling justification & expansion tools</li>
+                        <li>Executive presentation deck templates</li>
+                        <li>Contract negotiation value anchors</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="cta-button" onclick="goToPayment()">Get All 3 Tools Now - $497</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Screen 3: Enhanced Guarantee -->
+    <section class="guarantee">
+        <div class="container">
+            <div class="guarantee-content">
+                <div class="guarantee-badge">
+                    <span>🛡️</span>
+                    <span>30-Day Money-Back Guarantee</span>
+                </div>
+                
+                <div class="founding-member-section">
+                    <p class="spots-remaining">
+                        <span id="spotsRemaining">7</span> founding spots remaining
+                    </p>
+                    
+                    <p class="price-lock">
+                        Founding members: 50% off all future features
+                    </p>
+                </div>
+                
+                <button class="cta-button" onclick="goToPayment()">Get Your Tools - $497</button>
+                
+                <div class="enterprise-trust">
+                    <p>Trusted by Series A Technical Founders</p>
+                    <div class="trust-indicators">
+                        <div class="trust-item">Secure Checkout</div>
+                        <div class="trust-item">Instant Access</div>
+                        <div class="trust-item">30-Day Guarantee</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+    (function() {
+        // Process assessment data from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const assessmentData = {
+            email: urlParams.get('email') || '',
+            productName: urlParams.get('productName') || urlParams.get('company') || '',
+            score: parseInt(urlParams.get('score')) || 0,
+            challenges: parseInt(urlParams.get('challenges')) || 0,
+            riskLevel: urlParams.get('riskLevel') || '',
+            focusArea: urlParams.get('focusArea') || '',
+            revenueOpportunity: urlParams.get('revenueOpportunity') || '',
+            businessModel: urlParams.get('businessModel') || '',
+            customerCount: urlParams.get('customerCount') || '',
+            qualified: urlParams.get('qualified') === 'true',
+            sessionId: urlParams.get('sessionId') || Date.now()
+        };
+        
+        // Store assessment data
+        if (assessmentData.email || assessmentData.score > 0) {
+            localStorage.setItem('hs_assessment_data', JSON.stringify(assessmentData));
+        } else {
+            // Try to load from localStorage if no URL params
+            const stored = localStorage.getItem('hs_assessment_data');
+            if (stored) {
+                Object.assign(assessmentData, JSON.parse(stored));
+            }
+        }
+        
+        // Personalize content
+        function personalizeContent() {
+            // Update assessment badge
+            const badge = document.getElementById('assessmentBadge');
+            if (assessmentData.score > 0) {
+                if (assessmentData.score < 40) {
+                    badge.textContent = 'Critical: ' + assessmentData.challenges + ' Gaps Found';
+                    badge.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                } else if (assessmentData.score < 60) {
+                    badge.textContent = 'Warning: ' + assessmentData.challenges + ' Issues';
+                    badge.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                } else {
+                    badge.textContent = 'Qualified for Tools';
+                    badge.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                }
+            }
+            
+            // Update headline
+            const headline = document.getElementById('heroHeadline');
+            if (assessmentData.challenges > 0) {
+                headline.textContent = 'Your Assessment Identified ' + assessmentData.challenges + ' Revenue Gaps';
+            }
+            
+            // Update stats
+            document.getElementById('scoreDisplay').textContent = assessmentData.score || '0';
+            document.getElementById('challengesDisplay').textContent = assessmentData.challenges || '0';
+            document.getElementById('revenueDisplay').textContent = assessmentData.revenueOpportunity || '$0';
+            
+            // Update spots remaining (43/50 taken = 7 remaining)
+            const spots = 50 - 43;
+            document.getElementById('spotsRemaining').textContent = spots;
+        }
+        
+        // Payment redirect
+        window.goToPayment = function() {
+            const button = event.target;
+            button.textContent = '✓ Redirecting to secure checkout...';
+            button.disabled = true;
+            
+            // Build Stripe metadata
+            const metadata = {
+                email: assessmentData.email,
+                company: assessmentData.productName,
+                score: assessmentData.score,
+                challenges: assessmentData.challenges,
+                focusArea: assessmentData.focusArea,
+                revenueOpportunity: assessmentData.revenueOpportunity,
+                sessionId: assessmentData.sessionId,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Store for recovery
+            localStorage.setItem('hs_payment_pending', JSON.stringify(metadata));
+            
+            // Show loading state and redirect
+            button.textContent = '🔄 Securing your access...';
+            setTimeout(() => {
+                const checkoutUrl = 'https://buy.stripe.com/6oU9AVgJn4y78iqdU6bsc0n';
+                const emailParam = metadata.email ? `?prefilled_email=${encodeURIComponent(metadata.email)}` : '';
+                window.location.href = checkoutUrl + emailParam;
+            }, 1000);
+        
+        // Initialize
+        personalizeContent();
+    })();
+    </script>
+</body>
+</html>
