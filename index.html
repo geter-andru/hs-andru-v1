@@ -1219,6 +1219,11 @@
             }
         }
         
+        /* Landing Page Styles */
+        .assessment-steps.hidden {
+            display: none;
+        }
+        
         /* Enhanced Touch Device Optimizations */
         @media (hover: none) and (pointer: coarse) {
             .radio-option {
@@ -1359,7 +1364,7 @@
 
 
         <!-- PROGRESS STEPS -->
-        <div class="assessment-steps">
+        <div class="assessment-steps hidden">
             <div class="step active" id="step-1">
                 <div class="step-circle">1</div>
                 <div class="step-label">User Details</div>
@@ -1382,8 +1387,65 @@
             </div>
         </div>
 
+        <!-- LANDING PAGE -->
+        <div class="content-section" id="landing-section">
+            <!-- Hero Section -->
+            <div style="text-align: center; margin-bottom: var(--spacing-4xl);">
+                <h1 style="font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--spacing-lg); line-height: 1.2;">
+                    Are You Ready for Sales Tools?
+                </h1>
+                <p style="font-size: var(--font-size-xl); color: var(--color-text-secondary); margin-bottom: var(--spacing-2xl); max-width: 600px; margin-left: auto; margin-right: auto;">
+                    5-minute assessment reveals if you need foundation work first.
+                </p>
+                
+                <button class="btn btn-primary" onclick="startFromLanding()" style="padding: var(--spacing-lg) var(--spacing-3xl); font-size: var(--font-size-lg); margin-bottom: var(--spacing-lg);">
+                    Start Assessment
+                </button>
+                
+                <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    500+ technical founders tested
+                </p>
+            </div>
+
+            <!-- Assessment Preview -->
+            <div style="background: var(--color-background-secondary); padding: var(--spacing-2xl); border-radius: var(--border-radius-lg); margin-bottom: var(--spacing-3xl); max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h2 style="font-size: var(--font-size-xl); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--spacing-lg); text-align: center;">
+                    Assessment Preview
+                </h2>
+                <p style="color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--spacing-lg);">
+                    <strong>Sample questions:</strong> How confident are you presenting to executives? Can you predict common objections? How effectively do you translate features to business benefits?
+                </p>
+                <p style="color: var(--color-text-accent); font-weight: 500; text-align: center;">
+                    Get your readiness score vs. other Series A companies.
+                </p>
+            </div>
+
+            <!-- Trust Section -->
+            <div style="text-align: center; padding: var(--spacing-xl); background: var(--color-background-tertiary); border-radius: var(--border-radius-md); max-width: 700px; margin: 0 auto;">
+                <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
+                    No sales calls required. Results delivered immediately.
+                </p>
+                <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+                    Used by technical founders at
+                </p>
+                
+                <!-- Company Logos Placeholder -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: var(--spacing-xl); flex-wrap: wrap;">
+                    <div style="padding: var(--spacing-md) var(--spacing-lg); background: var(--color-background-primary); border-radius: var(--border-radius-sm); color: var(--color-text-muted); font-size: var(--font-size-sm); border: 1px solid var(--color-border-subtle);">
+                        Series A Co.
+                    </div>
+                    <div style="padding: var(--spacing-md) var(--spacing-lg); background: var(--color-background-primary); border-radius: var(--border-radius-sm); color: var(--color-text-muted); font-size: var(--font-size-sm); border: 1px solid var(--color-border-subtle);">
+                        TechStart Inc.
+                    </div>
+                    <div style="padding: var(--spacing-md) var(--spacing-lg); background: var(--color-background-primary); border-radius: var(--border-radius-sm); color: var(--color-text-muted); font-size: var(--font-size-sm); border: 1px solid var(--color-border-subtle);">
+                        B2B Scale Co.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- STEP 1: USER DETAILS -->
-        <div class="content-section" id="user-details-section">
+        <div class="content-section hidden" id="user-details-section">
             <h1 class="section-title">Welcome to Your Revenue Assessment</h1>
             <p class="section-subtitle">Tell us about your product and business to get personalized recommendations</p>
             
@@ -2563,7 +2625,7 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                     DOMUtils.safeSetContent('error-message', `${message}: ${error?.message || error}`);
                     DOMUtils.safeToggleClass('error-container', 'hidden', false);
                     
-                    ['user-details-section', 'assessment-section', 'analytics-section', 
+                    ['landing-section', 'user-details-section', 'assessment-section', 'analytics-section', 
                      'challenges-section', 'recommendations-section'].forEach(id => {
                         DOMUtils.safeToggleClass(id, 'hidden', true);
                     });
@@ -2938,6 +3000,33 @@ Sometimes you need data to show you what you already suspected. Time to systemat
         // REPAIRED: NAVIGATION AND UI FUNCTIONS
         // =============================================================================
         
+        // Landing page function
+        function startFromLanding() {
+            try {
+                // Hide landing section and show user details
+                DOMUtils.safeToggleClass('landing-section', 'hidden', true);
+                DOMUtils.safeToggleClass('user-details-section', 'hidden', false);
+                
+                // Show progress steps
+                const progressSteps = DOMUtils.safeGetElement('assessment-steps') || 
+                                    document.querySelector('.assessment-steps');
+                if (progressSteps) {
+                    progressSteps.classList.remove('hidden');
+                }
+                
+                // Update assessment state
+                assessmentState.currentStep = 1;
+                
+                // Update progress indicators
+                updateProgressIndicators(1);
+                
+                console.log('✅ Started from landing page');
+                
+            } catch (error) {
+                ErrorHandler.logError('Error starting from landing', error);
+            }
+        }
+
         function showStep(stepNumber) {
             console.log(`🔄 Navigating to step ${stepNumber}`);
             
@@ -2946,7 +3035,7 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                     throw new Error(`Invalid step number: ${stepNumber}`);
                 }
                 
-                const sections = ['user-details-section', 'assessment-section', 'analytics-section', 
+                const sections = ['landing-section', 'user-details-section', 'assessment-section', 'analytics-section', 
                                 'challenges-section', 'recommendations-section'];
                 
                 sections.forEach(sectionId => {
@@ -2954,6 +3043,7 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                 });
                 
                 const targetSections = {
+                    0: 'landing-section',
                     1: 'user-details-section',
                     2: 'assessment-section',
                     3: 'analytics-section',
