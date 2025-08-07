@@ -1561,7 +1561,7 @@
         // Airtable Configuration - REPLACE WITH YOUR ACTUAL VALUES
         const AIRTABLE_BASE_ID = 'app0jJkgTCqn46vp9'; // Airtable base URL
         const AIRTABLE_API_KEY = 'pat4jn6JyCcBrpqBN.96b92bd8cc46aa9e05ec9d75e0d1f8da3dd1ceafec8856fcc962d69d82b84aae'; // Get this from Airtable Account > Developers
-        const AIRTABLE_ASSESSMENT_TABLE = 'tblQl6DpGJNKKeQHu'; // Your table name
+        const AIRTABLE_ASSESSMENT_TABLE = 'assessment results'; // Your table name
         
         // Airtable integration functions
         async function saveToAirtable(data) {
@@ -1620,10 +1620,13 @@
                     console.log('✅ Data saved to Airtable:', result.id);
                     return { success: true, recordId: result.id };
                 } else {
-                    throw new Error(`Airtable API error: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('❌ Airtable API error:', response.status, errorText);
+                    throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
                 }
             } catch (error) {
                 console.error('❌ Airtable save error:', error);
+                console.error('Failed data:', data);
                 return { success: false, error: error.message };
             }
         }
@@ -4368,8 +4371,8 @@ Sometimes you need data to show you what you already suspected. Time to systemat
         // FIXED: Complete buildWaitlistUrl function with proper error handling
         function buildWaitlistUrl(assessmentContext) {
             try {
-                // Use the local waitlist page
-                const baseUrl = `${window.location.origin}/waitlist.html`;
+                // Use the waitlist page on the same domain
+                const baseUrl = `${window.location.origin}/waitlist`;
                 
                 const waitlistUrl = new URL(baseUrl);
         
@@ -4404,7 +4407,7 @@ Sometimes you need data to show you what you already suspected. Time to systemat
             } catch (error) {
                 ErrorHandler.logError('Error building waitlist URL', error);
                 // Fallback to local waitlist with error flag
-                return `${window.location.origin}/waitlist.html?source=hs_assessment_tool&error=url_generation_failed`;
+                return `${window.location.origin}/waitlist?source=hs_assessment_tool&error=url_generation_failed`;
             }
         }
 

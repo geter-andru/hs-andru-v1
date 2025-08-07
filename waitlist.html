@@ -820,6 +820,7 @@
                 const emailParam = metadata.email ? `?prefilled_email=${encodeURIComponent(metadata.email)}` : '';
                 window.location.href = checkoutUrl + emailParam;
             }, 1000);
+        };
         
         // Initialize
         personalizeContent();

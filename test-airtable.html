@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Airtable Connection</title>
+</head>
+<body>
+    <h1>Test Airtable Connection</h1>
+    <button onclick="testAirtable()">Test Airtable Submit</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAirtable() {
+            const AIRTABLE_BASE_ID = 'app0jJkgTCqn46vp9';
+            const AIRTABLE_API_KEY = 'pat4jn6JyCcBrpqBN.96b92bd8cc46aa9e05ec9d75e0d1f8da3dd1ceafec8856fcc962d69d82b84aae';
+            const AIRTABLE_TABLE = 'assessment results';
+            
+            const testData = {
+                'andru User email': 'test@example.com',
+                'Session ID': 'test_' + Date.now(),
+                'Product Name': 'Test Product',
+                'Overall Score': 75,
+                'Buyer Understanding Score': 80,
+                'Tech to Value Score': 70,
+                'Source': 'Test',
+                'Version': 'Test 1.0'
+            };
+            
+            const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;
+            
+            try {
+                console.log('Sending to URL:', url);
+                console.log('Data:', testData);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fields: testData
+                    })
+                });
+                
+                const resultDiv = document.getElementById('result');
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    resultDiv.textContent = 'SUCCESS!\n' + JSON.stringify(result, null, 2);
+                    console.log('Success:', result);
+                } else {
+                    const error = await response.text();
+                    resultDiv.textContent = 'ERROR ' + response.status + ':\n' + error;
+                    console.error('Error:', response.status, error);
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'NETWORK ERROR:\n' + error.message;
+                console.error('Network error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
