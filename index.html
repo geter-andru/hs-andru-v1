@@ -2437,6 +2437,65 @@ Sometimes you need data to show you what you already suspected. Time to systemat
         };
 
         // =============================================================================
+        // ASSESSMENT LINKEDIN SHARING FUNCTION
+        // =============================================================================
+        
+        function shareAssessmentToLinkedIn() {
+            try {
+                // Get assessment results from global state
+                const results = assessmentState.analysisResults;
+                const userDetails = assessmentState.userDetails;
+                
+                if (!results || !userDetails) {
+                    throw new Error('Assessment results not found');
+                }
+                
+                // Create personalized LinkedIn post based on assessment results
+                const score = results.overall.score;
+                const productName = userDetails.productName || 'my product';
+                const challenges = results.challenges?.length || 0;
+                
+                let postText = '';
+                
+                if (score >= 70) {
+                    postText = `🎯 Just completed a comprehensive buyer intelligence assessment for ${productName}! \\n\\nScore: ${score}/100 - Strong foundation in place! \\n\\n🚀 Key insight: Having clear buyer understanding and technical value translation puts us in the top tier for B2B success. \\n\\n#B2B #TechnicalFounders #BuyerIntelligence #ProductStrategy`;
+                } else if (score >= 50) {
+                    postText = `💡 Valuable insights from completing a buyer intelligence assessment for ${productName}! \\n\\nScore: ${score}/100 - Clear action plan ahead \\n\\n🎯 Identified ${challenges} key areas for improvement in buyer understanding and value communication. \\n\\nEvery technical founder's journey includes these growth opportunities! \\n\\n#B2B #TechnicalFounders #ProductStrategy #ContinuousImprovement`;
+                } else {
+                    postText = `🔍 Just completed an honest assessment of ${productName}'s buyer intelligence! \\n\\nScore: ${score}/100 - Ready to level up! \\n\\n💪 Identified ${challenges} specific growth areas. The best part? Now I have a clear roadmap for improvement. \\n\\nEvery successful technical founder started somewhere! \\n\\n#B2B #TechnicalFounders #Growth #ProductStrategy`;
+                }
+                
+                // Add call to action
+                postText += `\\n\\n🔗 Technical founders can take the assessment at: ${window.location.origin}`;
+                
+                // Use existing LinkedIn sharing function
+                SocialShareGenerator.shareToLinkedIn(encodeURIComponent(postText));
+                
+                // Track the sharing action
+                if (typeof CohortTracker !== 'undefined') {
+                    CohortTracker.trackUserJourney(
+                        assessmentState.sessionId,
+                        'assessment-complete', 
+                        'linkedin-share',
+                        { 
+                            score: score,
+                            productName: productName,
+                            challenges: challenges
+                        }
+                    );
+                }
+                
+            } catch (error) {
+                console.error('LinkedIn sharing error:', error);
+                
+                // Fallback: generic sharing
+                const fallbackText = `🎯 Just completed a comprehensive B2B buyer intelligence assessment! \\n\\nGreat insights for technical founders looking to improve their sales and market positioning. \\n\\n#B2B #TechnicalFounders #ProductStrategy \\n\\n🔗 Take the assessment: ${window.location.origin}`;
+                
+                SocialShareGenerator.shareToLinkedIn(encodeURIComponent(fallbackText));
+            }
+        }
+
+        // =============================================================================
         // REPAIRED: CENTRALIZED ERROR HANDLING
         // =============================================================================
         
@@ -4181,10 +4240,17 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                             </p>
                             
                             <div style="text-align: center;">
-                                <button class="btn btn-primary" onclick="proceedToWaitlist()" style="padding: var(--spacing-lg) var(--spacing-3xl); font-size: var(--font-size-lg);">
+                                <button class="btn btn-primary" onclick="proceedToWaitlist()" style="padding: var(--spacing-lg) var(--spacing-3xl); font-size: var(--font-size-lg); margin-bottom: var(--spacing-lg);">
                                     📋 Join Founding Member Waitlist
                                     <span class="loading-spinner hidden" id="waitlist-loading">⏳</span>
                                 </button>
+                                
+                                <div style="margin-top: var(--spacing-lg);">
+                                    <button class="btn btn-secondary" onclick="shareAssessmentToLinkedIn()" style="padding: var(--spacing-md) var(--spacing-xl); font-size: var(--font-size-base);">
+                                        📱 Share on LinkedIn
+                                    </button>
+                                </div>
+                                
                                 <p style="color: var(--color-text-subtle); font-size: var(--font-size-xs); margin-top: var(--spacing-md);">
                                     Your assessment data will personalize your experience
                                 </p>
