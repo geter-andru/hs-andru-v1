@@ -1565,17 +1565,12 @@
         
         // Airtable integration functions
         async function saveToAirtable(data) {
-            const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_ASSESSMENT_TABLE)}`;
+            // Use Netlify Function to avoid CORS issues
+            const url = '/.netlify/functions/submit-to-airtable';
             
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        fields: {
+                // Prepare the fields object
+                const fields = {
                             'andru User email': data.email,
                             'Qualification Score': data.overallScore,
                             'Revenue Opportunity Amount': parseFloat(data.revenueOpportunity.replace(/[^0-9.]/g, '')),
@@ -1611,8 +1606,15 @@
                             'Session ID': data.sessionId,
                             'Conversion Stage': 'Assessment Complete',
                             'Next Action': 'Waitlist Redirect'
-                        }
-                    })
+                        };
+                
+                // Send to Netlify Function
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(fields)
                 });
         
                 if (response.ok) {
