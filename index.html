@@ -3002,26 +3002,38 @@ Sometimes you need data to show you what you already suspected. Time to systemat
         
         // Landing page function
         function startFromLanding() {
+            console.log('🚀 Starting from landing page...');
             try {
+                console.log('🔍 Checking landing-section element...');
+                const landingSection = document.getElementById('landing-section');
+                console.log('Landing section found:', !!landingSection);
+                
+                console.log('🔍 Checking user-details-section element...');
+                const userDetailsSection = document.getElementById('user-details-section');
+                console.log('User details section found:', !!userDetailsSection);
+                
                 // Hide landing section and show user details
+                console.log('🔄 Toggling sections...');
                 DOMUtils.safeToggleClass('landing-section', 'hidden', true);
                 DOMUtils.safeToggleClass('user-details-section', 'hidden', false);
                 
-                // Show progress steps
+                // Show progress indicators (if they exist)
                 const progressSteps = document.querySelector('.assessment-steps');
                 if (progressSteps) {
                     progressSteps.classList.remove('hidden');
+                    console.log('✅ Progress steps shown');
+                } else {
+                    console.log('ℹ️ No progress steps found (optional)');
                 }
                 
                 // Update assessment state
+                console.log('🔄 Updating assessment state...');
                 assessmentState.currentStep = 1;
                 
-                // Update progress indicators
-                updateProgressIndicators(1);
-                
-                console.log('✅ Started from landing page');
+                console.log('✅ Started from landing page successfully');
                 
             } catch (error) {
+                console.error('❌ Error in startFromLanding:', error);
                 ErrorHandler.logError('Error starting from landing', error);
             }
         }
