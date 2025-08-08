@@ -23,8 +23,8 @@ exports.handler = async (event, context) => {
 
   // Airtable configuration
   const AIRTABLE_BASE_ID = 'app0jJkgTCqn46vp9';
-  const AIRTABLE_API_KEY = 'pat4jn6JyCcBrpqBN.96b92bd8cc46aa9e05ec9d75e0d1f8da3dd1ceafec8856fcc962d69d82b84aae';
-  const AIRTABLE_TABLE = 'assessment results';
+  const AIRTABLE_API_KEY = 'pat5kFmJsBxfL5Yqr.f44840b8b82995ec43ac998191c43f19d0471c9550d0fea9e0327cc4f4aa4815';
+  const AIRTABLE_TABLE = 'tblQl6DpGJNKKeQHu';
   
   // Build the Airtable API URL
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;

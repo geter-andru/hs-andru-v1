@@ -1622,8 +1622,8 @@
         
         // Airtable Configuration - REPLACE WITH YOUR ACTUAL VALUES
         const AIRTABLE_BASE_ID = 'app0jJkgTCqn46vp9'; // Airtable base URL
-        const AIRTABLE_API_KEY = 'pat4jn6JyCcBrpqBN.96b92bd8cc46aa9e05ec9d75e0d1f8da3dd1ceafec8856fcc962d69d82b84aae'; // Get this from Airtable Account > Developers
-        const AIRTABLE_ASSESSMENT_TABLE = 'assessment results'; // Your table name
+        const AIRTABLE_API_KEY = 'pat5kFmJsBxfL5Yqr.f44840b8b82995ec43ac998191c43f19d0471c9550d0fea9e0327cc4f4aa4815'; // Get this from Airtable Account > Developers
+        const AIRTABLE_ASSESSMENT_TABLE = 'tblQl6DpGJNKKeQHu'; // Your table ID
         
         // Airtable integration functions
         async function saveToAirtable(data) {
@@ -1634,9 +1634,9 @@
                 // Prepare the fields object
                 const fields = {
                             'andru User email': data.email,
-                            'Qualification Score': data.overallScore,
-                            'Revenue Opportunity Amount': parseFloat(data.revenueOpportunity.replace(/[^0-9.]/g, '')),
-                            'ROI Multiplier': data.roiMultiplier || 0,
+                            'Overall Score': data.overallScore,
+                            'Revenue Opportunity': data.revenueOpportunity,
+                            'ROI Multiplier': parseFloat(data.roiMultiplier.toString().replace(/[^0-9.]/g, '')) || 0,
                             'Is High Priority': data.isHighPriority || false,
                             'Lead Priority': data.leadPriority || 'Medium',
                             'Source': 'Wix Assessment Tool',
@@ -3023,6 +3023,59 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                 
             } catch (error) {
                 ErrorHandler.logError('Error starting from landing', error);
+            }
+        }
+
+        // Validate user details and proceed to assessment
+        function validateUserDetails() {
+            console.log('🔍 Validating user details...');
+            
+            try {
+                // Get form inputs
+                const email = document.getElementById('email')?.value?.trim();
+                const productName = document.getElementById('productName')?.value?.trim();
+                const businessModel = document.getElementById('businessModel')?.value;
+                const customerCount = document.getElementById('customerCount')?.value;
+                const distinguishingFeature = document.getElementById('distinguishingFeature')?.value?.trim();
+                
+                // Validate required fields
+                if (!email || !productName || !businessModel || !customerCount) {
+                    showValidationMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showValidationMessage('Please enter a valid email address', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                DOMUtils.safeToggleClass('user-loading', 'hidden', false);
+                
+                // Save user details
+                assessmentState.userDetails = {
+                    email,
+                    productName,
+                    businessModel,
+                    customerCount,
+                    distinguishingFeature: distinguishingFeature || ''
+                };
+                
+                console.log('✅ User details validated:', assessmentState.userDetails);
+                
+                // Proceed to assessment after a short delay
+                setTimeout(() => {
+                    DOMUtils.safeToggleClass('user-loading', 'hidden', true);
+                    showStep(2);
+                    startAssessmentQuestions();
+                }, 800);
+                
+            } catch (error) {
+                ErrorHandler.logError('Error validating user details', error);
+                DOMUtils.safeToggleClass('user-loading', 'hidden', true);
+                showValidationMessage('An error occurred. Please try again.', 'error');
             }
         }
 
@@ -4637,6 +4690,17 @@ Sometimes you need data to show you what you already suspected. Time to systemat
                 console.log('- simulateError() - test error recovery');
                 
                 ErrorHandler.showUserError('Assessment initialized successfully!', 'success');
+                
+                // Set up event listener for start assessment button
+                const startBtn = document.getElementById('start-assessment-btn');
+                if (startBtn) {
+                    startBtn.addEventListener('click', function() {
+                        validateUserDetails();
+                    });
+                    console.log('✅ Start assessment button listener attached');
+                } else {
+                    console.warn('⚠️ Start assessment button not found');
+                }
                 
             } catch (error) {
                 ErrorHandler.handleCriticalError('Application initialization failed', error, () => {
