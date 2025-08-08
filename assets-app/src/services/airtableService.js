@@ -36,18 +36,48 @@ export const airtableService = {
   // Fetch customer assets data
   async getCustomerAssets(customerId, accessToken) {
     try {
+      // First try to get by record ID if customerId looks like a record ID
+      if (customerId.startsWith('rec')) {
+        const response = await airtableClient.get(`/Customer Assets/${customerId}`);
+        const record = response.data;
+        
+        // Verify access token matches
+        if (record.fields['Access Token'] !== accessToken) {
+          throw new Error('Invalid customer ID or access token');
+        }
+        
+        return {
+          id: record.id,
+          customerId: record.fields['Customer ID'] || customerId,
+          customerName: record.fields['Customer Name'],
+          accessToken: record.fields['Access Token'],
+          icpContent: this.parseJsonField(record.fields['ICP Content']),
+          costCalculatorContent: this.parseJsonField(record.fields['Cost Calculator Content']),
+          businessCaseContent: this.parseJsonField(record.fields['Business Case Content']),
+          createdAt: record.fields['Created At'],
+          lastAccessed: record.fields['Last Accessed']
+        };
+      }
+      
+      // Fallback to formula field query (get all records and filter in code)
       const response = await airtableClient.get('/Customer Assets', {
         params: {
-          filterByFormula: `AND({Customer ID} = '${customerId}', {Access Token} = '${accessToken}')`,
-          maxRecords: 1
+          filterByFormula: `{Access Token} = '${accessToken}'`,
+          maxRecords: 100
         }
       });
 
-      if (response.data.records.length === 0) {
+      // Find matching record by Customer ID (since formula fields don't filter reliably)
+      const matchingRecord = response.data.records.find(record => 
+        record.fields['Customer ID'] === customerId && 
+        record.fields['Access Token'] === accessToken
+      );
+
+      if (!matchingRecord) {
         throw new Error('Invalid customer ID or access token');
       }
 
-      const record = response.data.records[0];
+      const record = matchingRecord;
       return {
         id: record.id,
         customerId: record.fields['Customer ID'],
