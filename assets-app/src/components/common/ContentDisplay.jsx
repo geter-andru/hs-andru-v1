@@ -27,11 +27,15 @@ const ContentDisplay = ({ content, className = '' }) => {
   if (typeof content === 'string' && (content.startsWith('{') || content.startsWith('['))) {
     try {
       parsedContent = JSON.parse(content);
+      console.log('ContentDisplay - Parsed JSON content:', parsedContent);
     } catch (e) {
+      console.log('ContentDisplay - JSON parsing failed, treating as text:', content);
       // If parsing fails, treat as plain text/HTML
       parsedContent = content;
     }
   }
+  
+  console.log('ContentDisplay - Content type:', typeof content, 'Parsed type:', typeof parsedContent);
 
   // Handle JSON objects with structured data
   if (typeof parsedContent === 'object' && parsedContent !== null) {
@@ -210,6 +214,22 @@ const ContentDisplay = ({ content, className = '' }) => {
                 </ul>
               </div>
             ))}
+          </div>
+        )}
+        
+        {/* Fallback for JSON objects that don't match structured patterns */}
+        {!parsedContent.segments && 
+         !parsedContent.categories && 
+         !parsedContent.templates && 
+         !parsedContent.keyIndicators && 
+         !parsedContent.ratingCriteria && 
+         !parsedContent.frameworks && 
+         !parsedContent.successMetrics && (
+          <div className="bg-surface/30 rounded-lg p-4 border border-glass-border">
+            <p className="text-sm text-secondary mb-2">Raw data structure:</p>
+            <pre className="text-xs text-muted bg-surface/50 p-3 rounded overflow-x-auto">
+              {JSON.stringify(parsedContent, null, 2)}
+            </pre>
           </div>
         )}
       </div>

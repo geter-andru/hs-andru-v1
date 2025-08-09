@@ -17,21 +17,21 @@ const Navigation = () => {
     {
       id: 'icp',
       name: 'ICP Analysis',
-      path: `dashboard/icp${queryString}`,
+      path: `/customer/${customerId}/dashboard/icp${queryString}`,
       step: 1,
       description: 'Identify & rate ideal customers'
     },
     {
       id: 'cost-calculator',
       name: 'Cost Calculator',
-      path: `dashboard/cost-calculator${queryString}`,
+      path: `/customer/${customerId}/dashboard/cost-calculator${queryString}`,
       step: 2,
       description: 'Calculate cost of inaction'
     },
     {
       id: 'business-case',
       name: 'Business Case',
-      path: `dashboard/business-case${queryString}`,
+      path: `/customer/${customerId}/dashboard/business-case${queryString}`,
       step: 3,
       description: 'Build pilot-to-contract cases'
     }
