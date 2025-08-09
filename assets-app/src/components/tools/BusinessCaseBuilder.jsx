@@ -114,133 +114,312 @@ const BusinessCaseBuilder = () => {
     }
   };
 
-  // Auto-populate fields using structured business content from Customer Assets
+  // Auto-populate fields using structured business content sections from Customer Assets
   const autoPopulateFields = async () => {
     if (!session || !formData.companyName?.trim() || !customerAssets) return;
 
     try {
       console.log('🔍 Auto-populate Debug:');
       console.log('Customer Assets:', customerAssets);
-      console.log('ICP Description:', customerAssets.icpDescription);
-      console.log('Cost Calculator Content:', customerAssets.costCalculatorContent);
 
       const companyName = formData.companyName.trim();
       const newFormData = { ...formData };
       const newAutoPopulated = new Set();
+      
+      const icpData = customerAssets.icpDescription || customerAssets.icpContent;
+      const costData = customerAssets.costCalculatorContent;  
+      const businessData = customerAssets.businessCaseContent;
 
-      // Auto-populate from ICP Description data
-      if (customerAssets.icpDescription) {
-        const icpData = customerAssets.icpDescription;
-        console.log('📊 Using ICP Description data');
+      console.log('📊 ICP Data:', icpData);
+      console.log('💰 Cost Data:', costData);
+      console.log('📋 Business Data:', businessData);
 
-        // Problem Statement from ICP segments and red flags
-        if (!formData.currentChallenges) {
-          let challenges = `${companyName} faces key challenges in:`;
-          if (icpData.redFlags && icpData.redFlags.length > 0) {
-            challenges += '\n' + icpData.redFlags.map(flag => `• ${flag}`).join('\n');
-          } else {
-            challenges += `\n• Scalability: Current processes may not support rapid growth phase\n• Technology readiness: Alignment needed with modern tech stack requirements\n• Market positioning: Optimization needed to maintain competitive advantage`;
-          }
-          newFormData.currentChallenges = challenges;
-          newAutoPopulated.add('currentChallenges');
+      // === PROBLEM STATEMENT SECTION ===
+      
+      // Current Challenges: ICP Business Characteristics + Cost Risk Categories + Business Case Challenges
+      if (!formData.currentChallenges) {
+        let challenges = `${companyName} faces critical business challenges:\n\n`;
+        
+        // From ICP Analysis: Business pain points and decision-making challenges
+        if (icpData?.segments) {
+          challenges += "**Market Positioning Challenges:**\n";
+          icpData.segments.slice(0, 2).forEach(segment => {
+            if (segment.criteria) {
+              challenges += segment.criteria.slice(0, 2).map(criterion => `• ${criterion}`).join('\n') + '\n';
+            }
+          });
+          challenges += '\n';
         }
-
-        // Business Impact from ICP segments and criteria
-        if (!formData.businessImpact) {
-          let impact = `Based on ICP analysis, ${companyName} shows strong alignment potential. `;
-          if (icpData.segments && icpData.segments.length > 0) {
-            const topSegment = icpData.segments[0];
-            impact += `Best fit: ${topSegment.name} segment (${topSegment.score}% match). `;
-          }
-          impact += `Key impact areas include operational efficiency, market positioning, and growth enablement with estimated revenue impact of 15-25%.`;
-          newFormData.businessImpact = impact;
-          newAutoPopulated.add('businessImpact');
+        
+        // From Cost Calculator: Risk Categories and operational inefficiencies  
+        if (costData?.categories) {
+          challenges += "**Operational Risk Areas:**\n";
+          costData.categories.slice(0, 3).forEach(category => {
+            challenges += `• ${category.name}: ${category.description}\n`;
+          });
+          challenges += '\n';
         }
-
-        // Urgency Factors from ICP key indicators
-        if (!formData.urgencyFactors) {
-          let urgency = `Strategic implementation recommended:\n`;
-          if (icpData.keyIndicators && icpData.keyIndicators.length > 0) {
-            urgency += icpData.keyIndicators.slice(0, 3).map(indicator => `• ${indicator}`).join('\n');
-          } else {
-            urgency += `• Market conditions favor early adoption\n• Competitive advantage window available\n• Current growth trajectory supports scaling`;
+        
+        // From Business Case: Specific stakeholder problems
+        if (businessData?.templates) {
+          const template = businessData.templates[0];
+          if (template?.keyPoints) {
+            challenges += "**Strategic Challenges:**\n";
+            challenges += template.keyPoints.slice(0, 2).map(point => `• ${point}`).join('\n');
           }
-          newFormData.urgencyFactors = urgency;
-          newAutoPopulated.add('urgencyFactors');
         }
+        
+        newFormData.currentChallenges = challenges.trim();
+        newAutoPopulated.add('currentChallenges');
       }
 
-      // Auto-populate from Cost Calculator Content
-      if (customerAssets.costCalculatorContent) {
-        const costData = customerAssets.costCalculatorContent;
-        console.log('💰 Using Cost Calculator Content data');
-
-        // Current State Costs from cost categories
-        if (!formData.currentStateCosts && costData.categories) {
-          const avgDealSize = costData.defaultValues?.averageDealSize || 25000;
-          const estimatedCosts = Math.round(avgDealSize * 50); // Estimate based on deal size
-          newFormData.currentStateCosts = `$${estimatedCosts.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
-          newAutoPopulated.add('currentStateCosts');
+      // Business Impact: ICP Demographics + Firmographics + Cost Calculator Operational Impact
+      if (!formData.businessImpact) {
+        let impact = `**Business Impact Assessment for ${companyName}:**\n\n`;
+        
+        // From ICP Analysis: Company size, revenue, growth stage pressures
+        if (icpData?.segments) {
+          const topSegment = icpData.segments[0];
+          impact += `**Market Segment Analysis:**\n`;
+          impact += `• Primary fit: ${topSegment.name} (${topSegment.score}% alignment)\n`;
+          if (topSegment.criteria) {
+            impact += `• Key characteristics: ${topSegment.criteria.slice(0, 2).join(', ')}\n\n`;
+          }
         }
-
-        // Expected Savings from cost scenarios
-        if (!formData.expectedSavings && costData.defaultValues) {
-          const dealSize = costData.defaultValues.averageDealSize || 25000;
-          const conversionRate = costData.defaultValues.conversionRate || 0.15;
-          const annualSavings = Math.round(dealSize * conversionRate * 40); // Conservative estimate
-          newFormData.expectedSavings = `$${annualSavings.toLocaleString()} in annual savings through efficiency gains and revenue optimization`;
-          newAutoPopulated.add('expectedSavings');
+        
+        // From Cost Calculator: Operational efficiency impact
+        if (costData?.defaultValues) {
+          impact += `**Financial Impact Scope:**\n`;
+          impact += `• Average deal size impact: $${(costData.defaultValues.averageDealSize || 25000).toLocaleString()}\n`;
+          impact += `• Conversion rate effects: ${((costData.defaultValues.conversionRate || 0.15) * 100).toFixed(0)}% efficiency factor\n`;
+          impact += `• Operational scale: ${costData.defaultValues.inefficiencyRate ? (costData.defaultValues.inefficiencyRate * 100).toFixed(0) + '% current inefficiency' : 'Significant process optimization potential'}\n\n`;
         }
-
-        // Solution Costs (smart estimate)
-        if (!formData.solutionCosts && costData.defaultValues) {
-          const dealSize = costData.defaultValues.averageDealSize || 25000;
-          const estimatedCost = Math.round(dealSize * 2); // 2x deal size for solution cost
-          newFormData.solutionCosts = `$${estimatedCost.toLocaleString()} implementation cost (estimated based on solution scope)`;
-          newAutoPopulated.add('solutionCosts');
-        }
-
-        // Payback Period from scenarios
-        if (!formData.paybackPeriod) {
-          const payback = 8; // Default estimate
-          newFormData.paybackPeriod = `${payback} months estimated payback period`;
-          newAutoPopulated.add('paybackPeriod');
-        }
-
-        // ROI calculation
-        if (!formData.expectedROI) {
-          const roi = 200; // Conservative 200% ROI estimate
-          newFormData.expectedROI = `${roi}% annual ROI based on cost analysis`;
-          newAutoPopulated.add('expectedROI');
-        }
+        
+        impact += `**Projected Business Benefits:**\n• Revenue growth acceleration: 15-25%\n• Operational efficiency gains: 20-35%\n• Market competitiveness improvement: High priority`;
+        
+        newFormData.businessImpact = impact;
+        newAutoPopulated.add('businessImpact');
       }
 
-      // Smart defaults for remaining fields
-      if (!formData.projectTitle) {
-        newFormData.projectTitle = `${companyName} Digital Transformation Initiative`;
-        newAutoPopulated.add('projectTitle');
+      // Urgency Factors: Cost Calculator Compounding Effects + Business Case "Why Now" + ICP Urgency
+      if (!formData.urgencyFactors) {
+        let urgency = `**Why ${companyName} Must Act Now:**\n\n`;
+        
+        // From Cost Calculator: Compounding effects timeline
+        if (costData?.scenarios) {
+          urgency += `**Cost of Delay Analysis:**\n`;
+          costData.scenarios.forEach(scenario => {
+            urgency += `• ${scenario.name} scenario: ${scenario.multiplier}x impact multiplier\n`;
+          });
+          urgency += '\n';
+        }
+        
+        // From ICP Analysis: Purchase decision urgency factors
+        if (icpData?.keyIndicators) {
+          urgency += `**Market Timing Factors:**\n`;
+          urgency += icpData.keyIndicators.slice(0, 3).map(indicator => `• ${indicator}`).join('\n') + '\n\n';
+        }
+        
+        urgency += `**Competitive Risk Timeline:**\n• 3-month delay: 15% competitive disadvantage\n• 6-month delay: 35% market position erosion\n• 12-month delay: Significant competitive displacement risk`;
+        
+        newFormData.urgencyFactors = urgency;
+        newAutoPopulated.add('urgencyFactors');
       }
 
+      // === SOLUTION SECTIONS ===
+      
+      // Solution Overview: Business Case Approach + ICP Strategic Fit
       if (!formData.solutionOverview) {
-        newFormData.solutionOverview = `Comprehensive solution designed to address ${companyName}'s specific scalability and efficiency challenges through proven technology implementation and process optimization.`;
+        let solution = `**Comprehensive Solution Framework for ${companyName}:**\n\n`;
+        
+        // From Business Case: Approach & differentiation
+        if (businessData?.frameworks) {
+          const framework = businessData.frameworks[0];
+          solution += `**${framework.name}:**\n${framework.description}\n\n`;
+          if (framework.components) {
+            solution += `**Core Components:**\n`;
+            solution += framework.components.map(comp => `• ${comp}`).join('\n') + '\n\n';
+          }
+        }
+        
+        // From ICP: Strategic fit analysis
+        if (icpData?.ratingCriteria) {
+          solution += `**Strategic Alignment:**\n`;
+          icpData.ratingCriteria.slice(0, 2).forEach(criterion => {
+            solution += `• ${criterion.name} (${criterion.weight}% weight): ${criterion.description}\n`;
+          });
+        }
+        
+        newFormData.solutionOverview = solution;
         newAutoPopulated.add('solutionOverview');
       }
 
+      // Key Features: Business Case 3-Phase Framework + ICP Competitive Analysis
+      if (!formData.keyFeatures) {
+        let features = `**Solution Key Features & Differentiators:**\n\n`;
+        
+        // From Business Case: Technical advantages and capabilities
+        if (businessData?.templates) {
+          const template = businessData.templates.find(t => t.name.includes('Full Implementation')) || businessData.templates[0];
+          features += `**Implementation Capabilities:**\n`;
+          if (template.sections) {
+            features += template.sections.slice(0, 4).map(section => `• ${section}`).join('\n') + '\n\n';
+          }
+        }
+        
+        // From ICP: Competitive differentiation
+        if (icpData?.segments) {
+          features += `**Competitive Advantages:**\n`;
+          features += `• Targeted solution for ${icpData.segments[0]?.name || 'enterprise'} segment\n`;
+          features += `• Proven framework addressing specific market needs\n`;
+          features += `• Scalable implementation approach\n`;
+        }
+        
+        newFormData.keyFeatures = features;
+        newAutoPopulated.add('keyFeatures');
+      }
+
+      // Implementation Approach: Business Case Implementation + ICP Guidelines  
       if (!formData.implementationApproach) {
-        newFormData.implementationApproach = `Phased implementation approach:\n• Phase 1: Assessment and planning (4-6 weeks)\n• Phase 2: Core system implementation (8-12 weeks)\n• Phase 3: Training and optimization (4-6 weeks)\n• Phase 4: Full deployment and support (ongoing)`;
+        let implementation = `**${companyName} Implementation Strategy:**\n\n`;
+        
+        // From Business Case: Timeline & milestones, resource needs
+        if (businessData?.templates) {
+          const template = businessData.templates[0];
+          implementation += `**${template.name} Approach:**\n`;
+          implementation += `• Duration: ${template.duration}\n`;
+          implementation += `• Investment Range: ${template.investment}\n\n`;
+          
+          if (template.sections) {
+            implementation += `**Implementation Phases:**\n`;
+            template.sections.forEach((section, index) => {
+              implementation += `• Phase ${index + 1}: ${section}\n`;
+            });
+            implementation += '\n';
+          }
+        }
+        
+        implementation += `**Resource Requirements:**\n• Dedicated project team: 3-5 members\n• Executive sponsor: Required\n• Technical integration: 2-4 weeks\n• User training: Ongoing support included`;
+        
+        newFormData.implementationApproach = implementation;
         newAutoPopulated.add('implementationApproach');
       }
 
+      // === FINANCIAL & SUCCESS SECTIONS ===
+      
+      // Current State Costs: Cost Calculator categories and calculations
+      if (!formData.currentStateCosts) {
+        let costs = '';
+        if (costData?.defaultValues) {
+          const avgDeal = costData.defaultValues.averageDealSize || 25000;
+          const inefficiency = costData.defaultValues.inefficiencyRate || 0.12;
+          const annualCost = Math.round(avgDeal * 50 * (1 + inefficiency));
+          costs = `$${annualCost.toLocaleString()} annually in operational inefficiencies, missed opportunities, and productivity losses`;
+        } else {
+          costs = `$1,250,000 annually in operational inefficiencies and missed revenue opportunities`;
+        }
+        newFormData.currentStateCosts = costs;
+        newAutoPopulated.add('currentStateCosts');
+      }
+
+      // Expected Savings: Cost Calculator ROI calculations
+      if (!formData.expectedSavings) {
+        let savings = '';
+        if (costData?.defaultValues) {
+          const avgDeal = costData.defaultValues.averageDealSize || 25000;
+          const conversion = costData.defaultValues.conversionRate || 0.15;
+          const annualSavings = Math.round(avgDeal * conversion * 60);
+          savings = `$${annualSavings.toLocaleString()} in annual savings through efficiency gains, revenue optimization, and process improvements`;
+        } else {
+          savings = `$875,000 in annual savings through efficiency gains and revenue optimization`;
+        }
+        newFormData.expectedSavings = savings;
+        newAutoPopulated.add('expectedSavings');
+      }
+
+      // Solution Costs: Business Case investment framework
+      if (!formData.solutionCosts) {
+        let solutionCost = '';
+        if (businessData?.templates) {
+          const template = businessData.templates[0];
+          solutionCost = `${template.investment} total implementation investment`;
+        } else if (costData?.defaultValues) {
+          const avgDeal = costData.defaultValues.averageDealSize || 25000;
+          const cost = Math.round(avgDeal * 2);
+          solutionCost = `$${cost.toLocaleString()} total implementation investment`;
+        } else {
+          solutionCost = `$75,000 total implementation investment`;
+        }
+        newFormData.solutionCosts = solutionCost;
+        newAutoPopulated.add('solutionCosts');
+      }
+
+      // Success Metrics: Business Case ROI + Cost Calculator scenarios + ICP validation
       if (!formData.successMetrics) {
-        newFormData.successMetrics = `• Revenue growth: 15-25% increase\n• Operational efficiency: 30% improvement\n• Process automation: 50% reduction in manual tasks\n• User adoption: 90% within 6 months\n• Customer satisfaction: 8.5+ rating`;
+        let metrics = `**${companyName} Success Metrics & KPIs:**\n\n`;
+        
+        // From Business Case: Impact table with current vs target states
+        if (businessData?.successMetrics) {
+          businessData.successMetrics.forEach(category => {
+            metrics += `**${category.category} Metrics:**\n`;
+            category.metrics.slice(0, 3).forEach(metric => {
+              metrics += `• ${metric}\n`;
+            });
+            metrics += '\n';
+          });
+        } else {
+          metrics += `**Financial Metrics:**\n• Revenue growth: 20-30%\n• Cost reduction: 25-40%\n• ROI achievement: 6-12 months\n\n`;
+          metrics += `**Operational Metrics:**\n• Process efficiency: 35% improvement\n• Error reduction: 50% decrease\n• User adoption: 90%+ within 90 days\n\n`;
+        }
+        
+        // From ICP: Success indicators and validation criteria
+        metrics += `**Strategic Success Indicators:**\n• Market position strengthening\n• Competitive advantage realization\n• Scalability foundation established`;
+        
+        newFormData.successMetrics = metrics;
         newAutoPopulated.add('successMetrics');
+      }
+
+      // Timeline: Business Case milestones + Cost Calculator projections
+      if (!formData.timeline) {
+        let timeline = `**${companyName} Implementation Timeline:**\n\n`;
+        
+        if (businessData?.templates) {
+          const template = businessData.templates[0];
+          timeline += `**${template.duration} Implementation Schedule:**\n\n`;
+        }
+        
+        timeline += `**Month 1: Foundation Phase**\n• Requirements gathering and validation\n• Team formation and kick-off\n• Initial system configuration\n\n`;
+        timeline += `**Months 2-3: Implementation Phase**\n• Core system deployment\n• Integration and testing\n• User training program launch\n\n`;
+        timeline += `**Months 4-6: Optimization Phase**\n• Performance monitoring and tuning\n• Full user adoption\n• Success metrics achievement\n• Ongoing support transition`;
+        
+        newFormData.timeline = timeline;
+        newAutoPopulated.add('timeline');
+      }
+
+      // Project Title
+      if (!formData.projectTitle) {
+        newFormData.projectTitle = `${companyName} Strategic Transformation Initiative`;
+        newAutoPopulated.add('projectTitle');
+      }
+
+      // Expected ROI and Payback Period
+      if (!formData.expectedROI) {
+        const roi = costData?.scenarios ? 250 : 200;
+        newFormData.expectedROI = `${roi}% annual ROI based on comprehensive impact analysis`;
+        newAutoPopulated.add('expectedROI');
+      }
+
+      if (!formData.paybackPeriod) {
+        const payback = businessData?.frameworks?.find(f => f.benchmark)?.benchmark || '8 months';
+        newFormData.paybackPeriod = payback.includes('month') ? payback : `${payback} estimated payback period`;
+        newAutoPopulated.add('paybackPeriod');
       }
 
       // Update form data and auto-populated tracking
       setFormData(newFormData);
       setAutoPopulated(newAutoPopulated);
 
-      console.log(`✅ Auto-populated ${newAutoPopulated.size} fields for ${companyName}`);
+      console.log(`✅ Auto-populated ${newAutoPopulated.size} fields for ${companyName} using structured business content`);
 
     } catch (error) {
       console.error('Error auto-populating fields:', error);
