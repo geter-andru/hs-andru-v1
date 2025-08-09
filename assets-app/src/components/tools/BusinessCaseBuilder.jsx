@@ -148,7 +148,9 @@ const BusinessCaseBuilder = () => {
 
           // Business Impact from ICP scoring
           if (!formData.businessImpact) {
-            const avgScore = Math.round(rating.criteria.reduce((sum, c) => sum + c.score, 0) / rating.criteria.length);
+            const avgScore = rating.criteria && rating.criteria.length > 0 
+              ? Math.round(rating.criteria.reduce((sum, c) => sum + c.score, 0) / rating.criteria.length)
+              : rating.overallScore || 75;
             newFormData.businessImpact = `Based on analysis, ${companyName} shows ${avgScore}% alignment with ideal customer profile. Key impact areas include operational efficiency, market positioning, and growth enablement with estimated revenue impact of 15-25%.`;
             newAutoPopulated.add('businessImpact');
           }
@@ -173,34 +175,37 @@ const BusinessCaseBuilder = () => {
         const calc = costProgress.calculations;
         
         // Current State Costs
-        if (!formData.currentStateCosts && calc.totalCost) {
-          newFormData.currentStateCosts = `$${calc.totalCost.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
+        const totalCost = calc.totalCostOfInaction || calc.totalCost;
+        if (!formData.currentStateCosts && totalCost) {
+          newFormData.currentStateCosts = `$${totalCost.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
           newAutoPopulated.add('currentStateCosts');
         }
 
-        // Expected Savings
-        if (!formData.expectedSavings && calc.totalSavings) {
-          newFormData.expectedSavings = `$${calc.totalSavings.toLocaleString()} in annual savings through efficiency gains and revenue optimization`;
+        // Expected Savings (use totalCost as potential savings)
+        if (!formData.expectedSavings && totalCost) {
+          const annualSavings = Math.round(totalCost * 0.7); // 70% of costs can be saved
+          newFormData.expectedSavings = `$${annualSavings.toLocaleString()} in annual savings through efficiency gains and revenue optimization`;
           newAutoPopulated.add('expectedSavings');
         }
 
         // Solution Costs (smart estimate based on savings)
-        if (!formData.solutionCosts && calc.totalSavings) {
-          const estimatedCost = Math.round(calc.totalSavings * 0.3); // 30% of annual savings
+        if (!formData.solutionCosts && totalCost) {
+          const estimatedCost = Math.round(totalCost * 0.2); // 20% of annual costs
           newFormData.solutionCosts = `$${estimatedCost.toLocaleString()} implementation cost (estimated based on solution scope)`;
           newAutoPopulated.add('solutionCosts');
         }
 
-        // Payback Period
-        if (!formData.paybackPeriod && calc.roi) {
-          const payback = calc.roi > 0 ? Math.round(12 / (calc.roi / 100)) : 12;
+        // Payback Period - calculate from metrics if available
+        if (!formData.paybackPeriod) {
+          const payback = calc.metrics?.paybackMonths || Math.round(totalCost * 0.2 / (totalCost * 0.7 / 12)) || 6;
           newFormData.paybackPeriod = `${payback} months estimated payback period`;
           newAutoPopulated.add('paybackPeriod');
         }
 
-        // ROI
-        if (!formData.expectedROI && calc.roi) {
-          newFormData.expectedROI = `${calc.roi}% annual ROI based on cost analysis`;
+        // ROI - calculate if not directly available
+        if (!formData.expectedROI) {
+          const roi = calc.metrics?.roi || Math.round((totalCost * 0.7) / (totalCost * 0.2) * 100) || 250;
+          newFormData.expectedROI = `${roi}% annual ROI based on cost analysis`;
           newAutoPopulated.add('expectedROI');
         }
       } else {
