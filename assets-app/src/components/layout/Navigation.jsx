@@ -1,13 +1,15 @@
 import React from 'react';
 import { NavLink, useLocation, useParams } from 'react-router-dom';
+import { authService } from '../../services/authService';
 
 const Navigation = () => {
   const location = useLocation();
   const params = useParams();
   
-  // Extract access token from current URL to preserve it in navigation
+  // Get access token from session or URL
+  const session = authService.getCurrentSession();
   const searchParams = new URLSearchParams(location.search);
-  const accessToken = searchParams.get('token');
+  const accessToken = session?.accessToken || searchParams.get('token');
   const customerId = params.customerId;
   
   // Build query string to preserve access token
@@ -43,7 +45,8 @@ const Navigation = () => {
     }
   ];
   
-  console.log('Navigation - Building paths with customerId:', customerId, 'queryString:', queryString);
+  console.log('Navigation - Building paths with customerId:', customerId, 'accessToken:', accessToken ? 'found' : 'missing', 'queryString:', queryString);
+  console.log('Navigation - Session data:', session ? 'exists' : 'missing');
 
   return (
     <nav className="bg-primary py-6">

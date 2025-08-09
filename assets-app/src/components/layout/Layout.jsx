@@ -18,7 +18,9 @@ const Layout = () => {
       try {
         // Check if already authenticated
         const existingSession = authService.getCurrentSession();
+        console.log('Layout - Existing session check:', existingSession ? 'found' : 'not found');
         if (existingSession) {
+          console.log('Layout - Using existing session:', existingSession.customerId);
           setCustomerData(existingSession);
           setLoading(false);
           return;

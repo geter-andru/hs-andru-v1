@@ -59,6 +59,7 @@ export const authService = {
   getCurrentSession() {
     try {
       const sessionData = sessionStorage.getItem('customerSession');
+      console.log('AuthService - Session data from storage:', sessionData ? 'exists' : 'not found');
       if (!sessionData) return null;
 
       const session = JSON.parse(sessionData);
@@ -72,10 +73,12 @@ export const authService = {
       
       // Check if session is expired
       if (Date.now() > session.expiresAt) {
+        console.log('AuthService - Session expired, clearing');
         this.clearSession();
         return null;
       }
 
+      console.log('AuthService - Returning valid session for:', session.customerId);
       return session;
     } catch (error) {
       console.error('Error reading session:', error);
