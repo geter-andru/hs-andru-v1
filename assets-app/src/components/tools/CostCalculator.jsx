@@ -372,10 +372,6 @@ const CostCalculator = () => {
     ).catch(console.error);
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleCalculate = (e) => {
     e.preventDefault();
     calculateCostOfInaction();
