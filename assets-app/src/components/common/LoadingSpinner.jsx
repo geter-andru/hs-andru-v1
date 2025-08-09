@@ -13,14 +13,14 @@ const LoadingSpinner = ({
   };
 
   const containerClass = fullScreen 
-    ? 'fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50'
+    ? 'fixed inset-0 flex items-center justify-center bg-primary z-50'
     : 'flex items-center justify-center p-8';
 
   return (
     <div className={`${containerClass} ${className}`}>
       <div className="text-center">
         <div className="flex justify-center mb-4">
-          <div className={`${sizeClasses[size]} animate-spin`}>
+          <div className={`${sizeClasses[size]} animate-spin text-brand`}>
             <svg className="w-full h-full" viewBox="0 0 24 24">
               <circle
                 className="opacity-25"
@@ -40,7 +40,7 @@ const LoadingSpinner = ({
           </div>
         </div>
         {message && (
-          <p className="text-sm text-gray-600 animate-pulse">
+          <p className="text-sm text-secondary animate-pulse">
             {message}
           </p>
         )}
@@ -53,13 +53,13 @@ const LoadingSpinner = ({
 export const ContentSkeleton = () => (
   <div className="animate-pulse">
     <div className="space-y-4">
-      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+      <div className="h-4 bg-surface rounded w-3/4"></div>
+      <div className="h-4 bg-surface rounded w-1/2"></div>
+      <div className="h-4 bg-surface rounded w-2/3"></div>
       <div className="space-y-2">
-        <div className="h-3 bg-gray-200 rounded"></div>
-        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-        <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+        <div className="h-3 bg-surface rounded"></div>
+        <div className="h-3 bg-surface rounded w-5/6"></div>
+        <div className="h-3 bg-surface rounded w-4/6"></div>
       </div>
     </div>
   </div>
@@ -67,18 +67,18 @@ export const ContentSkeleton = () => (
 
 // Card skeleton for tool sections
 export const CardSkeleton = () => (
-  <div className="card p-6 animate-pulse">
+  <div className="card card-padding glass animate-pulse-subtle">
     <div className="flex items-center space-x-4 mb-4">
-      <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+      <div className="rounded-full bg-surface h-10 w-10"></div>
       <div className="flex-1 space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+        <div className="h-4 bg-surface rounded w-3/4"></div>
+        <div className="h-3 bg-surface rounded w-1/2"></div>
       </div>
     </div>
     <div className="space-y-3">
-      <div className="h-3 bg-gray-200 rounded"></div>
-      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-      <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+      <div className="h-3 bg-surface rounded"></div>
+      <div className="h-3 bg-surface rounded w-5/6"></div>
+      <div className="h-3 bg-surface rounded w-4/6"></div>
     </div>
   </div>
 );

@@ -122,8 +122,8 @@ const ICPDisplay = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">ICP Identification & Rating</h1>
-            <p className="text-gray-600">Analyze and rate potential customers against your ideal profile</p>
+            <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating</h1>
+            <p className="text-secondary">Analyze and rate potential customers against your ideal profile</p>
           </div>
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
@@ -137,7 +137,7 @@ const ICPDisplay = () => {
   if (error && !icpData) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">ICP Identification & Rating</h1>
+        <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating</h1>
         <Callout type="error" title="Error Loading ICP Data">
           {error}
         </Callout>
@@ -149,28 +149,28 @@ const ICPDisplay = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ICP Identification & Rating System</h1>
-          <p className="text-gray-600">Analyze and rate potential customers against your ideal customer profile</p>
+          <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating System</h1>
+          <p className="text-secondary">Analyze and rate potential customers against your ideal customer profile</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Left Column: ICP Framework Content */}
         <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Your ICP Framework</h2>
+          <div className="card card-padding glass">
+            <h2 className="text-lg font-semibold text-primary mb-4">Your ICP Framework</h2>
             {icpData ? (
               <ContentDisplay content={icpData} />
             ) : (
-              <p className="text-gray-500">No ICP framework data available</p>
+              <p className="text-muted">No ICP framework data available</p>
             )}
           </div>
         </div>
 
         {/* Right Column: Interactive Rating Tool */}
         <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Company Fit Calculator</h2>
+          <div className="card card-padding glass">
+            <h2 className="text-lg font-semibold text-primary mb-4">Company Fit Calculator</h2>
             
             <form onSubmit={handleRatingSubmit} className="space-y-4">
               <div>
@@ -203,7 +203,7 @@ const ICPDisplay = () => {
             {ratingResult && (
               <div className="mt-6 space-y-4">
                 <div className="border-t pt-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">
+                  <h3 className="font-semibold text-primary mb-3">
                     Fit Analysis: {ratingResult.companyName}
                   </h3>
                   
@@ -227,7 +227,7 @@ const ICPDisplay = () => {
                             {criterion.score}/100
                           </span>
                         </div>
-                        <p className="text-xs text-gray-600">{criterion.description}</p>
+                        <p className="text-xs text-secondary">{criterion.description}</p>
                       </div>
                     ))}
                   </div>

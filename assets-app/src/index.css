@@ -375,6 +375,14 @@
     border-color: rgba(59, 130, 246, 0.5);
   }
   
+  .bg-brand\/10 {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  
+  .bg-surface\/50 {
+    background-color: rgba(42, 42, 42, 0.5);
+  }
+  
   /* Enhanced prose styling for content */
   .prose {
     color: var(--color-text-secondary);

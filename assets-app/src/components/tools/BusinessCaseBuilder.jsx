@@ -648,22 +648,22 @@ const BusinessCaseBuilder = () => {
       </div>
 
       {/* Template Selection */}
-      <div className="card p-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Template Selection</h3>
+      <div className="card card-padding">
+        <h3 className="text-lg font-medium text-primary mb-4">Template Selection</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Object.entries(templates).map(([key, template]) => (
             <button
               key={key}
               onClick={() => setActiveTemplate(key)}
-              className={`p-4 border-2 rounded-lg text-left transition-colors ${
+              className={`p-4 border-2 rounded-lg text-left transition-all duration-300 hover-lift ${
                 activeTemplate === key
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-brand bg-brand/10 shadow-brand/30'
+                  : 'border-glass-border bg-surface/50 hover:border-brand/50'
               }`}
             >
-              <h4 className="font-medium text-gray-900">{template.name}</h4>
-              <p className="text-sm text-gray-600 mt-1">{template.description}</p>
-              <p className="text-xs text-gray-500 mt-2">Duration: {template.duration}</p>
+              <h4 className="font-medium text-primary">{template.name}</h4>
+              <p className="text-sm text-secondary mt-1">{template.description}</p>
+              <p className="text-xs text-muted mt-2">Duration: {template.duration}</p>
             </button>
           ))}
         </div>
@@ -673,12 +673,12 @@ const BusinessCaseBuilder = () => {
         {/* Left Column: Framework Guide */}
         {!previewMode && (
           <div className="space-y-6">
-            <div className="card p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Framework Guide</h2>
+            <div className="card card-padding glass">
+              <h2 className="text-lg font-semibold text-primary mb-4">Framework Guide</h2>
               {businessCaseData ? (
                 <ContentDisplay content={businessCaseData} />
               ) : (
-                <p className="text-gray-500">No framework guide data available</p>
+                <p className="text-muted">No framework guide data available</p>
               )}
             </div>
           </div>
@@ -687,21 +687,21 @@ const BusinessCaseBuilder = () => {
         {/* Right Column: Form Builder or Preview */}
         <div className={`space-y-6 ${previewMode ? 'lg:col-span-2' : ''}`}>
           {previewMode ? (
-            <div className="card p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Preview</h2>
+            <div className="card card-padding glass">
+              <h2 className="text-lg font-semibold text-primary mb-4">Document Preview</h2>
               <div 
                 className="prose prose-gray max-w-none"
                 dangerouslySetInnerHTML={{ __html: generateBusinessCase() }}
               />
             </div>
           ) : (
-            <div className="card p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Case Builder</h2>
+            <div className="card card-padding glass">
+              <h2 className="text-lg font-semibold text-primary mb-4">Business Case Builder</h2>
               
               <div className="space-y-6">
                 {/* Executive Summary */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-3">Executive Summary</h3>
+                  <h3 className="text-md font-medium text-primary mb-3">Executive Summary</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="form-label">Company Name</label>
@@ -727,7 +727,7 @@ const BusinessCaseBuilder = () => {
                         </button>
                       </div>
                       {autoPopulated.size > 0 && (
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-brand mt-1">
                           ✨ {autoPopulated.size} fields auto-populated from your analysis data
                         </p>
                       )}
@@ -749,7 +749,7 @@ const BusinessCaseBuilder = () => {
 
                 {/* Problem Statement */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-3">Problem Statement</h3>
+                  <h3 className="text-md font-medium text-primary mb-3">Problem Statement</h3>
                   <div className="space-y-4">
                     {renderFormField('currentChallenges', 'Current Challenges', 'Describe the current challenges and pain points...', 'text', true)}
                     {renderFormField('businessImpact', 'Business Impact', 'Quantify the business impact of these challenges...', 'text', true)}
@@ -759,7 +759,7 @@ const BusinessCaseBuilder = () => {
 
                 {/* Proposed Solution */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-3">Proposed Solution</h3>
+                  <h3 className="text-md font-medium text-primary mb-3">Proposed Solution</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Solution Overview</label>
@@ -793,7 +793,7 @@ const BusinessCaseBuilder = () => {
 
                 {/* Financial Analysis */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-3">Financial Analysis</h3>
+                  <h3 className="text-md font-medium text-primary mb-3">Financial Analysis</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -842,7 +842,7 @@ const BusinessCaseBuilder = () => {
 
                 {/* Success Metrics */}
                 <div>
-                  <h3 className="text-md font-medium text-gray-900 mb-3">Success Metrics</h3>
+                  <h3 className="text-md font-medium text-primary mb-3">Success Metrics</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Success Metrics</label>

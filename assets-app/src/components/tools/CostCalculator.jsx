@@ -185,8 +185,8 @@ Generated on: ${new Date().toLocaleDateString()}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Cost of Inaction Calculator</h1>
-            <p className="text-gray-600">Calculate the financial impact of delayed action</p>
+            <h1 className="text-2xl font-bold text-primary">Cost of Inaction Calculator</h1>
+            <p className="text-secondary">Calculate the financial impact of delayed action</p>
           </div>
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
@@ -200,7 +200,7 @@ Generated on: ${new Date().toLocaleDateString()}
   if (error && !costData) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Cost of Inaction Calculator</h1>
+        <h1 className="text-2xl font-bold text-primary">Cost of Inaction Calculator</h1>
         <Callout type="error" title="Error Loading Calculator Data">
           {error}
         </Callout>
@@ -212,8 +212,8 @@ Generated on: ${new Date().toLocaleDateString()}
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cost of Inaction Calculator</h1>
-          <p className="text-gray-600">Calculate the financial impact of delayed decisions and missed opportunities</p>
+          <h1 className="text-2xl font-bold text-primary">Cost of Inaction Calculator</h1>
+          <p className="text-secondary">Calculate the financial impact of delayed decisions and missed opportunities</p>
         </div>
         {calculations && (
           <button
@@ -228,17 +228,17 @@ Generated on: ${new Date().toLocaleDateString()}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Left Column: Methodology and Input Form */}
         <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Calculation Methodology</h2>
+          <div className="card card-padding glass">
+            <h2 className="text-lg font-semibold text-primary mb-4">Calculation Methodology</h2>
             {costData ? (
               <ContentDisplay content={costData} />
             ) : (
-              <p className="text-gray-500">No methodology data available</p>
+              <p className="text-muted">No methodology data available</p>
             )}
           </div>
 
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Metrics</h2>
+          <div className="card card-padding glass">
+            <h2 className="text-lg font-semibold text-primary mb-4">Business Metrics</h2>
             <form onSubmit={handleCalculate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -339,8 +339,8 @@ Generated on: ${new Date().toLocaleDateString()}
         <div className="space-y-6">
           {calculations ? (
             <>
-              <div className="card p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Cost Analysis Results</h2>
+              <div className="card card-padding glass">
+                <h2 className="text-lg font-semibold text-primary mb-4">Cost Analysis Results</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   <div className="bg-red-50 rounded-lg p-4 text-center">
@@ -359,7 +359,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-gray-900">Impact Breakdown:</h3>
+                  <h3 className="font-medium text-primary">Impact Breakdown:</h3>
                   {calculations.impactCategories.map((category, index) => (
                     <div key={index} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
@@ -368,7 +368,7 @@ Generated on: ${new Date().toLocaleDateString()}
                           ${category.impact.toLocaleString()}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-secondary">
                         Current: ${category.currentState.toLocaleString()} → 
                         Potential: ${category.withImprovement.toLocaleString()}
                       </div>
@@ -377,8 +377,8 @@ Generated on: ${new Date().toLocaleDateString()}
                 </div>
               </div>
 
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Projection</h3>
+              <div className="card card-padding glass">
+                <h3 className="text-lg font-semibold text-primary mb-4">Revenue Projection</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={calculations.projections}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -404,8 +404,8 @@ Generated on: ${new Date().toLocaleDateString()}
                 </ResponsiveContainer>
               </div>
 
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Revenue Gap</h3>
+              <div className="card card-padding glass">
+                <h3 className="text-lg font-semibold text-primary mb-4">Monthly Revenue Gap</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={calculations.projections}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -418,7 +418,7 @@ Generated on: ${new Date().toLocaleDateString()}
               </div>
             </>
           ) : (
-            <div className="card p-6 text-center text-gray-500">
+            <div className="card card-padding glass text-center text-muted">
               <p>Enter your business metrics and click "Calculate Cost of Inaction" to see results</p>
             </div>
           )}
