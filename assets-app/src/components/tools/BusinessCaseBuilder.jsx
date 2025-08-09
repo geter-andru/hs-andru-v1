@@ -123,15 +123,23 @@ const BusinessCaseBuilder = () => {
         airtableService.getUserProgress(session.customerId, 'cost_calculator')
       ]);
 
+      console.log('🔍 Auto-populate Debug:');
+      console.log('ICP Progress:', icpProgress);
+      console.log('Cost Progress:', costProgress);
+
       const companyName = formData.companyName.trim();
       const newFormData = { ...formData };
       const newAutoPopulated = new Set();
 
+      console.log('Company Name:', companyName);
+
       // Auto-populate from ICP Analysis data
       if (icpProgress?.rating) {
         const { companyName: ratedCompany, rating } = icpProgress.rating;
+        console.log('📊 ICP Data found - Rated Company:', ratedCompany, 'Current Company:', companyName);
         
         if (ratedCompany?.toLowerCase() === companyName.toLowerCase()) {
+          console.log('✅ Company names match - applying ICP data');
           // Problem Statement from ICP criteria
           if (!formData.currentChallenges) {
             newFormData.currentChallenges = `${companyName} faces key challenges in:\n• Scalability: Current processes may not support rapid growth phase\n• Technology readiness: Alignment needed with modern tech stack requirements\n• Market positioning: Optimization needed to maintain competitive advantage`;
@@ -152,11 +160,16 @@ const BusinessCaseBuilder = () => {
               : `Strategic implementation timeline:\n• Planned growth phase alignment\n• Technology roadmap integration\n• Resource optimization opportunity`;
             newAutoPopulated.add('urgencyFactors');
           }
+        } else {
+          console.log('❌ Company names don\'t match - skipping ICP data');
         }
+      } else {
+        console.log('❌ No ICP progress data found');
       }
 
       // Auto-populate from Cost Calculator data
       if (costProgress?.calculations) {
+        console.log('💰 Cost Calculator data found');
         const calc = costProgress.calculations;
         
         // Current State Costs
@@ -190,6 +203,8 @@ const BusinessCaseBuilder = () => {
           newFormData.expectedROI = `${calc.roi}% annual ROI based on cost analysis`;
           newAutoPopulated.add('expectedROI');
         }
+      } else {
+        console.log('❌ No Cost Calculator data found');
       }
 
       // Smart defaults for remaining fields
