@@ -11,7 +11,7 @@ const airtableClient = axios.create({
     'Authorization': `Bearer ${API_KEY}`,
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 30000  // Increased from 10000ms to 30000ms
 });
 
 // Add request interceptor for logging
@@ -36,48 +36,56 @@ export const airtableService = {
   // Fetch customer assets data
   async getCustomerAssets(customerId, accessToken) {
     try {
-      // First try to get by record ID if customerId looks like a record ID
-      if (customerId.startsWith('rec')) {
-        const response = await airtableClient.get(`/Customer Assets/${customerId}`);
-        const record = response.data;
-        
-        // Verify access token matches
-        if (record.fields['Access Token'] !== accessToken) {
-          throw new Error('Invalid customer ID or access token');
-        }
-        
-        return {
-          id: record.id,
-          customerId: record.fields['Customer ID'] || customerId,
-          customerName: record.fields['Customer Name'],
-          accessToken: record.fields['Access Token'],
-          icpContent: this.parseJsonField(record.fields['ICP Content']),
-          costCalculatorContent: this.parseJsonField(record.fields['Cost Calculator Content']),
-          businessCaseContent: this.parseJsonField(record.fields['Business Case Content']),
-          createdAt: record.fields['Created At'],
-          lastAccessed: record.fields['Last Accessed']
-        };
-      }
+      console.log(`Fetching customer assets for: ${customerId} with token: ${accessToken}`);
       
-      // Fallback to formula field query (get all records and filter in code)
+      // Strategy 1: Try filtering by Access Token only (more reliable)
       const response = await airtableClient.get('/Customer Assets', {
         params: {
           filterByFormula: `{Access Token} = '${accessToken}'`,
-          maxRecords: 100
+          maxRecords: 10  // Reduced from 100 to minimize timeout risk
         }
       });
 
-      // Find matching record by Customer ID (since formula fields don't filter reliably)
-      const matchingRecord = response.data.records.find(record => 
-        record.fields['Customer ID'] === customerId && 
-        record.fields['Access Token'] === accessToken
-      );
+      console.log(`Found ${response.data.records.length} records with matching access token`);
+
+      // Find matching record by Customer ID in the filtered results
+      const matchingRecord = response.data.records.find(record => {
+        const recordCustomerId = record.fields['Customer ID'];
+        console.log(`Checking record with Customer ID: ${recordCustomerId}`);
+        return recordCustomerId === customerId;
+      });
 
       if (!matchingRecord) {
+        // Strategy 2: If no match found, try direct record lookup if customerId looks like record ID
+        if (customerId.startsWith('rec')) {
+          console.log('Trying direct record lookup...');
+          const directResponse = await airtableClient.get(`/Customer Assets/${customerId}`);
+          const record = directResponse.data;
+          
+          // Verify access token matches
+          if (record.fields['Access Token'] !== accessToken) {
+            throw new Error('Invalid customer ID or access token');
+          }
+          
+          return {
+            id: record.id,
+            customerId: record.fields['Customer ID'] || customerId,
+            customerName: record.fields['Customer Name'],
+            accessToken: record.fields['Access Token'],
+            icpContent: this.parseJsonField(record.fields['ICP Content']),
+            costCalculatorContent: this.parseJsonField(record.fields['Cost Calculator Content']),
+            businessCaseContent: this.parseJsonField(record.fields['Business Case Content']),
+            createdAt: record.fields['Created At'],
+            lastAccessed: record.fields['Last Accessed']
+          };
+        }
+        
         throw new Error('Invalid customer ID or access token');
       }
 
       const record = matchingRecord;
+      console.log('Successfully found matching customer record');
+      
       return {
         id: record.id,
         customerId: record.fields['Customer ID'],
