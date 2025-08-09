@@ -4,6 +4,10 @@ const BASE_URL = 'https://api.airtable.com/v0';
 const BASE_ID = process.env.REACT_APP_AIRTABLE_BASE_ID;
 const API_KEY = process.env.REACT_APP_AIRTABLE_API_KEY;
 
+// Cache for customer assets to avoid redundant API calls
+let customerAssetsCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Create axios instance with default config
 const airtableClient = axios.create({
   baseURL: `${BASE_URL}/${BASE_ID}`,
@@ -33,9 +37,18 @@ airtableClient.interceptors.response.use(
 );
 
 export const airtableService = {
-  // Fetch customer assets data
+  // Fetch customer assets data with caching
   async getCustomerAssets(customerId, accessToken) {
     try {
+      const cacheKey = `${customerId}_${accessToken}`;
+      
+      // Check cache first
+      const cachedData = customerAssetsCache.get(cacheKey);
+      if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+        console.log(`Using cached customer assets for: ${customerId}`);
+        return cachedData.data;
+      }
+      
       console.log(`Fetching customer assets for: ${customerId} with token: ${accessToken}`);
       
       // Strategy 1: Try filtering by Access Token only (more reliable)
@@ -67,7 +80,7 @@ export const airtableService = {
             throw new Error('Invalid customer ID or access token');
           }
           
-          return {
+          const customerData = {
             id: record.id,
             customerId: record.fields['Customer ID'] || customerId,
             customerName: record.fields['Customer Name'],
@@ -78,6 +91,14 @@ export const airtableService = {
             createdAt: record.fields['Created At'],
             lastAccessed: record.fields['Last Accessed']
           };
+          
+          // Cache the result to avoid redundant API calls
+          customerAssetsCache.set(cacheKey, {
+            data: customerData,
+            timestamp: Date.now()
+          });
+          
+          return customerData;
         }
         
         throw new Error('Invalid customer ID or access token');
@@ -86,7 +107,7 @@ export const airtableService = {
       const record = matchingRecord;
       console.log('Successfully found matching customer record');
       
-      return {
+      const customerData = {
         id: record.id,
         customerId: record.fields['Customer ID'],
         customerName: record.fields['Customer Name'],
@@ -97,6 +118,14 @@ export const airtableService = {
         createdAt: record.fields['Created At'],
         lastAccessed: record.fields['Last Accessed']
       };
+      
+      // Cache the result to avoid redundant API calls
+      customerAssetsCache.set(cacheKey, {
+        data: customerData,
+        timestamp: Date.now()
+      });
+      
+      return customerData;
     } catch (error) {
       console.error('Error fetching customer assets:', error);
       throw error;
