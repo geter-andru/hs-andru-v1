@@ -13,6 +13,12 @@ const Navigation = () => {
   // Build query string to preserve access token
   const queryString = accessToken ? `?token=${accessToken}` : '';
   
+  // If no customerId, don't render navigation
+  if (!customerId) {
+    console.error('Navigation - No customerId available');
+    return null;
+  }
+  
   const navItems = [
     {
       id: 'icp',
@@ -36,6 +42,8 @@ const Navigation = () => {
       description: 'Build pilot-to-contract cases'
     }
   ];
+  
+  console.log('Navigation - Building paths with customerId:', customerId, 'queryString:', queryString);
 
   return (
     <nav className="bg-primary py-6">

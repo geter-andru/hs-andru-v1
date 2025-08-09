@@ -36,6 +36,7 @@ const ContentDisplay = ({ content, className = '' }) => {
   }
   
   console.log('ContentDisplay - Content type:', typeof content, 'Parsed type:', typeof parsedContent);
+  console.log('ContentDisplay - Full content data:', parsedContent);
 
   // Handle JSON objects with structured data
   if (typeof parsedContent === 'object' && parsedContent !== null) {
@@ -52,10 +53,10 @@ const ContentDisplay = ({ content, className = '' }) => {
         )}
 
         {/* Render segments for ICP data */}
-        {parsedContent.segments && Array.isArray(parsedContent.segments) && (
+        {(parsedContent.segments || parsedContent.customerSegments) && Array.isArray(parsedContent.segments || parsedContent.customerSegments) && (
           <div className="space-y-3">
             <h4 className="font-medium text-primary">Customer Segments</h4>
-            {parsedContent.segments.map((segment, index) => (
+            {(parsedContent.segments || parsedContent.customerSegments).map((segment, index) => (
               <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-primary">{segment.name}</span>
@@ -219,6 +220,7 @@ const ContentDisplay = ({ content, className = '' }) => {
         
         {/* Fallback for JSON objects that don't match structured patterns */}
         {!parsedContent.segments && 
+         !parsedContent.customerSegments &&
          !parsedContent.categories && 
          !parsedContent.templates && 
          !parsedContent.keyIndicators && 
