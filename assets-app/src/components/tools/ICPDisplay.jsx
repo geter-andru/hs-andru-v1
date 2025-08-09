@@ -81,12 +81,14 @@ const ICPDisplay = () => {
 
       setRatingResult(mockRating);
       
-      // Save rating to user progress
-      await airtableService.saveUserProgress(
-        session.customerId,
-        'icp_rating',
-        { companyName, rating: mockRating }
-      );
+      // Save rating to user progress (only if session is available)
+      if (session?.customerId) {
+        await airtableService.saveUserProgress(
+          session.customerId,
+          'icp_rating',
+          { companyName, rating: mockRating }
+        );
+      }
 
     } catch (err) {
       console.error('Rating calculation failed:', err);
