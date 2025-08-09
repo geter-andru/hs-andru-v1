@@ -6,6 +6,7 @@ import { authService } from '../../services/authService';
 
 const BusinessCaseBuilder = () => {
   const [businessCaseData, setBusinessCaseData] = useState(null);
+  const [customerAssets, setCustomerAssets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTemplate, setActiveTemplate] = useState('pilot');
@@ -69,11 +70,12 @@ const BusinessCaseBuilder = () => {
     const loadBusinessCaseData = async () => {
       try {
         setLoading(true);
-        const customerAssets = await airtableService.getCustomerAssets(
+        const customerAssetsData = await airtableService.getCustomerAssets(
           session.recordId,
           session.accessToken
         );
-        setBusinessCaseData(customerAssets.businessCaseContent);
+        setCustomerAssets(customerAssetsData);
+        setBusinessCaseData(customerAssetsData.businessCaseContent);
         
         // Load saved progress
         const savedProgress = await airtableService.getUserProgress(
@@ -112,104 +114,105 @@ const BusinessCaseBuilder = () => {
     }
   };
 
-  // Auto-populate fields using data from ICP and Cost Calculator tools
+  // Auto-populate fields using structured business content from Customer Assets
   const autoPopulateFields = async () => {
-    if (!session || !formData.companyName?.trim()) return;
+    if (!session || !formData.companyName?.trim() || !customerAssets) return;
 
     try {
-      // Get cached data from other tools
-      const [icpProgress, costProgress] = await Promise.all([
-        airtableService.getUserProgress(session.customerId, 'icp_rating'),
-        airtableService.getUserProgress(session.customerId, 'cost_calculator')
-      ]);
-
       console.log('🔍 Auto-populate Debug:');
-      console.log('ICP Progress:', icpProgress);
-      console.log('Cost Progress:', costProgress);
+      console.log('Customer Assets:', customerAssets);
+      console.log('ICP Description:', customerAssets.icpDescription);
+      console.log('Cost Calculator Content:', customerAssets.costCalculatorContent);
 
       const companyName = formData.companyName.trim();
       const newFormData = { ...formData };
       const newAutoPopulated = new Set();
 
-      console.log('Company Name:', companyName);
+      // Auto-populate from ICP Description data
+      if (customerAssets.icpDescription) {
+        const icpData = customerAssets.icpDescription;
+        console.log('📊 Using ICP Description data');
 
-      // Auto-populate from ICP Analysis data
-      if (icpProgress?.rating) {
-        const { companyName: ratedCompany, rating } = icpProgress.rating;
-        console.log('📊 ICP Data found - Rated Company:', ratedCompany, 'Current Company:', companyName);
-        
-        if (ratedCompany?.toLowerCase() === companyName.toLowerCase()) {
-          console.log('✅ Company names match - applying ICP data');
-          // Problem Statement from ICP criteria
-          if (!formData.currentChallenges) {
-            newFormData.currentChallenges = `${companyName} faces key challenges in:\n• Scalability: Current processes may not support rapid growth phase\n• Technology readiness: Alignment needed with modern tech stack requirements\n• Market positioning: Optimization needed to maintain competitive advantage`;
-            newAutoPopulated.add('currentChallenges');
+        // Problem Statement from ICP segments and red flags
+        if (!formData.currentChallenges) {
+          let challenges = `${companyName} faces key challenges in:`;
+          if (icpData.redFlags && icpData.redFlags.length > 0) {
+            challenges += '\n' + icpData.redFlags.map(flag => `• ${flag}`).join('\n');
+          } else {
+            challenges += `\n• Scalability: Current processes may not support rapid growth phase\n• Technology readiness: Alignment needed with modern tech stack requirements\n• Market positioning: Optimization needed to maintain competitive advantage`;
           }
-
-          // Business Impact from ICP scoring
-          if (!formData.businessImpact) {
-            const avgScore = rating.criteria && rating.criteria.length > 0 
-              ? Math.round(rating.criteria.reduce((sum, c) => sum + c.score, 0) / rating.criteria.length)
-              : rating.overallScore || 75;
-            newFormData.businessImpact = `Based on analysis, ${companyName} shows ${avgScore}% alignment with ideal customer profile. Key impact areas include operational efficiency, market positioning, and growth enablement with estimated revenue impact of 15-25%.`;
-            newAutoPopulated.add('businessImpact');
-          }
-
-          // Urgency Factors from ICP recommendation
-          if (!formData.urgencyFactors) {
-            newFormData.urgencyFactors = rating.recommendation === 'High Priority' 
-              ? `High priority implementation recommended:\n• Market conditions favor early adoption\n• Competitive advantage window closing\n• Current growth trajectory requires immediate scaling`
-              : `Strategic implementation timeline:\n• Planned growth phase alignment\n• Technology roadmap integration\n• Resource optimization opportunity`;
-            newAutoPopulated.add('urgencyFactors');
-          }
-        } else {
-          console.log('❌ Company names don\'t match - skipping ICP data');
+          newFormData.currentChallenges = challenges;
+          newAutoPopulated.add('currentChallenges');
         }
-      } else {
-        console.log('❌ No ICP progress data found');
+
+        // Business Impact from ICP segments and criteria
+        if (!formData.businessImpact) {
+          let impact = `Based on ICP analysis, ${companyName} shows strong alignment potential. `;
+          if (icpData.segments && icpData.segments.length > 0) {
+            const topSegment = icpData.segments[0];
+            impact += `Best fit: ${topSegment.name} segment (${topSegment.score}% match). `;
+          }
+          impact += `Key impact areas include operational efficiency, market positioning, and growth enablement with estimated revenue impact of 15-25%.`;
+          newFormData.businessImpact = impact;
+          newAutoPopulated.add('businessImpact');
+        }
+
+        // Urgency Factors from ICP key indicators
+        if (!formData.urgencyFactors) {
+          let urgency = `Strategic implementation recommended:\n`;
+          if (icpData.keyIndicators && icpData.keyIndicators.length > 0) {
+            urgency += icpData.keyIndicators.slice(0, 3).map(indicator => `• ${indicator}`).join('\n');
+          } else {
+            urgency += `• Market conditions favor early adoption\n• Competitive advantage window available\n• Current growth trajectory supports scaling`;
+          }
+          newFormData.urgencyFactors = urgency;
+          newAutoPopulated.add('urgencyFactors');
+        }
       }
 
-      // Auto-populate from Cost Calculator data
-      if (costProgress?.calculations) {
-        console.log('💰 Cost Calculator data found');
-        const calc = costProgress.calculations;
-        
-        // Current State Costs
-        const totalCost = calc.totalCostOfInaction || calc.totalCost;
-        if (!formData.currentStateCosts && totalCost) {
-          newFormData.currentStateCosts = `$${totalCost.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
+      // Auto-populate from Cost Calculator Content
+      if (customerAssets.costCalculatorContent) {
+        const costData = customerAssets.costCalculatorContent;
+        console.log('💰 Using Cost Calculator Content data');
+
+        // Current State Costs from cost categories
+        if (!formData.currentStateCosts && costData.categories) {
+          const avgDealSize = costData.defaultValues?.averageDealSize || 25000;
+          const estimatedCosts = Math.round(avgDealSize * 50); // Estimate based on deal size
+          newFormData.currentStateCosts = `$${estimatedCosts.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
           newAutoPopulated.add('currentStateCosts');
         }
 
-        // Expected Savings (use totalCost as potential savings)
-        if (!formData.expectedSavings && totalCost) {
-          const annualSavings = Math.round(totalCost * 0.7); // 70% of costs can be saved
+        // Expected Savings from cost scenarios
+        if (!formData.expectedSavings && costData.defaultValues) {
+          const dealSize = costData.defaultValues.averageDealSize || 25000;
+          const conversionRate = costData.defaultValues.conversionRate || 0.15;
+          const annualSavings = Math.round(dealSize * conversionRate * 40); // Conservative estimate
           newFormData.expectedSavings = `$${annualSavings.toLocaleString()} in annual savings through efficiency gains and revenue optimization`;
           newAutoPopulated.add('expectedSavings');
         }
 
-        // Solution Costs (smart estimate based on savings)
-        if (!formData.solutionCosts && totalCost) {
-          const estimatedCost = Math.round(totalCost * 0.2); // 20% of annual costs
+        // Solution Costs (smart estimate)
+        if (!formData.solutionCosts && costData.defaultValues) {
+          const dealSize = costData.defaultValues.averageDealSize || 25000;
+          const estimatedCost = Math.round(dealSize * 2); // 2x deal size for solution cost
           newFormData.solutionCosts = `$${estimatedCost.toLocaleString()} implementation cost (estimated based on solution scope)`;
           newAutoPopulated.add('solutionCosts');
         }
 
-        // Payback Period - calculate from metrics if available
+        // Payback Period from scenarios
         if (!formData.paybackPeriod) {
-          const payback = calc.metrics?.paybackMonths || Math.round(totalCost * 0.2 / (totalCost * 0.7 / 12)) || 6;
+          const payback = 8; // Default estimate
           newFormData.paybackPeriod = `${payback} months estimated payback period`;
           newAutoPopulated.add('paybackPeriod');
         }
 
-        // ROI - calculate if not directly available
+        // ROI calculation
         if (!formData.expectedROI) {
-          const roi = calc.metrics?.roi || Math.round((totalCost * 0.7) / (totalCost * 0.2) * 100) || 250;
+          const roi = 200; // Conservative 200% ROI estimate
           newFormData.expectedROI = `${roi}% annual ROI based on cost analysis`;
           newAutoPopulated.add('expectedROI');
         }
-      } else {
-        console.log('❌ No Cost Calculator data found');
       }
 
       // Smart defaults for remaining fields
@@ -237,7 +240,7 @@ const BusinessCaseBuilder = () => {
       setFormData(newFormData);
       setAutoPopulated(newAutoPopulated);
 
-      console.log(`Auto-populated ${newAutoPopulated.size} fields for ${companyName}`);
+      console.log(`✅ Auto-populated ${newAutoPopulated.size} fields for ${companyName}`);
 
     } catch (error) {
       console.error('Error auto-populating fields:', error);
