@@ -27,7 +27,7 @@ const CostCalculator = () => {
       try {
         setLoading(true);
         const customerAssets = await airtableService.getCustomerAssets(
-          session.customerId,
+          session.recordId,
           new URLSearchParams(window.location.search).get('token')
         );
         setCostData(customerAssets.costCalculatorContent);
