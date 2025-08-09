@@ -70,7 +70,7 @@ const BusinessCaseBuilder = () => {
         setLoading(true);
         const customerAssets = await airtableService.getCustomerAssets(
           session.recordId,
-          new URLSearchParams(window.location.search).get('token')
+          session.accessToken
         );
         setBusinessCaseData(customerAssets.businessCaseContent);
         

@@ -37,11 +37,12 @@ export const authService = {
   },
 
   // Generate secure session
-  generateSession(customerData) {
+  generateSession(customerData, accessToken) {
     const sessionData = {
       customerId: customerData.customerId,
       customerName: customerData.customerName,
       recordId: customerData.id,
+      accessToken: accessToken,
       timestamp: Date.now(),
       expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
     };

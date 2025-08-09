@@ -20,7 +20,7 @@ const ICPDisplay = () => {
         setLoading(true);
         const customerAssets = await airtableService.getCustomerAssets(
           session.recordId,
-          new URLSearchParams(window.location.search).get('token')
+          session.accessToken
         );
         setIcpData(customerAssets.icpContent);
         setError(null);

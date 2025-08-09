@@ -43,7 +43,7 @@ const Layout = () => {
         }
 
         // Generate session and update last accessed
-        const session = authService.generateSession(validation.customerData);
+        const session = authService.generateSession(validation.customerData, accessToken);
         await airtableService.updateLastAccessed(validation.customerData.id);
         
         setCustomerData(session);
