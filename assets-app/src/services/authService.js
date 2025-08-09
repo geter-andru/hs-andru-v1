@@ -45,7 +45,8 @@ export const authService = {
       recordId: customerData.id,
       accessToken: accessToken,
       timestamp: Date.now(),
-      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+      version: 2 // Added to force session regeneration when structure changes
     };
 
     console.log('AuthService - Session data created:', sessionData);
@@ -61,6 +62,13 @@ export const authService = {
       if (!sessionData) return null;
 
       const session = JSON.parse(sessionData);
+      
+      // Check if session has the required version (force regeneration for old sessions)
+      if (!session.version || session.version < 2) {
+        console.log('AuthService - Clearing old session version:', session.version);
+        this.clearSession();
+        return null;
+      }
       
       // Check if session is expired
       if (Date.now() > session.expiresAt) {
