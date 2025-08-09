@@ -90,22 +90,22 @@ const Layout = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-6 text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="min-h-screen flex items-center justify-center bg-primary">
+        <div className="max-w-md w-full card card-padding text-center animate-fade-in">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-danger/10 mb-6 shadow-elegant">
+            <svg className="h-8 w-8 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-2xl font-semibold text-primary mb-3">
             Authentication Error
           </h3>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-base text-secondary mb-6 leading-relaxed">
             {error}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="btn btn-primary"
+            className="btn btn-primary hover-lift"
           >
             Try Again
           </button>
@@ -116,12 +116,12 @@ const Layout = () => {
 
   if (!customerData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-6 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-primary">
+        <div className="max-w-md w-full card card-padding text-center animate-fade-in">
+          <h3 className="text-2xl font-semibold text-primary mb-3">
             Access Required
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-base text-secondary leading-relaxed">
             Please access this application through your personalized link.
           </p>
         </div>
@@ -130,11 +130,11 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-primary">
       <Header />
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         <Outlet />
       </main>
     </div>
