@@ -38,6 +38,7 @@ export const authService = {
 
   // Generate secure session
   generateSession(customerData, accessToken) {
+    console.log('AuthService - generateSession called with:', { customerData, accessToken });
     const sessionData = {
       customerId: customerData.customerId,
       customerName: customerData.customerName,
@@ -47,6 +48,7 @@ export const authService = {
       expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
     };
 
+    console.log('AuthService - Session data created:', sessionData);
     // Store in sessionStorage (more secure than localStorage for tokens)
     sessionStorage.setItem('customerSession', JSON.stringify(sessionData));
     return sessionData;

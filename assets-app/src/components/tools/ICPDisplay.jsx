@@ -18,6 +18,10 @@ const ICPDisplay = () => {
     const loadICPData = async () => {
       try {
         setLoading(true);
+        console.log('ICP Tool - Session object:', session);
+        console.log('ICP Tool - Record ID:', session?.recordId);
+        console.log('ICP Tool - Access Token:', session?.accessToken);
+        
         const customerAssets = await airtableService.getCustomerAssets(
           session.recordId,
           session.accessToken

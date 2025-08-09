@@ -26,6 +26,7 @@ const Layout = () => {
 
         // Extract credentials from URL
         const { customerId, accessToken } = authService.extractCredentials(location);
+        console.log('Layout - Extracted credentials:', { customerId, accessToken });
         
         if (!customerId || !accessToken) {
           setError('Missing customer ID or access token in URL');
@@ -43,7 +44,9 @@ const Layout = () => {
         }
 
         // Generate session and update last accessed
+        console.log('Layout - Generating session with token:', accessToken);
         const session = authService.generateSession(validation.customerData, accessToken);
+        console.log('Layout - Generated session:', session);
         await airtableService.updateLastAccessed(validation.customerData.id);
         
         setCustomerData(session);
