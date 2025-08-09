@@ -16,40 +16,234 @@ const ContentDisplay = ({ content, className = '' }) => {
 
   if (!content) {
     return (
-      <div className={`bg-gray-50 rounded-lg p-6 text-center ${className}`}>
-        <p className="text-gray-500">No content available</p>
+      <div className={`bg-surface/30 rounded-lg p-6 text-center ${className}`}>
+        <p className="text-muted">No content available</p>
+      </div>
+    );
+  }
+
+  // Parse JSON string content if needed
+  let parsedContent = content;
+  if (typeof content === 'string' && (content.startsWith('{') || content.startsWith('['))) {
+    try {
+      parsedContent = JSON.parse(content);
+    } catch (e) {
+      // If parsing fails, treat as plain text/HTML
+      parsedContent = content;
+    }
+  }
+
+  // Handle JSON objects with structured data
+  if (typeof parsedContent === 'object' && parsedContent !== null) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        {/* Title if available */}
+        {parsedContent.title && (
+          <h3 className="text-lg font-semibold text-primary">{parsedContent.title}</h3>
+        )}
+        
+        {/* Description if available */}
+        {parsedContent.description && (
+          <p className="text-secondary">{parsedContent.description}</p>
+        )}
+
+        {/* Render segments for ICP data */}
+        {parsedContent.segments && Array.isArray(parsedContent.segments) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Customer Segments</h4>
+            {parsedContent.segments.map((segment, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-primary">{segment.name}</span>
+                  <span className="text-brand font-semibold">{segment.score}% fit</span>
+                </div>
+                {segment.criteria && (
+                  <ul className="text-sm text-secondary space-y-1">
+                    {segment.criteria.map((criterion, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="text-brand mr-2">•</span>
+                        {criterion}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Render categories for Cost Calculator data */}
+        {parsedContent.categories && Array.isArray(parsedContent.categories) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Cost Categories</h4>
+            {parsedContent.categories.map((category, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <h5 className="font-medium text-primary mb-2">{category.name}</h5>
+                <p className="text-sm text-secondary mb-2">{category.description}</p>
+                {category.formula && (
+                  <code className="text-xs bg-surface/30 px-2 py-1 rounded text-brand">
+                    {category.formula}
+                  </code>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Render templates for Business Case data */}
+        {parsedContent.templates && Array.isArray(parsedContent.templates) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Templates</h4>
+            {parsedContent.templates.map((template, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-primary">{template.name}</span>
+                  <span className="text-sm text-secondary">{template.duration}</span>
+                </div>
+                <p className="text-sm text-secondary mb-2">{template.investment}</p>
+                {template.sections && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted">Sections:</p>
+                    <ul className="text-xs text-secondary space-y-1">
+                      {template.sections.map((section, idx) => (
+                        <li key={idx} className="flex items-start">
+                          <span className="text-brand mr-2">•</span>
+                          {section}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {template.keyPoints && (
+                  <div className="mt-3 space-y-1">
+                    <p className="text-xs font-medium text-muted">Key Points:</p>
+                    <ul className="text-xs text-secondary space-y-1">
+                      {template.keyPoints.map((point, idx) => (
+                        <li key={idx} className="flex items-start">
+                          <span className="text-brand mr-2">•</span>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Render key indicators for ICP data */}
+        {parsedContent.keyIndicators && Array.isArray(parsedContent.keyIndicators) && (
+          <div className="space-y-2">
+            <h4 className="font-medium text-primary">Key Indicators</h4>
+            <ul className="space-y-1">
+              {parsedContent.keyIndicators.map((indicator, index) => (
+                <li key={index} className="flex items-start text-sm text-secondary">
+                  <span className="text-brand mr-2">•</span>
+                  {indicator}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Render rating criteria for ICP data */}
+        {parsedContent.ratingCriteria && Array.isArray(parsedContent.ratingCriteria) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Rating Criteria</h4>
+            {parsedContent.ratingCriteria.map((criteria, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-3 border border-glass-border">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-primary">{criteria.name}</span>
+                  <span className="text-sm text-brand">{criteria.weight}% weight</span>
+                </div>
+                <p className="text-sm text-secondary">{criteria.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Render frameworks for Business Case data */}
+        {parsedContent.frameworks && Array.isArray(parsedContent.frameworks) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Frameworks</h4>
+            {parsedContent.frameworks.map((framework, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <h5 className="font-medium text-primary mb-2">{framework.name}</h5>
+                {framework.formula && (
+                  <code className="text-xs bg-surface/30 px-2 py-1 rounded text-brand block mb-2">
+                    {framework.formula}
+                  </code>
+                )}
+                {framework.components && (
+                  <ul className="text-sm text-secondary space-y-1">
+                    {framework.components.map((component, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="text-brand mr-2">•</span>
+                        {component}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {framework.benchmark && (
+                  <p className="text-xs text-muted mt-2">Benchmark: {framework.benchmark}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Render success metrics for Business Case data */}
+        {parsedContent.successMetrics && Array.isArray(parsedContent.successMetrics) && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Success Metrics</h4>
+            {parsedContent.successMetrics.map((metric, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-3 border border-glass-border">
+                <h5 className="font-medium text-primary mb-2">{metric.category}</h5>
+                <ul className="text-sm text-secondary space-y-1">
+                  {metric.metrics.map((m, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="text-brand mr-2">•</span>
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   // If content has sections, render expandable sections
-  if (content.sections && typeof content.sections === 'object') {
+  if (parsedContent.sections && typeof parsedContent.sections === 'object') {
     return (
       <div className={`space-y-4 ${className}`}>
         {/* Main content if available */}
-        {content.html && (
+        {parsedContent.html && (
           <div 
-            className="prose prose-gray max-w-none"
-            dangerouslySetInnerHTML={{ __html: content.html }}
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: parsedContent.html }}
           />
         )}
 
         {/* Expandable sections */}
         <div className="space-y-3">
-          {Object.entries(content.sections).map(([sectionId, sectionContent]) => {
+          {Object.entries(parsedContent.sections).map(([sectionId, sectionContent]) => {
             const isExpanded = expandedSections.has(sectionId);
             
             return (
-              <div key={sectionId} className="border border-gray-200 rounded-lg">
+              <div key={sectionId} className="border border-glass-border rounded-lg bg-surface/30">
                 <button
                   onClick={() => toggleSection(sectionId)}
-                  className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg"
+                  className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-surface/50 transition-colors rounded-lg"
                 >
-                  <span className="font-medium text-gray-900 capitalize">
+                  <span className="font-medium text-primary capitalize">
                     {sectionId.replace(/[_-]/g, ' ')}
                   </span>
                   <svg
-                    className={`w-5 h-5 text-gray-500 transform transition-transform ${
+                    className={`w-5 h-5 text-muted transform transition-transform ${
                       isExpanded ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -63,7 +257,7 @@ const ContentDisplay = ({ content, className = '' }) => {
                 {isExpanded && (
                   <div className="px-4 pb-4">
                     <div 
-                      className="prose prose-gray max-w-none prose-sm"
+                      className="prose max-w-none prose-sm"
                       dangerouslySetInnerHTML={{ __html: sectionContent }}
                     />
                   </div>
@@ -79,8 +273,8 @@ const ContentDisplay = ({ content, className = '' }) => {
   // Simple HTML content display
   return (
     <div 
-      className={`prose prose-gray max-w-none ${className}`}
-      dangerouslySetInnerHTML={{ __html: content.html || content }}
+      className={`prose max-w-none ${className}`}
+      dangerouslySetInnerHTML={{ __html: parsedContent.html || parsedContent }}
     />
   );
 };
@@ -134,17 +328,17 @@ export const DefinitionList = ({ items, className = '' }) => {
 // Component for highlighting important callouts or tips
 export const Callout = ({ type = 'info', title, children, className = '' }) => {
   const typeStyles = {
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    success: 'bg-green-50 border-green-200 text-green-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    error: 'bg-red-50 border-red-200 text-red-800'
+    info: 'bg-brand/10 border-brand/20 text-primary',
+    success: 'bg-success/10 border-success/20 text-primary',
+    warning: 'bg-warning/10 border-warning/20 text-primary',
+    error: 'bg-danger/10 border-danger/20 text-primary'
   };
 
   const iconStyles = {
-    info: 'text-blue-400',
-    success: 'text-green-400', 
-    warning: 'text-yellow-400',
-    error: 'text-red-400'
+    info: 'text-brand',
+    success: 'text-success', 
+    warning: 'text-warning',
+    error: 'text-danger'
   };
 
   const icons = {
