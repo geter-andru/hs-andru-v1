@@ -26,6 +26,8 @@ const ICPDisplay = () => {
           session.recordId,
           session.accessToken
         );
+        console.log('ICP Tool - Customer Assets:', customerAssets);
+        console.log('ICP Tool - ICP Content:', customerAssets.icpContent);
         setIcpData(customerAssets.icpContent);
         setError(null);
       } catch (err) {
