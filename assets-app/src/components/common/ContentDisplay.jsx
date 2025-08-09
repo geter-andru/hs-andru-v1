@@ -27,16 +27,11 @@ const ContentDisplay = ({ content, className = '' }) => {
   if (typeof content === 'string' && (content.startsWith('{') || content.startsWith('['))) {
     try {
       parsedContent = JSON.parse(content);
-      console.log('ContentDisplay - Parsed JSON content:', parsedContent);
     } catch (e) {
-      console.log('ContentDisplay - JSON parsing failed, treating as text:', content);
       // If parsing fails, treat as plain text/HTML
       parsedContent = content;
     }
   }
-  
-  console.log('ContentDisplay - Content type:', typeof content, 'Parsed type:', typeof parsedContent);
-  console.log('ContentDisplay - Full content data:', parsedContent);
 
   // Handle JSON objects with structured data
   if (typeof parsedContent === 'object' && parsedContent !== null) {
@@ -226,12 +221,110 @@ const ContentDisplay = ({ content, className = '' }) => {
          !parsedContent.keyIndicators && 
          !parsedContent.ratingCriteria && 
          !parsedContent.frameworks && 
-         !parsedContent.successMetrics && (
+         !parsedContent.successMetrics && 
+         !parsedContent.content &&
+         !parsedContent.interactive && (
           <div className="bg-surface/30 rounded-lg p-4 border border-glass-border">
             <p className="text-sm text-secondary mb-2">Raw data structure:</p>
             <pre className="text-xs text-muted bg-surface/50 p-3 rounded overflow-x-auto">
               {JSON.stringify(parsedContent, null, 2)}
             </pre>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Handle the specific ICP data structure with content.html and content.sections
+  if (parsedContent.content && typeof parsedContent.content === 'object') {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        {/* Main HTML content */}
+        {parsedContent.content.html && (
+          <div 
+            className="prose max-w-none [&>div]:!bg-brand/10 [&>div]:!border-brand/20 [&_h2]:!text-primary [&_p]:!text-secondary [&_ul]:!text-secondary [&_.bg-white]:!bg-surface/50 [&_.bg-gray-50]:!bg-surface/30 [&_.text-blue-800]:!text-primary [&_.text-blue-700]:!text-brand [&_.text-gray-700]:!text-secondary [&_.text-gray-600]:!text-muted [&_.text-gray-800]:!text-primary [&_.bg-blue-50]:!bg-brand/5 [&_.border-blue-200]:!border-brand/20 [&_.bg-red-50]:!bg-danger/10 [&_.border-red-200]:!border-danger/20 [&_.text-red-500]:!text-danger"
+            dangerouslySetInnerHTML={{ __html: parsedContent.content.html }}
+          />
+        )}
+
+        {/* Expandable sections */}
+        {parsedContent.content.sections && (
+          <div className="space-y-3">
+            {Object.entries(parsedContent.content.sections).map(([sectionId, sectionContent]) => {
+              const isExpanded = expandedSections.has(sectionId);
+              
+              return (
+                <div key={sectionId} className="border border-glass-border rounded-lg bg-surface/30">
+                  <button
+                    onClick={() => toggleSection(sectionId)}
+                    className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-surface/50 transition-colors rounded-lg"
+                  >
+                    <span className="font-medium text-primary capitalize">
+                      {sectionId.replace(/[_-]/g, ' ')}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-muted transform transition-transform ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="px-4 pb-4">
+                      <div 
+                        className="prose max-w-none prose-sm [&_.bg-gray-50]:!bg-surface/30 [&_.text-gray-700]:!text-primary [&_.text-gray-600]:!text-secondary [&_.text-gray-800]:!text-primary [&_.bg-red-50]:!bg-danger/10 [&_.border-red-200]:!border-danger/20 [&_.text-red-500]:!text-danger [&_.w-2]:!bg-brand"
+                        dangerouslySetInnerHTML={{ __html: sectionContent }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Interactive scoring criteria */}
+        {parsedContent.interactive && parsedContent.interactive.scoring_criteria && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Scoring Criteria</h4>
+            {parsedContent.interactive.scoring_criteria.map((criteria, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-primary">{criteria.category}</span>
+                  <span className="text-sm text-brand">{criteria.weight}% weight</span>
+                </div>
+                <p className="text-sm text-secondary mb-2">{criteria.description}</p>
+                <div className="text-xs text-muted">Max Score: {criteria.max_score}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Interactive rating questions */}
+        {parsedContent.interactive && parsedContent.interactive.rating_questions && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-primary">Assessment Questions</h4>
+            {parsedContent.interactive.rating_questions.map((question, index) => (
+              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+                <div className="mb-3">
+                  <span className="text-sm text-brand font-medium">{question.category}</span>
+                  <h5 className="font-medium text-primary">{question.question}</h5>
+                </div>
+                <div className="space-y-2">
+                  {question.options.map((option, optionIndex) => (
+                    <div key={optionIndex} className="flex items-center justify-between bg-surface/30 rounded p-2">
+                      <span className="text-sm text-secondary">{option.text}</span>
+                      <span className="text-xs text-brand font-medium">{option.score} pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
