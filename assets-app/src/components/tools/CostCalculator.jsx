@@ -7,9 +7,11 @@ import { authService } from '../../services/authService';
 
 const CostCalculator = () => {
   const [costData, setCostData] = useState(null);
+  const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [calculations, setCalculations] = useState(null);
+  const [autoPopulated, setAutoPopulated] = useState(new Set());
   const [formData, setFormData] = useState({
     currentRevenue: '',
     targetGrowthRate: '20',
@@ -31,6 +33,7 @@ const CostCalculator = () => {
           session.accessToken
         );
         setCostData(customerAssets.costCalculatorContent);
+        setIcpData(customerAssets.icpDescription || customerAssets.icpContent);
         setError(null);
       } catch (err) {
         console.error('Failed to load cost calculator data:', err);
@@ -44,6 +47,239 @@ const CostCalculator = () => {
       loadCostData();
     }
   }, [session]);
+
+  // Auto-populate fields using ICP Analysis data
+  const autoPopulateFromICP = () => {
+    if (!icpData) return;
+
+    try {
+      console.log('🎯 ICP Auto-populate Debug:', icpData);
+      
+      const newFormData = { ...formData };
+      const newAutoPopulated = new Set();
+
+      // Current Annual Revenue - from ICP demographics and segments
+      if (!formData.currentRevenue && icpData.segments) {
+        const primarySegment = icpData.segments[0];
+        if (primarySegment?.criteria) {
+          // Extract revenue patterns from criteria
+          const revenueCriteria = primarySegment.criteria.find(c => 
+            c.includes('revenue') || c.includes('$') || c.includes('ARR') || c.includes('MRR')
+          );
+          if (revenueCriteria) {
+            // Extract numbers and estimate revenue
+            const numbers = revenueCriteria.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)\s*([MK]?)/gi);
+            if (numbers && numbers.length > 0) {
+              let revenue = parseFloat(numbers[0].replace(/[$,]/g, ''));
+              if (numbers[0].includes('M')) revenue *= 1000000;
+              if (numbers[0].includes('K')) revenue *= 1000;
+              newFormData.currentRevenue = Math.round(revenue).toString();
+              newAutoPopulated.add('currentRevenue');
+            }
+          } else {
+            // Default based on segment characteristics
+            const segmentName = primarySegment.name.toLowerCase();
+            if (segmentName.includes('enterprise')) {
+              newFormData.currentRevenue = '50000000'; // $50M
+            } else if (segmentName.includes('mid-market')) {
+              newFormData.currentRevenue = '10000000'; // $10M
+            } else if (segmentName.includes('smb') || segmentName.includes('small')) {
+              newFormData.currentRevenue = '2000000'; // $2M
+            } else {
+              newFormData.currentRevenue = '5000000'; // $5M default
+            }
+            newAutoPopulated.add('currentRevenue');
+          }
+        }
+      }
+
+      // Target Growth Rate - from business characteristics and growth stage
+      if (!formData.targetGrowthRate || formData.targetGrowthRate === '20') {
+        if (icpData.keyIndicators) {
+          const growthIndicators = icpData.keyIndicators.filter(indicator => 
+            indicator.toLowerCase().includes('growth') || 
+            indicator.toLowerCase().includes('scaling') ||
+            indicator.toLowerCase().includes('expansion')
+          );
+          if (growthIndicators.length > 0) {
+            // High growth companies
+            newFormData.targetGrowthRate = '35';
+          } else {
+            // Stable growth
+            newFormData.targetGrowthRate = '25';
+          }
+        } else {
+          // Default based on segment
+          const primarySegment = icpData.segments?.[0];
+          if (primarySegment?.name.toLowerCase().includes('enterprise')) {
+            newFormData.targetGrowthRate = '15'; // Slower but steady
+          } else {
+            newFormData.targetGrowthRate = '30'; // Faster growth expected
+          }
+        }
+        newAutoPopulated.add('targetGrowthRate');
+      }
+
+      // Average Deal Size - from segment characteristics and budget patterns
+      if (!formData.averageDealSize) {
+        const revenue = parseFloat(newFormData.currentRevenue || formData.currentRevenue || 0);
+        if (revenue > 0) {
+          // Estimate deal size as percentage of revenue
+          const primarySegment = icpData.segments?.[0];
+          if (primarySegment?.name.toLowerCase().includes('enterprise')) {
+            newFormData.averageDealSize = Math.round(revenue * 0.02).toString(); // 2% of revenue
+          } else if (primarySegment?.name.toLowerCase().includes('mid-market')) {
+            newFormData.averageDealSize = Math.round(revenue * 0.015).toString(); // 1.5% of revenue
+          } else {
+            newFormData.averageDealSize = Math.round(revenue * 0.01).toString(); // 1% of revenue
+          }
+          newAutoPopulated.add('averageDealSize');
+        }
+      }
+
+      // Sales Cycle Length - from decision-making complexity
+      if (!formData.salesCycleLength || formData.salesCycleLength === '90') {
+        if (icpData.ratingCriteria) {
+          // Look for complexity indicators
+          const complexityFactors = icpData.ratingCriteria.filter(criteria =>
+            criteria.description?.toLowerCase().includes('complex') ||
+            criteria.description?.toLowerCase().includes('committee') ||
+            criteria.description?.toLowerCase().includes('approval')
+          );
+          
+          if (complexityFactors.length > 0) {
+            newFormData.salesCycleLength = '120'; // 4 months for complex sales
+          } else {
+            newFormData.salesCycleLength = '75'; // 2.5 months for simpler sales
+          }
+        } else {
+          const primarySegment = icpData.segments?.[0];
+          if (primarySegment?.name.toLowerCase().includes('enterprise')) {
+            newFormData.salesCycleLength = '150'; // 5 months for enterprise
+          } else {
+            newFormData.salesCycleLength = '60'; // 2 months for smaller companies
+          }
+        }
+        newAutoPopulated.add('salesCycleLength');
+      }
+
+      // Conversion Rate - from fit score and strategic alignment
+      if (!formData.conversionRate || formData.conversionRate === '15') {
+        if (icpData.segments?.[0]?.score) {
+          const fitScore = icpData.segments[0].score;
+          if (fitScore >= 90) {
+            newFormData.conversionRate = '25'; // High fit = high conversion
+          } else if (fitScore >= 80) {
+            newFormData.conversionRate = '20';
+          } else {
+            newFormData.conversionRate = '12';
+          }
+        } else {
+          newFormData.conversionRate = '18'; // Slight improvement from default
+        }
+        newAutoPopulated.add('conversionRate');
+      }
+
+      // Churn Rate - from retention likelihood factors
+      if (!formData.churnRate || formData.churnRate === '5') {
+        if (icpData.segments?.[0]?.score) {
+          const fitScore = icpData.segments[0].score;
+          if (fitScore >= 90) {
+            newFormData.churnRate = '3'; // High fit = low churn
+          } else if (fitScore >= 80) {
+            newFormData.churnRate = '5';
+          } else {
+            newFormData.churnRate = '8';
+          }
+        } else {
+          newFormData.churnRate = '4'; // Slightly better retention
+        }
+        newAutoPopulated.add('churnRate');
+      }
+
+      // Analysis Timeframe - from urgency factors
+      if (!formData.timeframe || formData.timeframe === '12') {
+        if (icpData.keyIndicators) {
+          const urgencyIndicators = icpData.keyIndicators.filter(indicator =>
+            indicator.toLowerCase().includes('urgent') ||
+            indicator.toLowerCase().includes('immediate') ||
+            indicator.toLowerCase().includes('competitive')
+          );
+          if (urgencyIndicators.length > 0) {
+            newFormData.timeframe = '6'; // Urgent situations = shorter analysis
+          } else {
+            newFormData.timeframe = '18'; // Standard planning horizon
+          }
+        } else {
+          newFormData.timeframe = '12'; // Keep default
+        }
+        newAutoPopulated.add('timeframe');
+      }
+
+      setFormData(newFormData);
+      setAutoPopulated(newAutoPopulated);
+      
+      console.log(`✅ Auto-populated ${newAutoPopulated.size} fields from ICP analysis`);
+
+    } catch (error) {
+      console.error('Error auto-populating from ICP:', error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Remove from auto-populated set if user manually edits
+    if (autoPopulated.has(field)) {
+      setAutoPopulated(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(field);
+        return newSet;
+      });
+    }
+  };
+
+  // Helper function to render form fields with auto-population indicators
+  const renderFormField = (field, label, placeholder, type = 'number', options = null) => {
+    const isAutoPopulated = autoPopulated.has(field);
+    const className = isAutoPopulated 
+      ? 'form-input border-brand/30 bg-brand/5' 
+      : 'form-input';
+
+    return (
+      <div>
+        <label className="form-label flex items-center gap-1">
+          {label}
+          {isAutoPopulated && (
+            <span className="text-brand text-xs" title="Auto-populated from ICP Analysis">
+              ✨
+            </span>
+          )}
+        </label>
+        {options ? (
+          <select
+            value={formData[field]}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className={className}
+          >
+            {options.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={type}
+            value={formData[field]}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            placeholder={placeholder}
+            className={className}
+            required
+          />
+        )}
+      </div>
+    );
+  };
 
   const calculateCostOfInaction = () => {
     const {
@@ -238,95 +474,79 @@ Generated on: ${new Date().toLocaleDateString()}
           </div>
 
           <div className="card card-padding glass">
-            <h2 className="text-lg font-semibold text-primary mb-4">Business Metrics</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-primary">Business Metrics</h2>
+              <button
+                type="button"
+                onClick={autoPopulateFromICP}
+                disabled={!icpData}
+                className="btn btn-secondary"
+                title="Auto-populate fields using ICP Analysis data"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Auto-fill from ICP
+              </button>
+            </div>
+            {autoPopulated.size > 0 && (
+              <div className="mb-4 p-3 bg-brand/10 border border-brand/20 rounded-lg">
+                <p className="text-sm text-brand">
+                  ✨ {autoPopulated.size} fields auto-populated from your ICP Analysis
+                </p>
+              </div>
+            )}
             <form onSubmit={handleCalculate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="form-label">Current Annual Revenue ($)</label>
-                  <input
-                    type="number"
-                    value={formData.currentRevenue}
-                    onChange={(e) => handleInputChange('currentRevenue', e.target.value)}
-                    placeholder="1000000"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'currentRevenue', 
+                  'Current Annual Revenue ($)', 
+                  'e.g., 5000000 (from ICP demographics)'
+                )}
                 
-                <div>
-                  <label className="form-label">Target Growth Rate (%)</label>
-                  <input
-                    type="number"
-                    value={formData.targetGrowthRate}
-                    onChange={(e) => handleInputChange('targetGrowthRate', e.target.value)}
-                    placeholder="20"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'targetGrowthRate', 
+                  'Target Growth Rate (%)', 
+                  'e.g., 25 (from ICP growth stage)'
+                )}
                 
-                <div>
-                  <label className="form-label">Average Deal Size ($)</label>
-                  <input
-                    type="number"
-                    value={formData.averageDealSize}
-                    onChange={(e) => handleInputChange('averageDealSize', e.target.value)}
-                    placeholder="50000"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'averageDealSize', 
+                  'Average Deal Size ($)', 
+                  'e.g., 75000 (from ICP budget patterns)'
+                )}
                 
-                <div>
-                  <label className="form-label">Sales Cycle (days)</label>
-                  <input
-                    type="number"
-                    value={formData.salesCycleLength}
-                    onChange={(e) => handleInputChange('salesCycleLength', e.target.value)}
-                    placeholder="90"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'salesCycleLength', 
+                  'Sales Cycle (days)', 
+                  'e.g., 90 (from ICP decision complexity)'
+                )}
                 
-                <div>
-                  <label className="form-label">Conversion Rate (%)</label>
-                  <input
-                    type="number"
-                    value={formData.conversionRate}
-                    onChange={(e) => handleInputChange('conversionRate', e.target.value)}
-                    placeholder="15"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'conversionRate', 
+                  'Conversion Rate (%)', 
+                  'e.g., 18 (from ICP fit score)'
+                )}
                 
-                <div>
-                  <label className="form-label">Annual Churn Rate (%)</label>
-                  <input
-                    type="number"
-                    value={formData.churnRate}
-                    onChange={(e) => handleInputChange('churnRate', e.target.value)}
-                    placeholder="5"
-                    className="form-input"
-                    required
-                  />
-                </div>
+                {renderFormField(
+                  'churnRate', 
+                  'Annual Churn Rate (%)', 
+                  'e.g., 4 (from ICP retention factors)'
+                )}
               </div>
               
-              <div>
-                <label className="form-label">Analysis Timeframe (months)</label>
-                <select
-                  value={formData.timeframe}
-                  onChange={(e) => handleInputChange('timeframe', e.target.value)}
-                  className="form-input"
-                >
-                  <option value="6">6 months</option>
-                  <option value="12">12 months</option>
-                  <option value="18">18 months</option>
-                  <option value="24">24 months</option>
-                </select>
-              </div>
+              {renderFormField(
+                'timeframe', 
+                'Analysis Timeframe', 
+                'months', 
+                'select',
+                [
+                  { value: '6', label: '6 months (urgent situations)' },
+                  { value: '12', label: '12 months (standard)' },
+                  { value: '18', label: '18 months (strategic planning)' },
+                  { value: '24', label: '24 months (long-term analysis)' }
+                ]
+              )}
               
               <button type="submit" className="btn btn-primary w-full">
                 Calculate Cost of Inaction

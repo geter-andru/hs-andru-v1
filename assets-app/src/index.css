@@ -383,6 +383,18 @@
     background-color: rgba(42, 42, 42, 0.5);
   }
   
+  .bg-brand\/5 {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+  
+  .border-brand\/20 {
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+  
+  .border-brand\/30 {
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  
   /* Enhanced prose styling for content */
   .prose {
     color: var(--color-text-secondary);
