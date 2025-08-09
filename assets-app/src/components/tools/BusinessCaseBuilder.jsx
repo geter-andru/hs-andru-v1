@@ -43,6 +43,7 @@ const BusinessCaseBuilder = () => {
   });
   
   const [previewMode, setPreviewMode] = useState(false);
+  const [autoPopulated, setAutoPopulated] = useState(new Set()); // Track which fields were auto-populated
 
   const session = authService.getCurrentSession();
 
@@ -101,6 +102,126 @@ const BusinessCaseBuilder = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Remove from auto-populated set if user manually edits
+    if (autoPopulated.has(field)) {
+      setAutoPopulated(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(field);
+        return newSet;
+      });
+    }
+  };
+
+  // Auto-populate fields using data from ICP and Cost Calculator tools
+  const autoPopulateFields = async () => {
+    if (!session || !formData.companyName?.trim()) return;
+
+    try {
+      // Get cached data from other tools
+      const [icpProgress, costProgress] = await Promise.all([
+        airtableService.getUserProgress(session.customerId, 'icp_rating'),
+        airtableService.getUserProgress(session.customerId, 'cost_calculator')
+      ]);
+
+      const companyName = formData.companyName.trim();
+      const newFormData = { ...formData };
+      const newAutoPopulated = new Set();
+
+      // Auto-populate from ICP Analysis data
+      if (icpProgress?.rating) {
+        const { companyName: ratedCompany, rating } = icpProgress.rating;
+        
+        if (ratedCompany?.toLowerCase() === companyName.toLowerCase()) {
+          // Problem Statement from ICP criteria
+          if (!formData.currentChallenges) {
+            newFormData.currentChallenges = `${companyName} faces key challenges in:\n• Scalability: Current processes may not support rapid growth phase\n• Technology readiness: Alignment needed with modern tech stack requirements\n• Market positioning: Optimization needed to maintain competitive advantage`;
+            newAutoPopulated.add('currentChallenges');
+          }
+
+          // Business Impact from ICP scoring
+          if (!formData.businessImpact) {
+            const avgScore = Math.round(rating.criteria.reduce((sum, c) => sum + c.score, 0) / rating.criteria.length);
+            newFormData.businessImpact = `Based on analysis, ${companyName} shows ${avgScore}% alignment with ideal customer profile. Key impact areas include operational efficiency, market positioning, and growth enablement with estimated revenue impact of 15-25%.`;
+            newAutoPopulated.add('businessImpact');
+          }
+
+          // Urgency Factors from ICP recommendation
+          if (!formData.urgencyFactors) {
+            newFormData.urgencyFactors = rating.recommendation === 'High Priority' 
+              ? `High priority implementation recommended:\n• Market conditions favor early adoption\n• Competitive advantage window closing\n• Current growth trajectory requires immediate scaling`
+              : `Strategic implementation timeline:\n• Planned growth phase alignment\n• Technology roadmap integration\n• Resource optimization opportunity`;
+            newAutoPopulated.add('urgencyFactors');
+          }
+        }
+      }
+
+      // Auto-populate from Cost Calculator data
+      if (costProgress?.calculations) {
+        const calc = costProgress.calculations;
+        
+        // Current State Costs
+        if (!formData.currentStateCosts && calc.totalCost) {
+          newFormData.currentStateCosts = `$${calc.totalCost.toLocaleString()} annually in operational inefficiencies and missed opportunities`;
+          newAutoPopulated.add('currentStateCosts');
+        }
+
+        // Expected Savings
+        if (!formData.expectedSavings && calc.totalSavings) {
+          newFormData.expectedSavings = `$${calc.totalSavings.toLocaleString()} in annual savings through efficiency gains and revenue optimization`;
+          newAutoPopulated.add('expectedSavings');
+        }
+
+        // Solution Costs (smart estimate based on savings)
+        if (!formData.solutionCosts && calc.totalSavings) {
+          const estimatedCost = Math.round(calc.totalSavings * 0.3); // 30% of annual savings
+          newFormData.solutionCosts = `$${estimatedCost.toLocaleString()} implementation cost (estimated based on solution scope)`;
+          newAutoPopulated.add('solutionCosts');
+        }
+
+        // Payback Period
+        if (!formData.paybackPeriod && calc.roi) {
+          const payback = calc.roi > 0 ? Math.round(12 / (calc.roi / 100)) : 12;
+          newFormData.paybackPeriod = `${payback} months estimated payback period`;
+          newAutoPopulated.add('paybackPeriod');
+        }
+
+        // ROI
+        if (!formData.expectedROI && calc.roi) {
+          newFormData.expectedROI = `${calc.roi}% annual ROI based on cost analysis`;
+          newAutoPopulated.add('expectedROI');
+        }
+      }
+
+      // Smart defaults for remaining fields
+      if (!formData.projectTitle) {
+        newFormData.projectTitle = `${companyName} Digital Transformation Initiative`;
+        newAutoPopulated.add('projectTitle');
+      }
+
+      if (!formData.solutionOverview) {
+        newFormData.solutionOverview = `Comprehensive solution designed to address ${companyName}'s specific scalability and efficiency challenges through proven technology implementation and process optimization.`;
+        newAutoPopulated.add('solutionOverview');
+      }
+
+      if (!formData.implementationApproach) {
+        newFormData.implementationApproach = `Phased implementation approach:\n• Phase 1: Assessment and planning (4-6 weeks)\n• Phase 2: Core system implementation (8-12 weeks)\n• Phase 3: Training and optimization (4-6 weeks)\n• Phase 4: Full deployment and support (ongoing)`;
+        newAutoPopulated.add('implementationApproach');
+      }
+
+      if (!formData.successMetrics) {
+        newFormData.successMetrics = `• Revenue growth: 15-25% increase\n• Operational efficiency: 30% improvement\n• Process automation: 50% reduction in manual tasks\n• User adoption: 90% within 6 months\n• Customer satisfaction: 8.5+ rating`;
+        newAutoPopulated.add('successMetrics');
+      }
+
+      // Update form data and auto-populated tracking
+      setFormData(newFormData);
+      setAutoPopulated(newAutoPopulated);
+
+      console.log(`Auto-populated ${newAutoPopulated.size} fields for ${companyName}`);
+
+    } catch (error) {
+      console.error('Error auto-populating fields:', error);
+    }
   };
 
   const saveProgress = async () => {
@@ -125,6 +246,45 @@ const BusinessCaseBuilder = () => {
 
     return () => clearInterval(interval);
   }, [formData, activeTemplate, session]);
+
+  // Helper function to render form fields with auto-population indicators
+  const renderFormField = (field, label, placeholder, type = 'text', isTextarea = false) => {
+    const isAutoPopulated = autoPopulated.has(field);
+    const baseClassName = isTextarea ? 'form-textarea' : 'form-input';
+    const className = isAutoPopulated 
+      ? `${baseClassName} border-blue-200 bg-blue-50` 
+      : baseClassName;
+
+    return (
+      <div>
+        <label className="form-label flex items-center gap-1">
+          {label}
+          {isAutoPopulated && (
+            <span className="text-blue-500" title="Auto-populated from analysis data">
+              ✨
+            </span>
+          )}
+        </label>
+        {isTextarea ? (
+          <textarea
+            value={formData[field]}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className={className}
+            placeholder={placeholder}
+            rows={4}
+          />
+        ) : (
+          <input
+            type={type}
+            value={formData[field]}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className={className}
+            placeholder={placeholder}
+          />
+        )}
+      </div>
+    );
+  };
 
   const generateBusinessCase = () => {
     const template = templates[activeTemplate];
@@ -343,24 +503,34 @@ const BusinessCaseBuilder = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="form-label">Company Name</label>
-                      <input
-                        type="text"
-                        value={formData.companyName}
-                        onChange={(e) => handleInputChange('companyName', e.target.value)}
-                        className="form-input"
-                        placeholder="Acme Corporation"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={formData.companyName}
+                          onChange={(e) => handleInputChange('companyName', e.target.value)}
+                          className="form-input flex-1"
+                          placeholder="Acme Corporation"
+                        />
+                        <button
+                          type="button"
+                          onClick={autoPopulateFields}
+                          disabled={!formData.companyName?.trim()}
+                          className="btn btn-secondary whitespace-nowrap"
+                          title="Auto-populate fields using data from ICP and Cost Calculator analysis"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Auto-fill
+                        </button>
+                      </div>
+                      {autoPopulated.size > 0 && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          ✨ {autoPopulated.size} fields auto-populated from your analysis data
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <label className="form-label">Project Title</label>
-                      <input
-                        type="text"
-                        value={formData.projectTitle}
-                        onChange={(e) => handleInputChange('projectTitle', e.target.value)}
-                        className="form-input"
-                        placeholder="Digital Transformation Initiative"
-                      />
-                    </div>
+                    {renderFormField('projectTitle', 'Project Title', 'Digital Transformation Initiative')}
                     <div>
                       <label className="form-label">Requested Amount ($)</label>
                       <input
@@ -371,16 +541,7 @@ const BusinessCaseBuilder = () => {
                         placeholder="250000"
                       />
                     </div>
-                    <div>
-                      <label className="form-label">Expected ROI (%)</label>
-                      <input
-                        type="number"
-                        value={formData.expectedROI}
-                        onChange={(e) => handleInputChange('expectedROI', e.target.value)}
-                        className="form-input"
-                        placeholder="300"
-                      />
-                    </div>
+                    {renderFormField('expectedROI', 'Expected ROI (%)', '300', 'number')}
                   </div>
                 </div>
 
@@ -388,33 +549,9 @@ const BusinessCaseBuilder = () => {
                 <div>
                   <h3 className="text-md font-medium text-gray-900 mb-3">Problem Statement</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="form-label">Current Challenges</label>
-                      <textarea
-                        value={formData.currentChallenges}
-                        onChange={(e) => handleInputChange('currentChallenges', e.target.value)}
-                        className="form-input h-20"
-                        placeholder="Describe the current challenges and pain points..."
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label">Business Impact</label>
-                      <textarea
-                        value={formData.businessImpact}
-                        onChange={(e) => handleInputChange('businessImpact', e.target.value)}
-                        className="form-input h-20"
-                        placeholder="Quantify the business impact of these challenges..."
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label">Urgency Factors</label>
-                      <textarea
-                        value={formData.urgencyFactors}
-                        onChange={(e) => handleInputChange('urgencyFactors', e.target.value)}
-                        className="form-input h-16"
-                        placeholder="Why is this urgent? What happens if we don't act?"
-                      />
-                    </div>
+                    {renderFormField('currentChallenges', 'Current Challenges', 'Describe the current challenges and pain points...', 'text', true)}
+                    {renderFormField('businessImpact', 'Business Impact', 'Quantify the business impact of these challenges...', 'text', true)}
+                    {renderFormField('urgencyFactors', 'Urgency Factors', 'Why is this urgent? What happens if we don\'t act?', 'text', true)}
                   </div>
                 </div>
 
