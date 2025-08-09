@@ -365,6 +365,16 @@
     border-color: rgba(255, 255, 255, 0.08);
   }
   
+  /* Brand shadow utilities */
+  .shadow-brand\/30 {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Brand color with opacity */
+  .border-brand\/50 {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  
   /* Enhanced prose styling for content */
   .prose {
     color: var(--color-text-secondary);
