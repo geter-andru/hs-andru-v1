@@ -4,8 +4,9 @@ const BASE_URL = 'https://api.airtable.com/v0';
 const BASE_ID = process.env.REACT_APP_AIRTABLE_BASE_ID;
 const API_KEY = process.env.REACT_APP_AIRTABLE_API_KEY;
 
-// Cache for customer assets to avoid redundant API calls
+// Cache for customer assets and user progress to avoid redundant API calls
 let customerAssetsCache = new Map();
+let userProgressCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Create axios instance with default config
@@ -169,9 +170,18 @@ export const airtableService = {
     }
   },
 
-  // Fetch user progress
+  // Fetch user progress with caching
   async getUserProgress(customerId, toolName) {
     try {
+      const cacheKey = `${customerId}_${toolName}`;
+      
+      // Check cache first
+      const cachedProgress = userProgressCache.get(cacheKey);
+      if (cachedProgress && (Date.now() - cachedProgress.timestamp < CACHE_DURATION)) {
+        console.log(`Using cached user progress for: ${customerId}_${toolName}`);
+        return cachedProgress.data;
+      }
+      
       const response = await airtableClient.get('/User Progress', {
         params: {
           filterByFormula: `AND({Customer ID} = '${customerId}', {Tool Name} = '${toolName}')`,
@@ -180,12 +190,19 @@ export const airtableService = {
         }
       });
 
+      let progressData = null;
       if (response.data.records.length > 0) {
         const record = response.data.records[0];
-        return this.parseJsonField(record.fields['Progress Data']);
+        progressData = this.parseJsonField(record.fields['Progress Data']);
       }
       
-      return null;
+      // Cache the result
+      userProgressCache.set(cacheKey, {
+        data: progressData,
+        timestamp: Date.now()
+      });
+      
+      return progressData;
     } catch (error) {
       console.error('Error fetching user progress:', error);
       return null;

@@ -97,7 +97,7 @@ const BusinessCaseBuilder = () => {
     if (session) {
       loadBusinessCaseData();
     }
-  }, [session]);
+  }, [session?.recordId, session?.customerId]); // Only re-run if these specific values change
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
