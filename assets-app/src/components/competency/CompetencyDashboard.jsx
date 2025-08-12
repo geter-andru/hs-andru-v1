@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
 import CompetencyAssessment from './CompetencyAssessment';
 import ProgressiveToolAccess from './ProgressiveToolAccess';
 import ProfessionalMilestones from './ProfessionalMilestones';
@@ -83,17 +84,17 @@ const CompetencyDashboard = ({ customerId, isVisible = true, className = '' }) =
   };
 
   return (
-    <div className={`bg-gray-900 border border-gray-700 rounded-lg overflow-hidden ${className}`}>
+    <div className={`${COMPONENT_STYLES.card} overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
+      <div className={`${COLORS.secondary} ${COLORS.border} border-b p-4`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="text-2xl">🎓</div>
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className={`text-lg font-bold ${COLORS.textPrimary}`}>
                 Professional Development Center
               </h2>
-              <p className="text-sm text-gray-400">
+              <p className={`text-sm ${COLORS.textSecondary}`}>
                 Advanced business methodology training and competency tracking
               </p>
             </div>

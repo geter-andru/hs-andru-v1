@@ -6,6 +6,8 @@ import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
 import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
+import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
+import { TIMING, SCORES, BUSINESS, VALIDATION } from '../../constants/app';
 
 const CostCalculator = () => {
   const { onCostCalculated } = useOutletContext() || {};
@@ -24,7 +26,7 @@ const CostCalculator = () => {
     salesCycleLength: '90',
     conversionRate: '15',
     churnRate: '5',
-    timeframe: '12'
+    timeframe: BUSINESS.standardAnalysisPeriod.toString()
   });
 
   const session = authService.getCurrentSession();
@@ -239,7 +241,7 @@ const CostCalculator = () => {
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Remove from auto-populated set if user manually edits
     if (autoPopulated.has(field)) {
@@ -249,21 +251,35 @@ const CostCalculator = () => {
         return newSet;
       });
     }
-  };
+  }, [autoPopulated]);
+
+  // Memoize form validation state
+  const isFormValid = useMemo(() => {
+    return Object.values(formData).every(value => value && value.trim() !== '');
+  }, [formData]);
+
+  // Memoize auto-population status for expensive checks
+  const autoPopulationSummary = useMemo(() => {
+    return {
+      count: autoPopulated.size,
+      hasAnyAutoPopulated: autoPopulated.size > 0,
+      fields: Array.from(autoPopulated)
+    };
+  }, [autoPopulated]);
 
   // Helper function to render form fields with auto-population indicators
-  const renderFormField = (field, label, placeholder, type = 'number', options = null) => {
+  const renderFormField = useCallback((field, label, placeholder, type = 'number', options = null) => {
     const isAutoPopulated = autoPopulated.has(field);
     const className = isAutoPopulated 
-      ? 'form-input border-brand/30 bg-brand/5' 
-      : 'form-input';
+      ? `${COMPONENT_STYLES.formInput} border-blue-400/30 bg-blue-400/5` 
+      : COMPONENT_STYLES.formInput;
 
     return (
       <div>
-        <label className="form-label flex items-center gap-1">
+        <label className={`${COMPONENT_STYLES.formLabel} flex items-center gap-1`}>
           {label}
           {isAutoPopulated && (
-            <span className="text-brand text-xs" title="Auto-populated from ICP Analysis">
+            <span className={`${COLORS.brand} text-xs`} title="Auto-populated from ICP Analysis">
               ✨
             </span>
           )}
@@ -292,7 +308,7 @@ const CostCalculator = () => {
         )}
       </div>
     );
-  };
+  }, [formData, autoPopulated, handleInputChange]);
 
   const calculateCostOfInaction = useCallback(() => {
     const {
@@ -320,7 +336,7 @@ const CostCalculator = () => {
     
     // Calculate opportunity costs
     const missedGrowthRevenue = targetMonthlyGrowth * months * (months + 1) / 2;
-    const inefficiencyLoss = revenue * 0.15; // 15% inefficiency assumption
+    const inefficiencyLoss = revenue * BUSINESS.defaultInefficiencyRate;
     const churnImpact = revenue * churn;
     const extendedSalesCycleCost = (cycle - 60) * dealSize * 0.02; // Cost per day extended
     
@@ -330,7 +346,7 @@ const CostCalculator = () => {
     const projections = [];
     for (let month = 1; month <= 12; month++) {
       const withAction = currentMonthlyRevenue * (1 + growth) ** (month / 12);
-      const withoutAction = currentMonthlyRevenue * (1 + growth * 0.3) ** (month / 12); // 30% of target growth without action
+      const withoutAction = currentMonthlyRevenue * (1 + growth * BUSINESS.defaultGrowthWithoutAction) ** (month / 12);
       
       projections.push({
         month: `Month ${month}`,
@@ -506,10 +522,10 @@ Generated on: ${new Date().toLocaleDateString()}
                 Auto-fill from ICP
               </button>
             </div>
-            {autoPopulated.size > 0 && (
+            {autoPopulationSummary.hasAnyAutoPopulated && (
               <div className="mb-4 p-3 bg-brand/10 border border-brand/20 rounded-lg">
                 <p className="text-sm text-brand">
-                  ✨ {autoPopulated.size} fields auto-populated from your ICP Analysis
+                  ✨ {autoPopulationSummary.count} fields auto-populated from your ICP Analysis
                 </p>
               </div>
             )}
