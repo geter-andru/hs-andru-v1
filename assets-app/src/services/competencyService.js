@@ -210,15 +210,29 @@ class CompetencyService {
   getICPCompletionHistory(usageAnalytics) {
     const completions = [];
     
-    // Get ICP completion data
-    if (usageAnalytics?.tools_completed) {
-      const icpCompletions = usageAnalytics.tools_completed.filter(tool => tool.name === 'icp');
-      icpCompletions.forEach(completion => {
+    // Get ICP completion data from competency demonstrations
+    if (usageAnalytics?.competency_demonstrations) {
+      const icpDemos = usageAnalytics.competency_demonstrations.filter(demo => demo.tool === 'icp');
+      icpDemos.forEach(demo => {
         completions.push({
-          timestamp: completion.timestamp || new Date().toISOString(),
-          score: completion.score || completion.data?.score || 0,
-          companyName: completion.data?.company_name || 'Unknown'
+          timestamp: demo.timestamp,
+          score: demo.score,
+          companyName: demo.data?.companyName || 'Unknown'
         });
+      });
+    }
+    
+    // Also check tool_completions for backward compatibility
+    if (usageAnalytics?.tool_completions) {
+      const icpCompletions = usageAnalytics.tool_completions.filter(tool => tool.name === 'icp');
+      icpCompletions.forEach(completion => {
+        if (!completions.find(c => c.timestamp === completion.timestamp)) {
+          completions.push({
+            timestamp: completion.timestamp || new Date().toISOString(),
+            score: completion.score || 0,
+            companyName: completion.data?.companyName || 'Unknown'
+          });
+        }
       });
     }
 
@@ -254,14 +268,27 @@ class CompetencyService {
   getCostAnalysisHistory(usageAnalytics) {
     const completions = [];
 
-    // Get cost completion data
-    if (usageAnalytics?.tools_completed) {
-      const costCompletions = usageAnalytics.tools_completed.filter(tool => tool.name === 'cost');
-      costCompletions.forEach(completion => {
+    // Get cost completion data from competency demonstrations
+    if (usageAnalytics?.competency_demonstrations) {
+      const costDemos = usageAnalytics.competency_demonstrations.filter(demo => demo.tool === 'cost');
+      costDemos.forEach(demo => {
         completions.push({
-          timestamp: completion.timestamp || new Date().toISOString(),
-          annualCost: completion.data?.annual_cost || completion.annualCost || 0
+          timestamp: demo.timestamp,
+          annualCost: demo.data?.annualCost || 0
         });
+      });
+    }
+    
+    // Also check tool_completions for backward compatibility
+    if (usageAnalytics?.tool_completions) {
+      const costCompletions = usageAnalytics.tool_completions.filter(tool => tool.name === 'cost');
+      costCompletions.forEach(completion => {
+        if (!completions.find(c => c.timestamp === completion.timestamp)) {
+          completions.push({
+            timestamp: completion.timestamp || new Date().toISOString(),
+            annualCost: completion.annual_cost || completion.data?.annualCost || 0
+          });
+        }
       });
     }
 

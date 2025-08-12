@@ -430,7 +430,53 @@ export const airtableService = {
     }
   },
 
-  // ICP Completion Handler
+  // Track competency demonstration for progressive access
+  async trackCompetencyDemonstration(recordId, toolName, competencyData) {
+    try {
+      const currentData = await this.getCustomerDataByRecordId(recordId);
+      const analytics = currentData.usageAnalytics || this.getDefaultUsageAnalytics();
+      
+      // Initialize competency tracking arrays if needed
+      if (!analytics.competency_demonstrations) {
+        analytics.competency_demonstrations = [];
+      }
+      if (!analytics.tool_completions) {
+        analytics.tool_completions = [];
+      }
+      
+      // Add competency demonstration record
+      analytics.competency_demonstrations.push({
+        tool: toolName,
+        timestamp: new Date().toISOString(),
+        score: competencyData.score || 0,
+        competency: competencyData.competency || 'Unknown',
+        level: competencyData.level || 'Foundation',
+        data: competencyData
+      });
+      
+      // Track for unlock criteria evaluation
+      analytics.tool_completions.push({
+        name: toolName,
+        timestamp: new Date().toISOString(),
+        score: competencyData.score,
+        annual_cost: competencyData.annualCost,
+        data: competencyData
+      });
+      
+      await this.updateUsageAnalytics(recordId, analytics);
+      
+      return {
+        success: true,
+        demonstrations: analytics.competency_demonstrations,
+        completions: analytics.tool_completions
+      };
+    } catch (error) {
+      console.error('Error tracking competency demonstration:', error);
+      throw error;
+    }
+  },
+
+  // ICP Completion Handler with competency tracking
   async handleICPCompletion(recordId, data) {
     const progressUpdate = {
       icp_completed: true,
@@ -448,6 +494,15 @@ export const airtableService = {
       }
     };
 
+    // Track competency demonstration
+    await this.trackCompetencyDemonstration(recordId, 'icp', {
+      score: data.score,
+      companyName: data.companyName,
+      competency: 'Customer Analysis',
+      level: 'Foundation',
+      timeSpent: data.timeSpent
+    });
+
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),
       this.updateUsageAnalytics(recordId, analyticsUpdate)
@@ -456,7 +511,7 @@ export const airtableService = {
     return progressUpdate;
   },
 
-  // Cost Calculator Completion Handler
+  // Cost Calculator Completion Handler with competency tracking
   async handleCostCalculatorCompletion(recordId, data) {
     const progressUpdate = {
       cost_calculated: true,
@@ -479,6 +534,14 @@ export const airtableService = {
         'cost-calculator': data.timeSpent || 0
       }
     };
+
+    // Track competency demonstration for value quantification
+    await this.trackCompetencyDemonstration(recordId, 'cost', {
+      annualCost: data.annualCost,
+      competency: 'Value Quantification',
+      level: 'Developing',
+      timeSpent: data.timeSpent
+    });
 
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),

@@ -160,11 +160,13 @@ const CustomerDashboard = () => {
       />
       
       {/* Professional Development Center - Stealth Gamification */}
-      <CompetencyDashboard 
-        customerId={customerId}
-        isVisible={showCompetencyDashboard}
-        className="mb-8"
-      />
+      {showCompetencyDashboard && (
+        <CompetencyDashboard 
+          customerId={customerId}
+          isVisible={showCompetencyDashboard}
+          className="mb-8"
+        />
+      )}
       
       {/* Tool Content Area */}
       <div className="tool-content">

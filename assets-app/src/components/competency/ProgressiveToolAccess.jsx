@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkflowProgress } from '../../hooks/useWorkflowProgress';
+import CompetencyReadiness from './CompetencyReadiness';
+import MethodologyProgression from './MethodologyProgression';
+import ToolUnlockModal, { useToolUnlockModal } from './ToolUnlockModal';
+import { competencyService } from '../../services/competencyService';
 
 // Tool unlock requirements (hidden progression gates)
 const TOOL_UNLOCK_REQUIREMENTS = {
@@ -32,52 +36,100 @@ const TOOL_UNLOCK_REQUIREMENTS = {
   }
 };
 
-const ProgressiveToolAccess = ({ customerId, onToolStatusChange, className = '' }) => {
+const ProgressiveToolAccess = ({ 
+  customerId, 
+  onToolStatusChange, 
+  onToolNavigate,
+  showReadiness = true,
+  showProgression = true,
+  className = '' 
+}) => {
   const { workflowProgress, usageAnalytics } = useWorkflowProgress(customerId);
   const [toolStatus, setToolStatus] = useState(TOOL_UNLOCK_REQUIREMENTS);
   const [newUnlocks, setNewUnlocks] = useState([]);
   const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
+  const [activeView, setActiveView] = useState('overview'); // 'overview', 'readiness', 'progression'
+  const { modalState, showUnlockModal, hideModal, navigateToTool } = useToolUnlockModal();
+  const [previousAccessStatus, setPreviousAccessStatus] = useState({});
 
-  // Check tool unlock requirements based on user progress
+  // Check tool unlock requirements and competency progression
   useEffect(() => {
-    if (!workflowProgress || !usageAnalytics) return;
+    if (!workflowProgress || !usageAnalytics || !customerId) return;
 
-    const updatedStatus = { ...toolStatus };
-    const previouslyLocked = Object.keys(updatedStatus).filter(key => !updatedStatus[key].unlocked);
+    const checkUnlocks = async () => {
+      try {
+        // Get current access status from competency service
+        const accessStatus = await competencyService.getToolAccessStatus(customerId);
+        
+        // Check for new unlocks
+        const unlockCheck = await competencyService.checkForUnlocks(customerId, previousAccessStatus);
+        
+        if (unlockCheck.hasUnlocks && unlockCheck.unlocks.length > 0) {
+          const firstUnlock = unlockCheck.unlocks[0];
+          
+          // Show professional unlock modal
+          showUnlockModal(firstUnlock.tool, firstUnlock.competencyAchieved);
+          
+          // Update local state
+          setNewUnlocks([firstUnlock.tool]);
+          setShowUnlockAnimation(true);
+          setTimeout(() => setShowUnlockAnimation(false), 4000);
+        }
+        
+        // Update tool status based on competency service
+        const updatedStatus = { ...toolStatus };
+        if (accessStatus['cost-calculator']?.hasAccess) {
+          updatedStatus.COST_CALCULATOR.unlocked = true;
+        }
+        if (accessStatus['business-case']?.hasAccess) {
+          updatedStatus.BUSINESS_CASE.unlocked = true;
+        }
+        
+        setToolStatus(updatedStatus);
+        setPreviousAccessStatus(accessStatus);
+        
+        // Notify parent component
+        if (onToolStatusChange) {
+          onToolStatusChange(updatedStatus);
+        }
+      } catch (error) {
+        console.error('Error checking tool unlocks:', error);
+        
+        // Fallback to basic unlock logic
+        const updatedStatus = { ...toolStatus };
+        const previouslyLocked = Object.keys(updatedStatus).filter(key => !updatedStatus[key].unlocked);
 
-    // Cost Calculator unlock logic
-    const icpCompletions = getICPCompletionCount();
-    const qualifyingICPScores = getQualifyingICPScores();
-    
-    if (qualifyingICPScores >= TOOL_UNLOCK_REQUIREMENTS.COST_CALCULATOR.requiredCompletions) {
-      updatedStatus.COST_CALCULATOR.unlocked = true;
-    }
+        // Cost Calculator unlock logic
+        const qualifyingICPScores = getQualifyingICPScores();
+        if (qualifyingICPScores >= TOOL_UNLOCK_REQUIREMENTS.COST_CALCULATOR.requiredCompletions) {
+          updatedStatus.COST_CALCULATOR.unlocked = true;
+        }
 
-    // Business Case Builder unlock logic
-    const costCalculatorCompletions = getCostCalculatorCompletions();
-    
-    if (costCalculatorCompletions >= TOOL_UNLOCK_REQUIREMENTS.BUSINESS_CASE.requiredCompletions) {
-      updatedStatus.BUSINESS_CASE.unlocked = true;
-    }
+        // Business Case Builder unlock logic
+        const costCalculatorCompletions = getCostCalculatorCompletions();
+        if (costCalculatorCompletions >= TOOL_UNLOCK_REQUIREMENTS.BUSINESS_CASE.requiredCompletions) {
+          updatedStatus.BUSINESS_CASE.unlocked = true;
+        }
 
-    // Check for new unlocks (achievement moment)
-    const newlyUnlocked = Object.keys(updatedStatus).filter(
-      key => updatedStatus[key].unlocked && previouslyLocked.includes(key)
-    );
+        const newlyUnlocked = Object.keys(updatedStatus).filter(
+          key => updatedStatus[key].unlocked && previouslyLocked.includes(key)
+        );
 
-    if (newlyUnlocked.length > 0) {
-      setNewUnlocks(newlyUnlocked);
-      setShowUnlockAnimation(true);
-      setTimeout(() => setShowUnlockAnimation(false), 4000);
-      
-      // Notify parent component about tool status changes
-      if (onToolStatusChange) {
-        onToolStatusChange(updatedStatus);
+        if (newlyUnlocked.length > 0) {
+          setNewUnlocks(newlyUnlocked);
+          setShowUnlockAnimation(true);
+          setTimeout(() => setShowUnlockAnimation(false), 4000);
+        }
+
+        setToolStatus(updatedStatus);
+        if (onToolStatusChange) {
+          onToolStatusChange(updatedStatus);
+        }
       }
-    }
+    };
 
-    setToolStatus(updatedStatus);
-  }, [workflowProgress, usageAnalytics]);
+    checkUnlocks();
+  }, [workflowProgress, usageAnalytics, customerId]);
 
   // Helper functions to calculate progress (hidden from user)
   const getICPCompletionCount = () => {
@@ -210,67 +262,130 @@ const ProgressiveToolAccess = ({ customerId, onToolStatusChange, className = '' 
     );
   };
 
+  const handleToolSelect = (toolId) => {
+    if (onToolNavigate) {
+      onToolNavigate(toolId);
+    } else {
+      // Default navigation
+      const basePath = window.location.pathname.split('/dashboard')[0];
+      window.location.href = `${basePath}/dashboard/${toolId}`;
+    }
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Unlock Notification */}
-      {showUnlockAnimation && newUnlocks.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-6 py-4 rounded-lg shadow-lg border border-yellow-400">
-            <div className="flex items-center space-x-3">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <div className="font-semibold">New Methodology Unlocked!</div>
-                <div className="text-sm opacity-90">
-                  {toolStatus[newUnlocks[0]]?.name} is now available
+      {/* Tool Unlock Modal */}
+      <ToolUnlockModal
+        isOpen={modalState.isOpen}
+        onClose={hideModal}
+        unlockedTool={modalState.unlockedTool}
+        competencyAchieved={modalState.competencyAchieved}
+        onNavigateToTool={navigateToTool}
+      />
+
+      {/* View Tabs */}
+      <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-6">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setActiveView('overview')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              activeView === 'overview' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-800 text-gray-400 hover:text-white'
+            }`}
+          >
+            Access Overview
+          </button>
+          {showProgression && (
+            <button
+              onClick={() => setActiveView('progression')}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                activeView === 'progression' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Methodology Path
+            </button>
+          )}
+          {showReadiness && (
+            <button
+              onClick={() => setActiveView('readiness')}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                activeView === 'readiness' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Readiness Status
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content based on active view */}
+      {activeView === 'progression' && showProgression && (
+        <MethodologyProgression
+          customerId={customerId}
+          onToolSelect={handleToolSelect}
+        />
+      )}
+
+      {activeView === 'readiness' && showReadiness && (
+        <div className="space-y-4">
+          <CompetencyReadiness
+            customerId={customerId}
+            targetTool="cost-calculator"
+          />
+          <CompetencyReadiness
+            customerId={customerId}
+            targetTool="business-case"
+          />
+        </div>
+      )}
+
+      {/* Original Overview (default view) */}
+      {activeView === 'overview' && (
+        <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-white mb-2">Methodology Access Framework</h2>
+            <p className="text-gray-400">
+              Systematic methodology ensures optimal implementation success
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
+            {Object.entries(toolStatus).map(([key, tool]) => (
+              <ToolAccessCard key={key} toolKey={key} tool={tool} />
+            ))}
+          </div>
+
+          {/* Overall Progress Summary */}
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4">Access Progress Summary</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-400">
+                  {Object.values(toolStatus).filter(t => t.unlocked).length}
                 </div>
+                <div className="text-sm text-gray-400">Methodologies Available</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-400">
+                  {getICPCompletionCount() + getCostCalculatorCompletions()}
+                </div>
+                <div className="text-sm text-gray-400">Analyses Completed</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-purple-400">
+                  {Math.round(Object.values(toolStatus).reduce((sum, tool) => sum + getProgressTowardsUnlock(Object.keys(toolStatus).find(k => toolStatus[k] === tool)), 0) / Object.keys(toolStatus).length)}%
+                </div>
+                <div className="text-sm text-gray-400">Overall Access Progress</div>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Tool Access Overview */}
-      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">Methodology Access Framework</h2>
-          <p className="text-gray-400">
-            Progressive access to advanced business analysis methodologies based on demonstrated competency
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
-          {Object.entries(toolStatus).map(([key, tool]) => (
-            <ToolAccessCard key={key} toolKey={key} tool={tool} />
-          ))}
-        </div>
-
-        {/* Overall Progress Summary */}
-        <div className="mt-6 pt-6 border-t border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Access Progress Summary</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-400">
-                {Object.values(toolStatus).filter(t => t.unlocked).length}
-              </div>
-              <div className="text-sm text-gray-400">Methodologies Available</div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-400">
-                {getICPCompletionCount() + getCostCalculatorCompletions()}
-              </div>
-              <div className="text-sm text-gray-400">Analyses Completed</div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-400">
-                {Math.round(Object.values(toolStatus).reduce((sum, tool) => sum + getProgressTowardsUnlock(Object.keys(toolStatus).find(k => toolStatus[k] === tool)), 0) / Object.keys(toolStatus).length)}%
-              </div>
-              <div className="text-sm text-gray-400">Overall Access Progress</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
