@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Layout from './components/layout/Layout';
+import CustomerDashboard from './components/dashboard/CustomerDashboard';
 import ICPDisplay from './components/tools/ICPDisplay';
 import CostCalculator from './components/tools/CostCalculator';
 import BusinessCaseBuilder from './components/tools/BusinessCaseBuilder';
@@ -43,11 +44,13 @@ function App() {
             {/* Customer dashboard routes */}
             <Route path="/customer/:customerId" element={<Layout />}>
               <Route index element={<Navigate to="dashboard/icp" replace />} />
-              <Route path="dashboard" element={<Navigate to="icp" replace />} />
-              <Route path="dashboard/icp" element={<ICPDisplay />} />
-              <Route path="dashboard/cost-calculator" element={<CostCalculator />} />
-              <Route path="dashboard/business-case" element={<BusinessCaseBuilder />} />
-              <Route path="dashboard/results" element={<ResultsDashboard />} />
+              <Route path="dashboard" element={<CustomerDashboard />}>
+                <Route index element={<Navigate to="icp" replace />} />
+                <Route path="icp" element={<ICPDisplay />} />
+                <Route path="cost-calculator" element={<CostCalculator />} />
+                <Route path="business-case" element={<BusinessCaseBuilder />} />
+                <Route path="results" element={<ResultsDashboard />} />
+              </Route>
             </Route>
             
             {/* Fallback for any other routes */}

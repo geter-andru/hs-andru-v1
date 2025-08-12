@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { 
   TrendingUp, 
   AlertTriangle, 
@@ -31,6 +32,16 @@ const ResultsDashboard = ({
   onExport,
   onShare
 }) => {
+  const { onResultsGenerated, onExport: contextOnExport, onShare: contextOnShare } = useOutletContext() || {};
+  
+  // Track results generation on mount
+  useEffect(() => {
+    if (onResultsGenerated) {
+      onResultsGenerated({
+        timeSpent: 0
+      }).catch(console.error);
+    }
+  }, [onResultsGenerated]);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState('pdf');
   const [shareOptions, setShareOptions] = useState({
@@ -114,19 +125,27 @@ const ResultsDashboard = ({
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      const exportData = {
+        format,
+        data: {
+          companyName,
+          icpScore,
+          annualRisk,
+          roiPercent,
+          roiTimeline,
+          selectedTemplate,
+          analysisDate
+        }
+      };
+      
+      // Call prop callback first
       if (onExport) {
-        await onExport({
-          format,
-          data: {
-            companyName,
-            icpScore,
-            annualRisk,
-            roiPercent,
-            roiTimeline,
-            selectedTemplate,
-            analysisDate
-          }
-        });
+        await onExport(exportData);
+      }
+      
+      // Call context callback for tracking
+      if (contextOnExport) {
+        await contextOnExport(exportData);
       }
       
       console.log(`Exporting as ${format}...`);
@@ -147,17 +166,25 @@ const ResultsDashboard = ({
       return;
     }
     
+    const shareData = {
+      platforms: selectedPlatforms,
+      data: {
+        companyName,
+        icpScore,
+        annualRisk,
+        roiPercent,
+        roiTimeline
+      }
+    };
+    
+    // Call prop callback first
     if (onShare) {
-      await onShare({
-        platforms: selectedPlatforms,
-        data: {
-          companyName,
-          icpScore,
-          annualRisk,
-          roiPercent,
-          roiTimeline
-        }
-      });
+      await onShare(shareData);
+    }
+    
+    // Call context callback for tracking
+    if (contextOnShare) {
+      await contextOnShare(shareData);
     }
     
     setShowShareModal(false);

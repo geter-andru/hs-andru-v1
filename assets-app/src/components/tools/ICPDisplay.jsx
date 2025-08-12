@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
 import ICPFrameworkDisplay from './ICPFrameworkDisplay';
@@ -6,6 +7,7 @@ import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const ICPDisplay = () => {
+  const { onICPComplete } = useOutletContext() || {};
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,6 +15,7 @@ const ICPDisplay = () => {
   const [ratingResult, setRatingResult] = useState(null);
   const [isRating, setIsRating] = useState(false);
   const [icpFramework, setIcpFramework] = useState(null);
+  const [startTime, setStartTime] = useState(Date.now());
 
   const session = authService.getCurrentSession();
 
@@ -93,6 +96,15 @@ const ICPDisplay = () => {
           'icp_rating',
           { companyName, rating: mockRating }
         );
+      }
+
+      // Trigger workflow completion callback
+      if (onICPComplete && mockRating.overallScore >= 60) {
+        await onICPComplete({
+          overallScore: mockRating.overallScore,
+          companyName: companyName,
+          timeSpent: Date.now() - startTime // Calculate time spent
+        });
       }
 
     } catch (err) {

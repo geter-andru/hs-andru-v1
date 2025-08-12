@@ -16,16 +16,9 @@ import {
 const EnhancedTabNavigation = ({ 
   activeTab, 
   onTabChange, 
-  workflowData = {
-    icpCompleted: false,
-    icpScore: 0,
-    costCalculated: false,
-    annualCost: 0,
-    businessCaseReady: false,
-    selectedTemplate: '',
-    resultsGenerated: false,
-    allToolsCompleted: false
-  }
+  workflowData = {},
+  workflowStatus = {},
+  completionPercentage = 0
 }) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
@@ -38,8 +31,8 @@ const EnhancedTabNavigation = ({
       step: 1,
       description: 'Identify & rate ideal customers',
       isAvailable: () => true, // Always available
-      isCompleted: () => workflowData.icpCompleted,
-      getBadge: () => workflowData.icpCompleted ? `${workflowData.icpScore}% match` : null,
+      isCompleted: () => workflowData.icp_completed,
+      getBadge: () => workflowData.icp_completed && workflowData.icp_score ? `${workflowData.icp_score}% match` : null,
       route: 'icp'
     },
     {
@@ -48,9 +41,9 @@ const EnhancedTabNavigation = ({
       icon: Calculator,
       step: 2,
       description: 'Calculate cost of inaction',
-      isAvailable: () => workflowData.icpCompleted,
-      isCompleted: () => workflowData.costCalculated,
-      getBadge: () => workflowData.costCalculated ? `$${formatLargeNumber(workflowData.annualCost)} risk` : null,
+      isAvailable: () => workflowStatus?.canAccessCost || workflowData.icp_completed,
+      isCompleted: () => workflowData.cost_calculated,
+      getBadge: () => workflowData.cost_calculated && workflowData.annual_cost ? `$${formatLargeNumber(workflowData.annual_cost)} risk` : null,
       route: 'cost-calculator'
     },
     {
@@ -59,9 +52,9 @@ const EnhancedTabNavigation = ({
       icon: FileText,
       step: 3,
       description: 'Build pilot-to-contract cases',
-      isAvailable: () => workflowData.costCalculated,
-      isCompleted: () => workflowData.businessCaseReady,
-      getBadge: () => workflowData.selectedTemplate || (workflowData.businessCaseReady ? 'Complete' : null),
+      isAvailable: () => workflowStatus?.canAccessBusinessCase || workflowData.cost_calculated,
+      isCompleted: () => workflowData.business_case_ready,
+      getBadge: () => workflowData.selected_template || (workflowData.business_case_ready ? 'Complete' : null),
       route: 'business-case'
     },
     {
@@ -70,9 +63,9 @@ const EnhancedTabNavigation = ({
       icon: BarChart3,
       step: 4,
       description: 'Executive results & insights',
-      isAvailable: () => workflowData.businessCaseReady,
-      isCompleted: () => workflowData.resultsGenerated,
-      getBadge: () => workflowData.allToolsCompleted ? 'Ready' : null,
+      isAvailable: () => workflowStatus?.canExport || workflowData.business_case_ready,
+      isCompleted: () => completionPercentage === 100,
+      getBadge: () => completionPercentage === 100 ? 'Ready' : null,
       route: 'results'
     }
   ];

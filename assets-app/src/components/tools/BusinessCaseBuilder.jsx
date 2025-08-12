@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const BusinessCaseBuilder = () => {
+  const { onBusinessCaseReady } = useOutletContext() || {};
   const [businessCaseData, setBusinessCaseData] = useState(null);
   const [customerAssets, setCustomerAssets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTemplate, setActiveTemplate] = useState('pilot');
+  const [startTime, setStartTime] = useState(Date.now());
   const [formData, setFormData] = useState({
     // Executive Summary
     companyName: '',
@@ -593,6 +596,14 @@ const BusinessCaseBuilder = () => {
       'business_case_export',
       { exportDate: new Date().toISOString(), format, formData }
     );
+
+    // Trigger workflow completion callback on first export
+    if (onBusinessCaseReady) {
+      onBusinessCaseReady({
+        selectedTemplate: activeTemplate,
+        timeSpent: Date.now() - startTime
+      }).catch(console.error);
+    }
   };
 
   if (loading) {

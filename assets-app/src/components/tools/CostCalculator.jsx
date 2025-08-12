@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ResponsiveContainer } from 'recharts';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
@@ -6,12 +7,14 @@ import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const CostCalculator = () => {
+  const { onCostCalculated } = useOutletContext() || {};
   const [costData, setCostData] = useState(null);
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [calculations, setCalculations] = useState(null);
   const [autoPopulated, setAutoPopulated] = useState(new Set());
+  const [startTime, setStartTime] = useState(Date.now());
   const [formData, setFormData] = useState({
     currentRevenue: '',
     targetGrowthRate: '20',
@@ -370,6 +373,14 @@ const CostCalculator = () => {
       'cost_calculator',
       { formData, calculations: result }
     ).catch(console.error);
+
+    // Trigger workflow completion callback
+    if (onCostCalculated && result.totalAnnualCost > 0) {
+      onCostCalculated({
+        totalAnnualCost: result.totalAnnualCost,
+        timeSpent: Date.now() - startTime
+      }).catch(console.error);
+    }
   };
 
   const handleCalculate = (e) => {
