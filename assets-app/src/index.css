@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './styles/gamification.css';
+@import './styles/progressive-engagement.css';
+
 @layer base {
   :root {
     /* Exact andru-ai.com Color System */
