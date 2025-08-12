@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import EnhancedTabNavigation from '../navigation/EnhancedTabNavigation';
 import { useWorkflowProgress } from '../../hooks/useWorkflowProgress';
@@ -21,6 +21,22 @@ const CustomerDashboard = () => {
   const [dashboardLayout, setDashboardLayout] = useState('integrated'); // 'integrated' or 'classic'
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // State reducer to handle race conditions in async operations
+  const [asyncState, dispatchAsync] = useReducer((state, action) => {
+    switch (action.type) {
+      case 'START_OPERATION':
+        return { ...state, [action.operation]: { loading: true, error: null } };
+      case 'COMPLETE_OPERATION':
+        return { ...state, [action.operation]: { loading: false, error: null, result: action.result } };
+      case 'ERROR_OPERATION':
+        return { ...state, [action.operation]: { loading: false, error: action.error } };
+      case 'RESET_OPERATION':
+        return { ...state, [action.operation]: { loading: false, error: null, result: null } };
+      default:
+        return state;
+    }
+  }, {});
   
   const {
     workflowData,
@@ -118,8 +134,10 @@ const CustomerDashboard = () => {
 
   // Enhanced tool completion callbacks with gamification integration
   const toolCallbacks = {
-    onICPComplete: async (data) => {
+    onICPComplete: useCallback(async (data) => {
       try {
+        dispatchAsync({ type: 'START_OPERATION', operation: 'icpComplete' });
+        
         // Process with both workflow and gamification systems
         const [workflowResult, gamificationResult] = await Promise.all([
           completeTool('icp', {
@@ -160,15 +178,18 @@ const CustomerDashboard = () => {
           }, 3000); // Longer delay to show notifications
         }
         
+        dispatchAsync({ type: 'COMPLETE_OPERATION', operation: 'icpComplete', result: workflowResult });
         return workflowResult;
       } catch (error) {
         console.error('Error completing ICP:', error);
+        dispatchAsync({ type: 'ERROR_OPERATION', operation: 'icpComplete', error: error.message });
         throw error;
       }
-    },
+    }, [completeTool, handleToolCompletion, checkUnlockCriteria, showProgressRecognition, showMilestoneReached, showToolAccessEarned, handleTabChange]),
 
-    onCostCalculated: async (data) => {
+    onCostCalculated: useCallback(async (data) => {
       try {
+        dispatchAsync({ type: 'START_OPERATION', operation: 'costCalculated' });
         const [workflowResult, gamificationResult] = await Promise.all([
           completeTool('cost', {
             annual_cost: data.totalAnnualCost,
@@ -205,15 +226,18 @@ const CustomerDashboard = () => {
           }, 3000);
         }
         
+        dispatchAsync({ type: 'COMPLETE_OPERATION', operation: 'costCalculated', result: workflowResult });
         return workflowResult;
       } catch (error) {
         console.error('Error completing Cost Calculator:', error);
+        dispatchAsync({ type: 'ERROR_OPERATION', operation: 'costCalculated', error: error.message });
         throw error;
       }
-    },
+    }, [completeTool, handleToolCompletion, checkUnlockCriteria, showProgressRecognition, showMilestoneReached, showToolAccessEarned, handleTabChange]),
 
-    onBusinessCaseReady: async (data) => {
+    onBusinessCaseReady: useCallback(async (data) => {
       try {
+        dispatchAsync({ type: 'START_OPERATION', operation: 'businessCaseReady' });
         const [workflowResult, gamificationResult] = await Promise.all([
           completeTool('business_case', {
             selected_template: data.selectedTemplate,
@@ -248,12 +272,14 @@ const CustomerDashboard = () => {
           }, 3000);
         }
         
+        dispatchAsync({ type: 'COMPLETE_OPERATION', operation: 'businessCaseReady', result: workflowResult });
         return workflowResult;
       } catch (error) {
         console.error('Error completing Business Case:', error);
+        dispatchAsync({ type: 'ERROR_OPERATION', operation: 'businessCaseReady', error: error.message });
         throw error;
       }
-    },
+    }, [completeTool, handleToolCompletion, checkUnlockCriteria, showProgressRecognition, showMilestoneReached, handleTabChange]),
 
     onExport: async (exportData) => {
       try {

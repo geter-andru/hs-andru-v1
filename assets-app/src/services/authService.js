@@ -38,7 +38,9 @@ export const authService = {
 
   // Generate secure session
   generateSession(customerData, accessToken) {
-    console.log('AuthService - generateSession called with:', { customerData, accessToken });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AuthService - generateSession called with:', { customerData, accessToken });
+    }
     const sessionData = {
       customerId: customerData.customerId,
       customerName: customerData.customerName,
@@ -49,7 +51,9 @@ export const authService = {
       version: 2 // Added to force session regeneration when structure changes
     };
 
-    console.log('AuthService - Session data created:', sessionData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AuthService - Session data created:', sessionData);
+    }
     // Store in sessionStorage (more secure than localStorage for tokens)
     sessionStorage.setItem('customerSession', JSON.stringify(sessionData));
     return sessionData;

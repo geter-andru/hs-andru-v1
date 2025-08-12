@@ -178,12 +178,31 @@ export const useWorkflowProgress = (customerId) => {
 
   // Start session tracking on mount (with error handling)
   useEffect(() => {
+    let sessionCleanup;
+    
     if (recordId) {
       airtableService.startSession(recordId).catch(err => {
         // Don't set error state for session tracking failures
         console.warn('Session tracking failed (non-critical):', err.message);
       });
+      
+      // Setup cleanup function for session tracking
+      sessionCleanup = () => {
+        // End session if service supports it
+        if (airtableService.endSession) {
+          airtableService.endSession(recordId).catch(err => {
+            console.warn('Session cleanup failed (non-critical):', err.message);
+          });
+        }
+      };
     }
+    
+    // Cleanup function
+    return () => {
+      if (sessionCleanup) {
+        sessionCleanup();
+      }
+    };
   }, [recordId]);
 
   return {

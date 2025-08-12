@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
 import ICPFrameworkDisplay from './ICPFrameworkDisplay';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const ICPDisplay = () => {
   const { onICPComplete } = useOutletContext() || {};
+  const { throwError } = useAsyncError();
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,18 +31,22 @@ const ICPDisplay = () => {
           throw new Error('No valid session found. Please check your access link.');
         }
 
-        console.log('Loading ICP data for session:', {
-          recordId: session.recordId,
-          customerId: session.customerId,
-          hasToken: !!session.accessToken
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Loading ICP data for session:', {
+            recordId: session.recordId,
+            customerId: session.customerId,
+            hasToken: !!session.accessToken
+          });
+        }
 
         const customerAssets = await airtableService.getCustomerAssets(
           session.recordId,
           session.accessToken
         );
         
-        console.log('Customer assets loaded:', customerAssets);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Customer assets loaded:', customerAssets);
+        }
         
         if (!customerAssets || !customerAssets.icpContent) {
           throw new Error('No ICP content found for this customer');
@@ -50,6 +56,10 @@ const ICPDisplay = () => {
       } catch (err) {
         console.error('Failed to load ICP data:', err);
         setError(err.message);
+        // Throw error to boundary for critical failures
+        if (err.message.includes('configuration') || err.message.includes('unauthorized')) {
+          throwError(err);
+        }
       } finally {
         setLoading(false);
       }
@@ -197,24 +207,38 @@ const ICPDisplay = () => {
             
             <form onSubmit={handleRatingSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                <label 
+                  htmlFor="company-name-input-form"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
+                  Company Name
+                </label>
                 <input
+                  id="company-name-input-form"
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Enter company name to analyze"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isRating}
+                  aria-describedby="company-name-form-help"
                 />
+                <div id="company-name-form-help" className="sr-only">
+                  Enter the name of the company you want to analyze against your ideal customer profile
+                </div>
               </div>
               
               <button
                 type="submit"
                 disabled={!companyName.trim() || isRating}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                aria-describedby="calculate-button-help"
               >
                 {isRating ? 'Analyzing Company...' : 'Calculate ICP Fit Score'}
               </button>
+              <div id="calculate-button-help" className="sr-only">
+                Click to start analyzing the company against your ideal customer profile criteria
+              </div>
             </form>
 
             {/* Rating Results */}
@@ -297,24 +321,38 @@ const ICPDisplay = () => {
             
             <form onSubmit={handleRatingSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                <label 
+                  htmlFor="company-name-input-main"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
+                  Company Name
+                </label>
                 <input
+                  id="company-name-input-main"
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Enter company name to analyze"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isRating}
+                  aria-describedby="company-name-main-help"
                 />
+                <div id="company-name-main-help" className="sr-only">
+                  Enter the name of the company you want to analyze against your ideal customer profile
+                </div>
               </div>
               
               <button
                 type="submit"
                 disabled={!companyName.trim() || isRating}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                aria-describedby="calculate-main-button-help"
               >
                 {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
               </button>
+              <div id="calculate-main-button-help" className="sr-only">
+                Click to start analyzing the company against your ideal customer profile criteria
+              </div>
             </form>
 
             {isRating && (
@@ -385,4 +423,13 @@ const ICPDisplay = () => {
   );
 };
 
-export default ICPDisplay;
+const ICPDisplayWithErrorBoundary = (props) => (
+  <AsyncErrorBoundary 
+    fallbackMessage="Failed to load the ICP Analysis tool. This might be due to a configuration issue or temporary service disruption."
+    onRetry={() => window.location.reload()}
+  >
+    <ICPDisplay {...props} />
+  </AsyncErrorBoundary>
+);
+
+export default ICPDisplayWithErrorBoundary;

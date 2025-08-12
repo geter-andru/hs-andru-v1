@@ -52,6 +52,8 @@ const CompetencyDashboard = ({ customerId, isVisible = true, className = '' }) =
           : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
       }`}
       title={tab.description}
+      aria-pressed={isActive}
+      aria-describedby={`${tab.id}-description`}
     >
       <span className="text-lg">{tab.icon}</span>
       <span className={`${collapsed ? 'hidden' : 'block'}`}>{tab.name}</span>
@@ -101,6 +103,8 @@ const CompetencyDashboard = ({ customerId, isVisible = true, className = '' }) =
             onClick={() => setCollapsed(!collapsed)}
             className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700"
             title={collapsed ? 'Expand' : 'Collapse'}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand Professional Development Center' : 'Collapse Professional Development Center'}
           >
             <svg 
               className={`w-5 h-5 transform transition-transform ${collapsed ? 'rotate-180' : ''}`}

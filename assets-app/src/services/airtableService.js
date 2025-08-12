@@ -1,8 +1,14 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://api.airtable.com/v0';
-const BASE_ID = process.env.REACT_APP_AIRTABLE_BASE_ID;
-const API_KEY = process.env.REACT_APP_AIRTABLE_API_KEY;
+const BASE_ID = process.env.REACT_APP_AIRTABLE_BASE_ID || (() => {
+  console.error('Missing REACT_APP_AIRTABLE_BASE_ID environment variable');
+  throw new Error('Airtable configuration missing');
+})();
+const API_KEY = process.env.REACT_APP_AIRTABLE_API_KEY || (() => {
+  console.error('Missing REACT_APP_AIRTABLE_API_KEY environment variable');
+  throw new Error('Airtable configuration missing');
+})();
 
 // Cache for customer assets and user progress to avoid redundant API calls
 let customerAssetsCache = new Map();
@@ -129,7 +135,9 @@ const airtableClient = axios.create({
 // Add request interceptor for logging
 airtableClient.interceptors.request.use(
   (config) => {
-    console.log('Airtable Request:', config.method?.toUpperCase(), config.url);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Airtable Request:', config.method?.toUpperCase(), config.url);
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -153,33 +161,45 @@ export const airtableService = {
       // Check cache first
       const cachedData = customerAssetsCache.get(cacheKey);
       if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
-        console.log(`Using cached customer assets for: ${customerId}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Using cached customer assets for: ${customerId}`);
+        }
         return cachedData.data;
       }
       
-      console.log(`Fetching customer assets for: ${customerId} with token: ${accessToken}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Fetching customer assets for: ${customerId} with token: ${accessToken}`);
+      }
       
       // Strategy 1: Try filtering by Access Token only (more reliable)
+      // Sanitize accessToken to prevent injection attacks
+      const sanitizedToken = accessToken.replace(/'/g, "''").replace(/\\/g, "\\\\");
       const response = await airtableClient.get('/Customer Assets', {
         params: {
-          filterByFormula: `{Access Token} = '${accessToken}'`,
+          filterByFormula: `{Access Token} = '${sanitizedToken}'`,
           maxRecords: 10  // Reduced from 100 to minimize timeout risk
         }
       });
 
-      console.log(`Found ${response.data.records.length} records with matching access token`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Found ${response.data.records.length} records with matching access token`);
+      }
 
       // Find matching record by Customer ID in the filtered results
       const matchingRecord = response.data.records.find(record => {
         const recordCustomerId = record.fields['Customer ID'];
-        console.log(`Checking record with Customer ID: ${recordCustomerId}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Checking record with Customer ID: ${recordCustomerId}`);
+        }
         return recordCustomerId === customerId;
       });
 
       if (!matchingRecord) {
         // Strategy 2: If no match found, try direct record lookup if customerId looks like record ID
         if (customerId.startsWith('rec')) {
-          console.log('Trying direct record lookup...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Trying direct record lookup...');
+          }
           const directResponse = await airtableClient.get(`/Customer Assets/${customerId}`);
           const record = directResponse.data;
           
@@ -222,7 +242,9 @@ export const airtableService = {
       }
 
       const record = matchingRecord;
-      console.log('Successfully found matching customer record');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Successfully found matching customer record');
+      }
       
       const customerData = {
         id: record.id,

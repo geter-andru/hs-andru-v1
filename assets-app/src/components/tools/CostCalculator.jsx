@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ResponsiveContainer } from 'recharts';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const CostCalculator = () => {
   const { onCostCalculated } = useOutletContext() || {};
+  const { throwError } = useAsyncError();
   const [costData, setCostData] = useState(null);
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,10 @@ const CostCalculator = () => {
       } catch (err) {
         console.error('Failed to load cost calculator data:', err);
         setError(err.message);
+        // Throw error to boundary for critical failures
+        if (err.message.includes('configuration') || err.message.includes('unauthorized')) {
+          throwError(err);
+        }
       } finally {
         setLoading(false);
       }
@@ -56,7 +62,9 @@ const CostCalculator = () => {
     if (!icpData) return;
 
     try {
-      console.log('🎯 ICP Auto-populate Debug:', icpData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎯 ICP Auto-populate Debug:', icpData);
+      }
       
       const newFormData = { ...formData };
       const newAutoPopulated = new Set();
@@ -222,7 +230,9 @@ const CostCalculator = () => {
       setFormData(newFormData);
       setAutoPopulated(newAutoPopulated);
       
-      console.log(`✅ Auto-populated ${newAutoPopulated.size} fields from ICP analysis`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Auto-populated ${newAutoPopulated.size} fields from ICP analysis`);
+      }
 
     } catch (error) {
       console.error('Error auto-populating from ICP:', error);
@@ -284,7 +294,7 @@ const CostCalculator = () => {
     );
   };
 
-  const calculateCostOfInaction = () => {
+  const calculateCostOfInaction = useCallback(() => {
     const {
       currentRevenue,
       targetGrowthRate,
@@ -375,13 +385,13 @@ const CostCalculator = () => {
     ).catch(console.error);
 
     // Trigger workflow completion callback
-    if (onCostCalculated && result.totalAnnualCost > 0) {
+    if (onCostCalculated && result.totalCostOfInaction > 0) {
       onCostCalculated({
-        totalAnnualCost: result.totalAnnualCost,
+        totalAnnualCost: result.totalCostOfInaction,
         timeSpent: Date.now() - startTime
       }).catch(console.error);
     }
-  };
+  }, [formData, onCostCalculated, session?.customerId, startTime]);
 
   const handleCalculate = (e) => {
     e.preventDefault();
@@ -655,4 +665,13 @@ Generated on: ${new Date().toLocaleDateString()}
   );
 };
 
-export default CostCalculator;
+const CostCalculatorWithErrorBoundary = (props) => (
+  <AsyncErrorBoundary 
+    fallbackMessage="Failed to load the Cost Calculator. This might be due to a configuration issue or temporary service disruption."
+    onRetry={() => window.location.reload()}
+  >
+    <CostCalculator {...props} />
+  </AsyncErrorBoundary>
+);
+
+export default CostCalculatorWithErrorBoundary;
