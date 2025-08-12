@@ -16,8 +16,8 @@ const ContentDisplay = ({ content, className = '' }) => {
 
   if (!content) {
     return (
-      <div className={`bg-surface/30 rounded-lg p-6 text-center ${className}`}>
-        <p className="text-muted">No content available</p>
+      <div className={`bg-gray-800 border border-gray-600 rounded-lg p-6 text-center ${className}`}>
+        <p className="text-gray-400">No content available</p>
       </div>
     );
   }
@@ -242,7 +242,7 @@ const ContentDisplay = ({ content, className = '' }) => {
         {/* Main HTML content */}
         {parsedContent.content.html && (
           <div 
-            className="prose max-w-none [&>div]:!bg-brand/10 [&>div]:!border-brand/20 [&_h2]:!text-primary [&_p]:!text-secondary [&_ul]:!text-secondary [&_.bg-white]:!bg-surface/50 [&_.bg-gray-50]:!bg-surface/30 [&_.text-blue-800]:!text-primary [&_.text-blue-700]:!text-brand [&_.text-gray-700]:!text-secondary [&_.text-gray-600]:!text-muted [&_.text-gray-800]:!text-primary [&_.bg-blue-50]:!bg-brand/5 [&_.border-blue-200]:!border-brand/20 [&_.bg-red-50]:!bg-danger/10 [&_.border-red-200]:!border-danger/20 [&_.text-red-500]:!text-danger"
+            className="prose max-w-none prose-invert [&>div]:!bg-gray-800 [&>div]:!border-gray-600 [&_h2]:!text-white [&_p]:!text-gray-300 [&_ul]:!text-gray-300 [&_.bg-white]:!bg-gray-800 [&_.bg-gray-50]:!bg-gray-700 [&_.text-blue-800]:!text-blue-400 [&_.text-blue-700]:!text-blue-300 [&_.text-gray-700]:!text-gray-300 [&_.text-gray-600]:!text-gray-400 [&_.text-gray-800]:!text-white [&_.bg-blue-50]:!bg-blue-900/20 [&_.border-blue-200]:!border-blue-600 [&_.bg-red-50]:!bg-red-900/20 [&_.border-red-200]:!border-red-600 [&_.text-red-500]:!text-red-400"
             dangerouslySetInnerHTML={{ __html: parsedContent.content.html }}
           />
         )}
@@ -254,16 +254,16 @@ const ContentDisplay = ({ content, className = '' }) => {
               const isExpanded = expandedSections.has(sectionId);
               
               return (
-                <div key={sectionId} className="border border-glass-border rounded-lg bg-surface/30">
+                <div key={sectionId} className="border border-gray-600 rounded-lg bg-gray-800">
                   <button
                     onClick={() => toggleSection(sectionId)}
-                    className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-surface/50 transition-colors rounded-lg"
+                    className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-700 transition-colors rounded-lg"
                   >
-                    <span className="font-medium text-primary capitalize">
+                    <span className="font-medium text-white capitalize">
                       {sectionId.replace(/[_-]/g, ' ')}
                     </span>
                     <svg
-                      className={`w-5 h-5 text-muted transform transition-transform ${
+                      className={`w-5 h-5 text-gray-400 transform transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}
                       fill="none"
@@ -277,7 +277,7 @@ const ContentDisplay = ({ content, className = '' }) => {
                   {isExpanded && (
                     <div className="px-4 pb-4">
                       <div 
-                        className="prose max-w-none prose-sm [&_.bg-gray-50]:!bg-surface/30 [&_.text-gray-700]:!text-primary [&_.text-gray-600]:!text-secondary [&_.text-gray-800]:!text-primary [&_.bg-red-50]:!bg-danger/10 [&_.border-red-200]:!border-danger/20 [&_.text-red-500]:!text-danger [&_.w-2]:!bg-brand"
+                        className="prose max-w-none prose-sm prose-invert [&_.bg-gray-50]:!bg-gray-700 [&_.text-gray-700]:!text-gray-300 [&_.text-gray-600]:!text-gray-400 [&_.text-gray-800]:!text-white [&_.bg-red-50]:!bg-red-900/20 [&_.border-red-200]:!border-red-600 [&_.text-red-500]:!text-red-400 [&_.w-2]:!bg-blue-500"
                         dangerouslySetInnerHTML={{ __html: sectionContent }}
                       />
                     </div>
@@ -291,15 +291,15 @@ const ContentDisplay = ({ content, className = '' }) => {
         {/* Interactive scoring criteria */}
         {parsedContent.interactive && parsedContent.interactive.scoring_criteria && (
           <div className="space-y-3">
-            <h4 className="font-medium text-primary">Scoring Criteria</h4>
+            <h4 className="font-medium text-white">Scoring Criteria</h4>
             {parsedContent.interactive.scoring_criteria.map((criteria, index) => (
-              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+              <div key={index} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-primary">{criteria.category}</span>
-                  <span className="text-sm text-brand">{criteria.weight}% weight</span>
+                  <span className="font-medium text-white">{criteria.category}</span>
+                  <span className="text-sm text-blue-400">{criteria.weight}% weight</span>
                 </div>
-                <p className="text-sm text-secondary mb-2">{criteria.description}</p>
-                <div className="text-xs text-muted">Max Score: {criteria.max_score}</div>
+                <p className="text-sm text-gray-300 mb-2">{criteria.description}</p>
+                <div className="text-xs text-gray-400">Max Score: {criteria.max_score}</div>
               </div>
             ))}
           </div>
@@ -308,18 +308,18 @@ const ContentDisplay = ({ content, className = '' }) => {
         {/* Interactive rating questions */}
         {parsedContent.interactive && parsedContent.interactive.rating_questions && (
           <div className="space-y-3">
-            <h4 className="font-medium text-primary">Assessment Questions</h4>
+            <h4 className="font-medium text-white">Assessment Questions</h4>
             {parsedContent.interactive.rating_questions.map((question, index) => (
-              <div key={index} className="bg-surface/50 rounded-lg p-4 border border-glass-border">
+              <div key={index} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
                 <div className="mb-3">
-                  <span className="text-sm text-brand font-medium">{question.category}</span>
-                  <h5 className="font-medium text-primary">{question.question}</h5>
+                  <span className="text-sm text-blue-400 font-medium">{question.category}</span>
+                  <h5 className="font-medium text-white">{question.question}</h5>
                 </div>
                 <div className="space-y-2">
                   {question.options.map((option, optionIndex) => (
-                    <div key={optionIndex} className="flex items-center justify-between bg-surface/30 rounded p-2">
-                      <span className="text-sm text-secondary">{option.text}</span>
-                      <span className="text-xs text-brand font-medium">{option.score} pts</span>
+                    <div key={optionIndex} className="flex items-center justify-between bg-gray-800 rounded p-2">
+                      <span className="text-sm text-gray-300">{option.text}</span>
+                      <span className="text-xs text-blue-400 font-medium">{option.score} pts</span>
                     </div>
                   ))}
                 </div>
