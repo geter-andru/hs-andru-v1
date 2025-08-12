@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Award, Target, Unlock, ChevronRight, Star } from 'lucide-react';
 import { airtableService } from '../../services/airtableService';
+import '../../styles/gamification.css';
 
 const CompetencyOverview = ({ customerId, competencyData, onRefresh, className = '' }) => {
   const [overview, setOverview] = useState({

@@ -3,6 +3,7 @@ import { Lock, CheckCircle, Clock, TrendingUp, Award, Target } from 'lucide-reac
 import { airtableService } from '../../services/airtableService';
 import { useProgressNotifications } from '../notifications/ProgressNotifications';
 import ProgressNotifications from '../notifications/ProgressNotifications';
+import '../../styles/gamification.css';
 
 const ActiveToolDisplay = ({ 
   currentTool, 
@@ -169,155 +170,177 @@ const ActiveToolDisplay = ({
 
   return (
     <>
-      <div className={`bg-gray-900 border border-gray-700 rounded-lg overflow-hidden ${className}`}>
-        {/* Tool Header */}
-        <div className={`bg-gradient-to-r from-${toolInfo.color}-900/50 to-${toolInfo.color}-800/50 border-b border-gray-700 p-6`}>
+      <div className={`executive-card animate-executive-entrance ${className}`}>
+        {/* Executive Tool Header */}
+        <div className={`bg-gradient-to-r from-${toolInfo.color}-900/30 via-${toolInfo.color}-800/20 to-${toolInfo.color}-900/30 border-b border-gray-700 p-8`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 bg-${toolInfo.color}-900/50 rounded-lg border border-${toolInfo.color}-700`}>
-                <span className="text-2xl">{toolInfo.icon}</span>
+            <div className="flex items-center space-x-6">
+              <div className={`p-4 bg-gradient-to-br from-${toolInfo.color}-600/20 to-${toolInfo.color}-500/20 rounded-2xl border border-${toolInfo.color}-500/30 backdrop-blur-sm shadow-lg`}>
+                <span className="text-4xl">{toolInfo.icon}</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">
+                <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">
                   {toolInfo.name}
                 </h2>
-                <p className="text-gray-300 text-sm">
+                <p className="text-gray-200 text-base leading-relaxed mb-4">
                   {toolInfo.description}
                 </p>
-                <div className="flex items-center space-x-4 mt-2">
-                  <span className={`text-xs px-2 py-1 bg-${toolInfo.color}-900/50 text-${toolInfo.color}-300 rounded-full border border-${toolInfo.color}-700`}>
-                    {toolInfo.level} Level
+                <div className="flex items-center space-x-6">
+                  <span className={`professional-badge badge-advancement text-sm font-semibold`}>
+                    {toolInfo.level} Tier
                   </span>
-                  <span className="text-xs text-gray-400">
-                    Completions: {accessStatus.completions || 0}
+                  <span className="text-sm text-gray-300 font-medium">
+                    Deployments: {accessStatus.completions || 0}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Status Indicator */}
-            <div className="flex items-center space-x-3">
+            {/* Executive Status Indicator */}
+            <div className="flex items-center space-x-4">
               {isLocked ? (
-                <div className="flex items-center space-x-2 text-gray-400">
-                  <Lock className="w-5 h-5" />
-                  <span className="text-sm">Methodology Locked</span>
+                <div className="flex items-center space-x-3 text-gray-400">
+                  <div className="p-2 bg-gray-700/50 rounded-lg">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <span className="text-base font-medium">Access Restricted</span>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="text-sm">Available</span>
+                <div className="flex items-center space-x-3 text-green-400">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <span className="text-base font-semibold">Executive Access</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Gamification Feedback */}
+        {/* Executive Performance Feedback */}
         {gamificationFeedback && (
-          <div className="bg-gray-800 border-b border-gray-700 p-4">
-            <div className="flex items-center space-x-4">
-              <Award className="w-5 h-5 text-yellow-400" />
+          <div className="bg-gradient-to-r from-gray-800/80 to-gray-900/60 border-b border-gray-700/50 p-6 animate-progress-recognition">
+            <div className="flex items-center space-x-6">
+              <div className="p-3 bg-yellow-500/20 rounded-xl">
+                <Award className="w-6 h-6 text-yellow-400" />
+              </div>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-white mb-1">
-                  Professional Development Feedback
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Strategic Development Recognition
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {gamificationFeedback.pointsAwarded > 0 && (
-                    <div className="flex items-center space-x-1">
-                      <TrendingUp className="w-3 h-3 text-blue-400" />
-                      <span className="text-gray-300">+{gamificationFeedback.pointsAwarded} points</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-blue-500/20 rounded">
+                        <TrendingUp className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-200">+{gamificationFeedback.pointsAwarded} excellence points</span>
                     </div>
                   )}
                   {gamificationFeedback.competencyAdvanced && (
-                    <div className="flex items-center space-x-1">
-                      <Target className="w-3 h-3 text-green-400" />
-                      <span className="text-gray-300">Competency Advanced</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-green-500/20 rounded">
+                        <Target className="w-4 h-4 text-green-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-200">Competency Advancement</span>
                     </div>
                   )}
                   {gamificationFeedback.milestoneAchieved && (
-                    <div className="flex items-center space-x-1">
-                      <Award className="w-3 h-3 text-yellow-400" />
-                      <span className="text-gray-300">Milestone Achieved</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-yellow-500/20 rounded">
+                        <Award className="w-4 h-4 text-yellow-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-200">Strategic Milestone</span>
                     </div>
                   )}
                   {gamificationFeedback.toolUnlocked && (
-                    <div className="flex items-center space-x-1">
-                      <CheckCircle className="w-3 h-3 text-purple-400" />
-                      <span className="text-gray-300">Tool Unlocked</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-purple-500/20 rounded">
+                        <CheckCircle className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-200">Access Granted</span>
                     </div>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => setGamificationFeedback(null)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="professional-interactive text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700/50"
               >
-                ×
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
         )}
 
-        {/* Locked Tool Display */}
+        {/* Executive Access Restriction Display */}
         {isLocked ? (
-          <div className="p-8 text-center">
-            <div className="mb-6">
-              <Lock className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                Advanced Methodology Locked
+          <div className="p-12 text-center">
+            <div className="mb-8">
+              <div className="p-6 bg-gray-700/30 rounded-2xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Lock className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                Executive Methodology Access Required
               </h3>
-              <p className="text-gray-400 max-w-md mx-auto">
-                Demonstrate proficiency in prerequisite methodologies to unlock this advanced analysis tool.
+              <p className="text-gray-300 max-w-lg mx-auto leading-relaxed">
+                Demonstrate strategic competency in foundational methodologies to unlock this advanced executive framework.
               </p>
             </div>
 
-            {/* Unlock Progress */}
+            {/* Executive Unlock Progress Dashboard */}
             {accessStatus.unlock_progress && (
-              <div className="bg-gray-800 rounded-lg p-4 max-w-md mx-auto">
-                <h4 className="text-sm font-medium text-gray-300 mb-3">
-                  Unlock Requirements
-                </h4>
-                <div className="space-y-3 text-sm">
-                  {Object.entries(accessStatus.unlock_progress).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-gray-400 capitalize">
-                        {key.replace('_', ' ')}
-                      </span>
-                      <span className="text-gray-300 font-medium">
-                        {typeof value === 'number' ? value : String(value)}
-                      </span>
-                    </div>
-                  ))}
+              <div className="executive-card max-w-lg mx-auto mb-8">
+                <div className="p-6">
+                  <h4 className="text-lg font-semibold text-gray-200 mb-4">
+                    Competency Requirements
+                  </h4>
+                  <div className="space-y-4">
+                    {Object.entries(accessStatus.unlock_progress).map(([key, value]) => (
+                      <div key={key} className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span className="text-gray-300 font-medium capitalize">
+                          {key.replace('_', ' ')}
+                        </span>
+                        <span className="professional-badge badge-advancement font-bold">
+                          {typeof value === 'number' ? value : String(value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
             <button
               onClick={() => onToolChange('icp')}
-              className="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              className="professional-interactive professional-focus px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl font-semibold text-lg shadow-lg"
             >
-              Start with Customer Analysis
+              Begin Strategic Foundation
             </button>
           </div>
         ) : (
-          /* Active Tool Content */
-          <div className="p-6">
-            {/* Enhanced children with gamification context */}
+          /* Executive Tool Framework Content */
+          <div className="p-8">
+            {/* Enhanced children with executive gamification context */}
             {React.cloneElement(children, {
               onCompletion: handleCompletionWithGamification,
               toolInfo: toolInfo,
               accessStatus: accessStatus,
-              gamificationEnabled: true
+              gamificationEnabled: true,
+              executiveMode: true
             })}
           </div>
         )}
       </div>
 
-      {/* Progress Notifications */}
+      {/* Executive Progress Notifications */}
       <ProgressNotifications
         notifications={notifications}
         onDismiss={dismissNotification}
         position="top-right"
+        className="notification-container"
       />
     </>
   );

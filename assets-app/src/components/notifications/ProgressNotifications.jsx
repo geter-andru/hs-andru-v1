@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, TrendingUp, Award, Unlock, Star, CheckCircle } from 'lucide-react';
+import '../../styles/gamification.css';
 
 const ProgressNotifications = ({ 
   notifications, 
@@ -52,52 +53,52 @@ const ProgressNotifications = ({
       progress_recognition: {
         icon: TrendingUp,
         iconColor: 'text-blue-400',
-        bgGradient: 'from-blue-900/80 to-blue-800/80',
-        borderColor: 'border-blue-600',
-        title: 'Progress Recognition',
-        message: `+${data.points} Development Points`,
+        bgGradient: 'from-blue-900/90 to-blue-800/90',
+        borderColor: 'border-blue-500',
+        title: 'Strategic Progress Recognition',
+        message: `+${data.points} Excellence Points`,
         subtitle: data.activity,
-        celebrationLevel: 'low'
+        celebrationLevel: 'medium'
       },
       competency_advancement: {
         icon: Award,
         iconColor: 'text-green-400',
-        bgGradient: 'from-green-900/80 to-green-800/80',
-        borderColor: 'border-green-600',
-        title: 'Competency Advanced',
+        bgGradient: 'from-green-900/90 to-green-800/90',
+        borderColor: 'border-green-500',
+        title: 'Executive Competency Advancement',
         message: `${data.competency} +${data.gain}`,
-        subtitle: 'Professional capability increased',
-        celebrationLevel: 'medium'
+        subtitle: 'Strategic capability expanded',
+        celebrationLevel: 'high'
       },
       milestone_reached: {
         icon: Star,
         iconColor: 'text-yellow-400',
-        bgGradient: 'from-yellow-900/80 to-yellow-800/80',
-        borderColor: 'border-yellow-600',
-        title: 'Professional Milestone',
+        bgGradient: 'from-yellow-900/90 to-yellow-800/90',
+        borderColor: 'border-yellow-500',
+        title: 'Strategic Milestone Achievement',
         message: data.milestone_name,
-        subtitle: 'Systematic development recognized',
+        subtitle: 'Executive excellence demonstrated',
         celebrationLevel: 'high'
       },
       tool_access_earned: {
         icon: Unlock,
         iconColor: 'text-purple-400',
-        bgGradient: 'from-purple-900/80 to-purple-800/80',
-        borderColor: 'border-purple-600',
-        title: 'Advanced Tools Available',
+        bgGradient: 'from-purple-900/90 to-purple-800/90',
+        borderColor: 'border-purple-500',
+        title: 'Executive Methodology Unlocked',
         message: data.tool_name,
-        subtitle: 'Competency readiness demonstrated',
+        subtitle: 'Strategic competency requirements fulfilled',
         celebrationLevel: 'high'
       },
       consistency_reward: {
         icon: CheckCircle,
         iconColor: 'text-emerald-400',
-        bgGradient: 'from-emerald-900/80 to-emerald-800/80',
-        borderColor: 'border-emerald-600',
-        title: 'Consistency Recognition',
-        message: `${data.streak_days} Day Excellence`,
-        subtitle: 'Professional dedication acknowledged',
-        celebrationLevel: 'medium'
+        bgGradient: 'from-emerald-900/90 to-emerald-800/90',
+        borderColor: 'border-emerald-500',
+        title: 'Executive Excellence Momentum',
+        message: `${data.streak_days} Day Strategic Consistency`,
+        subtitle: 'Leadership dedication recognized',
+        celebrationLevel: 'high'
       }
     };
 
@@ -123,83 +124,85 @@ const ProgressNotifications = ({
 
     return (
       <div
-        className={`relative mb-3 transform transition-all duration-500 ease-out animate-slide-in-right`}
+        className={`relative mb-4 transform transition-all duration-500 ease-out animate-notification-professional`}
         style={{ animationDelay: `${animationDelay}ms` }}
       >
-        {/* Glow effect for high celebration level */}
+        {/* Executive Glow Effect for High Achievement */}
         {content.celebrationLevel === 'high' && (
-          <div className={`absolute inset-0 bg-gradient-to-r ${content.bgGradient} opacity-20 blur-xl rounded-lg animate-pulse`} />
+          <div className={`absolute inset-0 bg-gradient-to-r ${content.bgGradient} opacity-30 blur-2xl rounded-xl animate-sophisticated-glow`} />
         )}
         
-        {/* Main notification card */}
-        <div className={`relative bg-gray-900/95 backdrop-blur-sm border-2 ${content.borderColor} rounded-lg shadow-2xl max-w-sm overflow-hidden`}>
-          {/* Animated border effect */}
+        {/* Executive Notification Card */}
+        <div className={`notification-container notification-${notification.type} max-w-md`}>
+          {/* Executive Animated Border Effect */}
           {content.celebrationLevel === 'high' && (
-            <div className={`absolute inset-0 bg-gradient-to-r ${content.bgGradient} opacity-30 animate-pulse`} />
+            <div className={`absolute inset-0 bg-gradient-to-r ${content.bgGradient} opacity-20 animate-milestone-celebration`} />
           )}
           
-          {/* Header */}
-          <div className={`relative bg-gradient-to-r ${content.bgGradient} p-4 border-b border-gray-700`}>
+          {/* Executive Header */}
+          <div className={`relative bg-gradient-to-r ${content.bgGradient} p-6`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 bg-black/20 rounded-lg ${content.celebrationLevel === 'high' ? 'animate-bounce' : ''}`}>
-                  <Icon className={`w-5 h-5 ${content.iconColor}`} />
+              <div className="flex items-center space-x-4">
+                <div className={`p-3 bg-black/30 rounded-xl shadow-lg ${content.celebrationLevel === 'high' ? 'animate-milestone-bounce' : 'animate-professional-pulse'}`}>
+                  <Icon className={`w-6 h-6 ${content.iconColor}`} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">
+                  <h3 className="text-white font-bold text-base tracking-tight">
                     {content.title}
                   </h3>
                   {notification.timestamp && (
-                    <p className="text-xs text-gray-300 opacity-75">
-                      {new Date(notification.timestamp).toLocaleTimeString()}
+                    <p className="text-sm text-gray-200 opacity-80 font-medium">
+                      {new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => handleDismiss(notification.id)}
-                className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
+                className="professional-interactive text-gray-300 hover:text-white p-2 hover:bg-white/20 rounded-lg backdrop-blur-sm"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="relative p-4">
-            <div className="space-y-2">
-              <p className="text-white font-medium">
+          {/* Executive Content */}
+          <div className="relative p-6">
+            <div className="space-y-3">
+              <p className="text-white font-bold text-lg">
                 {content.message}
               </p>
               {content.subtitle && (
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-300 text-sm font-medium leading-relaxed">
                   {content.subtitle}
                 </p>
               )}
               
-              {/* Progress points animation */}
+              {/* Executive Progress Points Animation */}
               {notification.data?.points && (
-                <div className="flex items-center space-x-2 mt-3">
-                  <div className="flex-1 bg-gray-700 rounded-full h-2">
+                <div className="flex items-center space-x-3 mt-4">
+                  <div className="flex-1 bg-gray-700/50 rounded-full h-3 shadow-inner">
                     <div
-                      className={`bg-gradient-to-r ${content.bgGradient} h-2 rounded-full transition-all duration-1000 ease-out`}
-                      style={{ width: '100%' }}
-                    />
+                      className={`bg-gradient-to-r ${content.bgGradient} h-3 rounded-full animate-sophisticated-progress-fill shadow-lg`}
+                      style={{ width: '100%', '--target-width': '100%' }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                  <span className="text-sm text-gray-200 font-bold whitespace-nowrap animate-sophisticated-points-increment">
                     +{notification.data.points}
                   </span>
                 </div>
               )}
 
-              {/* Competency gain visualization */}
+              {/* Executive Competency Advancement Visualization */}
               {notification.data?.competency && (
-                <div className="mt-3 p-2 bg-gray-800/50 rounded border border-gray-600">
+                <div className="mt-4 p-4 bg-gray-800/60 rounded-xl border border-gray-600/50 backdrop-blur-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-sm text-gray-300 font-medium">
                       {notification.data.competency}
                     </span>
-                    <span className="text-xs font-medium text-green-400">
+                    <span className="text-sm font-bold text-green-400 animate-competency-advancement">
                       +{notification.data.gain}
                     </span>
                   </div>
@@ -207,21 +210,22 @@ const ProgressNotifications = ({
               )}
             </div>
 
-            {/* Achievement sparkle effect */}
+            {/* Executive Achievement Celebration Effect */}
             {content.celebrationLevel === 'high' && (
-              <div className="absolute top-1 right-1">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
-                <div className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full" />
+              <div className="absolute top-2 right-2">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-professional-confetti" />
+                <div className="absolute top-0 right-0 w-3 h-3 bg-purple-400 rounded-full animate-professional-confetti" style={{ animationDelay: '0.3s' }} />
+                <div className="absolute top-1 right-1 w-2 h-2 bg-blue-400 rounded-full animate-professional-confetti" style={{ animationDelay: '0.6s' }} />
               </div>
             )}
           </div>
 
-          {/* Footer for milestones */}
+          {/* Executive Milestone Footer */}
           {notification.type === 'milestone_reached' && notification.data?.badge && (
-            <div className="px-4 pb-4">
-              <div className={`inline-flex items-center px-3 py-1 bg-gradient-to-r ${content.bgGradient} rounded-full border ${content.borderColor}`}>
-                <Star className="w-3 h-3 text-yellow-400 mr-2" />
-                <span className="text-xs font-medium text-white">
+            <div className="px-6 pb-6">
+              <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${content.bgGradient} rounded-xl border-2 ${content.borderColor} shadow-lg`}>
+                <Star className="w-4 h-4 text-yellow-400 mr-2 animate-executive-streak-fire" />
+                <span className="text-sm font-bold text-white">
                   {notification.data.badge}
                 </span>
               </div>
@@ -236,7 +240,7 @@ const ProgressNotifications = ({
 
   return (
     <div className={`fixed z-50 ${getPositionClasses()} ${className}`}>
-      <div className="space-y-3 max-h-screen overflow-y-auto">
+      <div className="space-y-4 max-h-screen overflow-y-auto">
         {visibleNotifications.map((notification, index) => (
           <NotificationCard
             key={notification.id}
