@@ -13,6 +13,8 @@ import ProfessionalDevelopment from './ProfessionalDevelopment';
 import ProgressiveToolAccess from '../competency/ProgressiveToolAccess';
 import ProgressNotifications from '../notifications/ProgressNotifications';
 import { useProgressNotifications } from '../notifications/ProgressNotifications';
+import WelcomeHero from '../progressive-engagement/WelcomeHero';
+import ProgressiveEngagementContainer from '../progressive-engagement/ProgressiveEngagementContainer';
 
 const CustomerDashboard = () => {
   const location = useLocation();
@@ -321,107 +323,127 @@ const CustomerDashboard = () => {
     );
   }
 
+  // Check if user should see the Progressive Engagement experience
+  const shouldUseProgressiveEngagement = () => {
+    // Use Progressive Engagement for new users or when explicitly enabled
+    return workflowProgress?.completion_percentage < 100 || dashboardLayout === 'integrated';
+  };
+
   return (
     <>
-      <div className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
-        {/* Integrated Dashboard Layout */}
-        {dashboardLayout === 'integrated' ? (
-          <div className="space-y-6">
-            {/* Competency Overview Header */}
-            <CompetencyOverview
-              customerId={customerId}
-              competencyData={competencyProgress}
-              onRefresh={refreshData}
-              className="w-full"
-            />
+      {shouldUseProgressiveEngagement() ? (
+        /* Progressive Engagement Experience - Complete Replacement */
+        <ProgressiveEngagementContainer
+          customerId={customerId}
+          onToolCompletion={async (toolName, data) => {
+            // Route to appropriate callback based on tool name
+            if (toolName === 'icp_analysis') return await toolCallbacks.onICPComplete(data);
+            if (toolName === 'cost_calculator') return await toolCallbacks.onCostCalculated(data);
+            if (toolName === 'business_case') return await toolCallbacks.onBusinessCaseReady(data);
+            return data;
+          }}
+        />
+      ) : (
+        /* Traditional Dashboard Layout for Completed Users */
+        <div className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
+          {/* Integrated Dashboard Layout */}
+          {dashboardLayout === 'integrated' ? (
+            <div className="space-y-6">
+              {/* Competency Overview Header */}
+              <CompetencyOverview
+                customerId={customerId}
+                competencyData={competencyProgress}
+                onRefresh={refreshData}
+                className="w-full"
+              />
 
-            {/* Main Content Grid */}
-            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'}`}>
-              {/* Tool Area - Takes up most space */}
-              <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-3'} space-y-6`}>
-                {/* Progressive Tool Access */}
-                <ProgressiveToolAccess
-                  customerId={customerId}
-                  toolAccess={toolAccess}
-                  onToolComplete={handleToolCompletion}
-                  onUnlockEarned={handleToolUnlock}
-                  className="w-full"
-                />
+              {/* Main Content Grid */}
+              <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'}`}>
+                {/* Tool Area - Takes up most space */}
+                <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-3'} space-y-6`}>
+                  {/* Progressive Tool Access */}
+                  <ProgressiveToolAccess
+                    customerId={customerId}
+                    toolAccess={toolAccess}
+                    onToolComplete={handleToolCompletion}
+                    onUnlockEarned={handleToolUnlock}
+                    className="w-full"
+                  />
 
-                {/* Enhanced Navigation */}
-                <EnhancedTabNavigation 
-                  activeTab={getActiveTab()}
-                  onTabChange={handleTabChange}
-                  workflowData={workflowProgress}
-                  workflowStatus={workflowStatus}
-                  completionPercentage={workflowProgress?.completion_percentage || 0}
-                  customerId={customerId}
-                  toolAccess={toolAccess} // Pass tool access for progressive tabs
-                />
+                  {/* Enhanced Navigation */}
+                  <EnhancedTabNavigation 
+                    activeTab={getActiveTab()}
+                    onTabChange={handleTabChange}
+                    workflowData={workflowProgress}
+                    workflowStatus={workflowStatus}
+                    completionPercentage={workflowProgress?.completion_percentage || 0}
+                    customerId={customerId}
+                    toolAccess={toolAccess}
+                  />
 
-                {/* Active Tool Display with Gamification */}
-                <ActiveToolDisplay
-                  currentTool={getActiveTab()}
-                  toolData={workflowProgress}
-                  customerId={customerId}
-                  onCompletion={async (data) => {
-                    // Route to appropriate callback
-                    const activeTab = getActiveTab();
-                    if (activeTab === 'icp') return await toolCallbacks.onICPComplete(data);
-                    if (activeTab === 'cost') return await toolCallbacks.onCostCalculated(data);
-                    if (activeTab === 'business_case') return await toolCallbacks.onBusinessCaseReady(data);
-                    return data;
-                  }}
-                  onToolChange={handleTabChange}
-                  className="w-full"
-                >
-                  <Outlet context={toolCallbacks} />
-                </ActiveToolDisplay>
-              </div>
+                  {/* Active Tool Display */}
+                  <ActiveToolDisplay
+                    currentTool={getActiveTab()}
+                    toolData={workflowProgress}
+                    customerId={customerId}
+                    onCompletion={async (data) => {
+                      // Route to appropriate callback
+                      const activeTab = getActiveTab();
+                      if (activeTab === 'icp') return await toolCallbacks.onICPComplete(data);
+                      if (activeTab === 'cost') return await toolCallbacks.onCostCalculated(data);
+                      if (activeTab === 'business_case') return await toolCallbacks.onBusinessCaseReady(data);
+                      return data;
+                    }}
+                    onToolChange={handleTabChange}
+                    className="w-full"
+                  >
+                    <Outlet context={toolCallbacks} />
+                  </ActiveToolDisplay>
+                </div>
 
-              {/* Professional Development Sidebar */}
-              <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-1'}`}>
-                {isMobile ? (
-                  /* Mobile: Collapsible Sidebar */
-                  <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 border-t border-gray-700">
-                    <button
-                      onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                      className="w-full min-h-[44px] p-4 text-white font-medium flex items-center justify-center space-x-2 touch-manipulation"
-                    >
-                      <span>Professional Development</span>
-                      <span className="text-xs bg-blue-600 px-2 py-1 rounded-full">
-                        {summaryStats.objectivesCompleted}/{summaryStats.objectivesTotal}
-                      </span>
-                    </button>
-                    
-                    {showMobileSidebar && (
-                      <div className="absolute bottom-full left-0 right-0 bg-gray-900 border-t border-gray-700 max-h-80 overflow-y-auto">
-                        <ProfessionalDevelopment
-                          customerId={customerId}
-                          milestones={milestones}
-                          dailyObjectives={dailyObjectives}
-                          onObjectiveComplete={handleObjectiveCompletion}
-                          className="w-full"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Desktop: Fixed Sidebar */
-                  <div className="sticky top-6">
-                    <ProfessionalDevelopment
-                      customerId={customerId}
-                      milestones={milestones}
-                      dailyObjectives={dailyObjectives}
-                      onObjectiveComplete={handleObjectiveCompletion}
-                      className="w-full"
-                    />
-                  </div>
-                )}
+                {/* Professional Development Sidebar */}
+                <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-1'}`}>
+                  {isMobile ? (
+                    /* Mobile: Collapsible Sidebar */
+                    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 border-t border-gray-700">
+                      <button
+                        onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                        className="w-full min-h-[44px] p-4 text-white font-medium flex items-center justify-center space-x-2 touch-manipulation"
+                      >
+                        <span>Professional Development</span>
+                        <span className="text-xs bg-blue-600 px-2 py-1 rounded-full">
+                          {summaryStats.objectivesCompleted}/{summaryStats.objectivesTotal}
+                        </span>
+                      </button>
+                      
+                      {showMobileSidebar && (
+                        <div className="absolute bottom-full left-0 right-0 bg-gray-900 border-t border-gray-700 max-h-80 overflow-y-auto">
+                          <ProfessionalDevelopment
+                            customerId={customerId}
+                            milestones={milestones}
+                            dailyObjectives={dailyObjectives}
+                            onObjectiveComplete={handleObjectiveCompletion}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Desktop: Fixed Sidebar */
+                    <div className="sticky top-6">
+                      <ProfessionalDevelopment
+                        customerId={customerId}
+                        milestones={milestones}
+                        dailyObjectives={dailyObjectives}
+                        onObjectiveComplete={handleObjectiveCompletion}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
+          ) : (
           /* Classic Dashboard Layout (Fallback) */
           <div className="space-y-8">
             <EnhancedTabNavigation 
@@ -444,21 +466,22 @@ const CustomerDashboard = () => {
             </div>
           </div>
         )}
+        </div>
+      )}
 
-        {/* Layout Toggle (Development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed top-4 right-4 z-50">
-            <button
-              onClick={() => setDashboardLayout(prev => prev === 'integrated' ? 'classic' : 'integrated')}
-              className="px-3 py-1 bg-gray-800 text-white text-xs rounded border border-gray-600 hover:bg-gray-700"
-            >
-              {dashboardLayout === 'integrated' ? 'Classic' : 'Integrated'} Layout
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Layout Toggle (Development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => setDashboardLayout(prev => prev === 'integrated' ? 'classic' : 'integrated')}
+            className="px-3 py-1 bg-gray-800 text-white text-xs rounded border border-gray-600 hover:bg-gray-700"
+          >
+            {dashboardLayout === 'integrated' ? 'Classic' : 'Integrated'} Layout
+          </button>
+        </div>
+      )}
 
-      {/* Progress Notifications */}
+      {/* Progress Notifications - Always show */}
       <ProgressNotifications
         notifications={notifications}
         onDismiss={dismissNotification}
