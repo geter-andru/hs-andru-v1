@@ -42,6 +42,13 @@ const Navigation = () => {
       path: `/customer/${customerId}/dashboard/business-case${queryString}`,
       step: 3,
       description: 'Build pilot-to-contract cases'
+    },
+    {
+      id: 'results',
+      name: 'Results Dashboard',
+      path: `/customer/${customerId}/dashboard/results${queryString}`,
+      step: 4,
+      description: 'Executive results & insights'
     }
   ];
   

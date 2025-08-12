@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ICPDisplay from './components/tools/ICPDisplay';
 import CostCalculator from './components/tools/CostCalculator';
 import BusinessCaseBuilder from './components/tools/BusinessCaseBuilder';
+import ResultsDashboard from './components/results/ResultsDashboard';
 
 // Landing page component for invalid routes
 const InvalidAccess = () => (
@@ -46,6 +47,7 @@ function App() {
               <Route path="dashboard/icp" element={<ICPDisplay />} />
               <Route path="dashboard/cost-calculator" element={<CostCalculator />} />
               <Route path="dashboard/business-case" element={<BusinessCaseBuilder />} />
+              <Route path="dashboard/results" element={<ResultsDashboard />} />
             </Route>
             
             {/* Fallback for any other routes */}
