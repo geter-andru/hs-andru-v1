@@ -487,7 +487,7 @@ Generated on: ${new Date().toLocaleDateString()}
         {calculations && (
           <button
             onClick={exportResults}
-            className="btn btn-secondary"
+            className="btn btn-secondary min-h-[44px] touch-manipulation"
           >
             Export Results
           </button>
@@ -513,7 +513,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 type="button"
                 onClick={autoPopulateFromICP}
                 disabled={!icpData}
-                className="btn btn-secondary"
+                className="btn btn-secondary min-h-[44px] touch-manipulation"
                 title="Auto-populate fields using ICP Analysis data"
               >
                 <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -581,7 +581,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 ]
               )}
               
-              <button type="submit" className="btn btn-primary w-full">
+              <button type="submit" className="btn btn-primary w-full min-h-[44px] touch-manipulation">
                 Calculate Cost of Inaction
               </button>
             </form>

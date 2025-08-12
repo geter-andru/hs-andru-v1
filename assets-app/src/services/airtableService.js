@@ -46,7 +46,7 @@ const DEFAULT_USAGE_ANALYTICS = {
   last_login: null
 };
 
-// Enhanced gamification default structures
+// Enhanced professional development default structures
 const DEFAULT_COMPETENCY_PROGRESS = {
   overall_level: "Foundation",
   total_progress_points: 0,
@@ -61,9 +61,9 @@ const DEFAULT_COMPETENCY_PROGRESS = {
   advancement_dates: {},
   consistency_streak: 0,
   last_activity: null,
-  hidden_rank: "E", // Solo Leveling rank (E, D, C, B, A, S)
-  rank_points: 0,
-  next_rank_threshold: 500
+  competency_tier: "Foundation", // Professional competency tier (Foundation, Developing, Competent, Proficient, Advanced, Strategic)
+  development_points: 0,
+  next_tier_threshold: 500
 };
 
 const DEFAULT_TOOL_ACCESS_STATUS = {

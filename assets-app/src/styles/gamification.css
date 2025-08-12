@@ -47,6 +47,44 @@
    SOPHISTICATED PSYCHOLOGICAL ANIMATIONS
    ============================================== */
 
+/* Mobile Performance Optimization */
+@media (max-width: 768px) {
+  /* Reduce motion for better mobile performance */
+  .animate-executive-entrance,
+  .animate-professional-fade-in,
+  .animate-notification-professional,
+  .animate-progress-celebration {
+    animation-duration: 0.3s !important;
+    animation-timing-function: ease-out !important;
+    /* Use hardware acceleration for smoother mobile performance */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+  
+  /* Optimize blur effects for mobile */
+  @keyframes executive-entrance {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      /* Remove blur on mobile for performance */
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  /* Disable complex animations on mobile for performance */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
 /* Executive Dashboard Fade-In */
 @keyframes executive-entrance {
   from {

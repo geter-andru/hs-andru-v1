@@ -386,7 +386,7 @@ const CustomerDashboard = () => {
                   <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 border-t border-gray-700">
                     <button
                       onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                      className="w-full p-4 text-white font-medium flex items-center justify-center space-x-2"
+                      className="w-full min-h-[44px] p-4 text-white font-medium flex items-center justify-center space-x-2 touch-manipulation"
                     >
                       <span>Professional Development</span>
                       <span className="text-xs bg-blue-600 px-2 py-1 rounded-full">

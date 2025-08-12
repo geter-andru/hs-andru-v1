@@ -10,17 +10,19 @@ const useCompetencyDashboard = (customerId) => {
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
-  // Load all gamification data
-  const loadGamificationData = useCallback(async () => {
+  // Load all professional development data
+  const loadProfessionalDevelopmentData = useCallback(async () => {
     if (!customerId) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      console.log('Loading gamification data for customer:', customerId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Loading professional development data for customer:', customerId);
+      }
       
-      // Load all gamification data in parallel
+      // Load all professional development data in parallel
       const [
         competencyData,
         toolAccessData,
@@ -63,9 +65,11 @@ const useCompetencyDashboard = (customerId) => {
       }
 
       setLastRefresh(new Date());
-      console.log('Gamification data loaded successfully');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Professional development data loaded successfully');
+      }
     } catch (error) {
-      console.error('Error loading gamification data:', error);
+      console.error('Error loading professional development data:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -83,12 +87,14 @@ const useCompetencyDashboard = (customerId) => {
     }
   };
 
-  // Handle tool completion with gamification
+  // Handle tool completion with professional development tracking
   const handleToolCompletion = useCallback(async (toolName, completionData) => {
     if (!customerId) return { success: false, error: 'No customer ID' };
 
     try {
-      console.log(`Processing ${toolName} completion with gamification for customer:`, customerId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Processing ${toolName} completion with professional development for customer:`, customerId);
+      }
       
       let result;
       
@@ -112,9 +118,9 @@ const useCompetencyDashboard = (customerId) => {
           throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      // Refresh gamification data after completion
+      // Refresh professional development data after completion
       setTimeout(() => {
-        loadGamificationData();
+        loadProfessionalDevelopmentData();
       }, 1000);
 
       return { success: true, ...result };
@@ -122,7 +128,7 @@ const useCompetencyDashboard = (customerId) => {
       console.error(`Error completing ${toolName}:`, error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Handle objective completion
   const handleObjectiveCompletion = useCallback(async (objectiveId) => {
@@ -133,7 +139,7 @@ const useCompetencyDashboard = (customerId) => {
       
       // Refresh data to show updated objectives and streaks
       setTimeout(() => {
-        loadGamificationData();
+        loadProfessionalDevelopmentData();
       }, 500);
 
       return { success: true, ...result };
@@ -141,7 +147,7 @@ const useCompetencyDashboard = (customerId) => {
       console.error('Error completing objective:', error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Handle tool unlock
   const handleToolUnlock = useCallback(async (toolName) => {
@@ -152,7 +158,7 @@ const useCompetencyDashboard = (customerId) => {
       
       // Refresh tool access data
       setTimeout(() => {
-        loadGamificationData();
+        loadProfessionalDevelopmentData();
       }, 500);
 
       return { success: true, ...result };
@@ -160,12 +166,12 @@ const useCompetencyDashboard = (customerId) => {
       console.error('Error unlocking tool:', error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Manual refresh function
   const refreshData = useCallback(async () => {
-    await loadGamificationData();
-  }, [loadGamificationData]);
+    await loadProfessionalDevelopmentData();
+  }, [loadProfessionalDevelopmentData]);
 
   // Check for available tool unlocks
   const checkUnlockCriteria = useCallback(async () => {
@@ -177,7 +183,7 @@ const useCompetencyDashboard = (customerId) => {
       // Refresh if unlocks were granted
       if (result.unlocks && result.unlocks.length > 0) {
         setTimeout(() => {
-          loadGamificationData();
+          loadProfessionalDevelopmentData();
         }, 500);
       }
 
@@ -186,7 +192,7 @@ const useCompetencyDashboard = (customerId) => {
       console.error('Error checking unlock criteria:', error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Award progress points manually
   const awardProgressPoints = useCallback(async (points, source) => {
@@ -197,7 +203,7 @@ const useCompetencyDashboard = (customerId) => {
       
       // Refresh competency data
       setTimeout(() => {
-        loadGamificationData();
+        loadProfessionalDevelopmentData();
       }, 500);
 
       return { success: true, ...result };
@@ -205,7 +211,7 @@ const useCompetencyDashboard = (customerId) => {
       console.error('Error awarding progress points:', error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Update consistency streak
   const updateConsistencyStreak = useCallback(async () => {
@@ -216,7 +222,7 @@ const useCompetencyDashboard = (customerId) => {
       
       // Refresh competency data to show updated streak
       setTimeout(() => {
-        loadGamificationData();
+        loadProfessionalDevelopmentData();
       }, 500);
 
       return { success: true, ...result };
@@ -224,14 +230,14 @@ const useCompetencyDashboard = (customerId) => {
       console.error('Error updating consistency streak:', error);
       return { success: false, error: error.message };
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Get summary statistics
   const getSummaryStats = useCallback(() => {
     return {
       totalPoints: competencyProgress.total_progress_points || 0,
       currentLevel: competencyProgress.overall_level || 'Foundation',
-      hiddenRank: competencyProgress.hidden_rank || 'E',
+      competencyTier: competencyProgress.competency_tier || 'Foundation',
       consistencyStreak: competencyProgress.consistency_streak || 0,
       toolsUnlocked: Object.values(toolAccess).filter(tool => tool.access).length,
       milestonesAchieved: milestones.achieved?.length || 0,
@@ -243,20 +249,20 @@ const useCompetencyDashboard = (customerId) => {
   // Load data on mount and customer change
   useEffect(() => {
     if (customerId) {
-      loadGamificationData();
+      loadProfessionalDevelopmentData();
     }
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   // Auto-refresh every 5 minutes to keep data current
   useEffect(() => {
     if (!customerId) return;
 
     const refreshInterval = setInterval(() => {
-      loadGamificationData();
+      loadProfessionalDevelopmentData();
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [customerId, loadGamificationData]);
+  }, [customerId, loadProfessionalDevelopmentData]);
 
   return {
     // Data state

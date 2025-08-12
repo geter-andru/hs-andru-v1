@@ -28,13 +28,13 @@ const CompetencyDashboard = ({ customerId, isVisible = true, className = '' }) =
       id: 'access',
       name: 'Methodology Access',
       icon: '🔓',
-      description: 'Tool unlock requirements and progress'
+      description: 'Tool access requirements and readiness'
     },
     {
       id: 'milestones',
       name: 'Professional Milestones',
       icon: '🏆',
-      description: 'Achievement tracking and recognition'
+      description: 'Professional progress tracking and recognition'
     },
     {
       id: 'objectives',
@@ -179,9 +179,9 @@ const CompetencyDashboard = ({ customerId, isVisible = true, className = '' }) =
                       Development Tip
                     </h5>
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      {activeTab === 'assessment' && 'Complete analyses to advance your professional competency levels.'}
-                      {activeTab === 'access' && 'Demonstrate proficiency to unlock advanced methodologies.'}
-                      {activeTab === 'milestones' && 'Achievements unlock as you master business analysis skills.'}
+                      {activeTab === 'assessment' && 'Complete analyses to advance your professional competency development.'}
+                      {activeTab === 'access' && 'Demonstrate proficiency to access advanced methodologies.'}
+                      {activeTab === 'milestones' && 'Professional milestones become available as you master business analysis skills.'}
                       {activeTab === 'objectives' && 'Daily objectives help maintain consistent professional growth.'}
                     </p>
                   </div>

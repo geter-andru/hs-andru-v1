@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, TrendingUp, Award, Unlock, Star, CheckCircle } from 'lucide-react';
 import '../../styles/gamification.css';
 
@@ -9,22 +9,35 @@ const ProgressNotifications = ({
   className = '' 
 }) => {
   const [visibleNotifications, setVisibleNotifications] = useState([]);
+  const timeoutRefs = useRef(new Map());
 
   useEffect(() => {
     // Add new notifications with stagger effect
     notifications.forEach((notification, index) => {
       if (!visibleNotifications.find(n => n.id === notification.id)) {
-        setTimeout(() => {
+        const staggerTimeout = setTimeout(() => {
           setVisibleNotifications(prev => [...prev, notification]);
           
           // Auto-dismiss after delay (variable timing for psychological effect)
           const dismissDelay = getDismissDelay(notification.type);
-          setTimeout(() => {
+          const dismissTimeout = setTimeout(() => {
             handleDismiss(notification.id);
           }, dismissDelay);
+          
+          // Store timeout reference for cleanup
+          timeoutRefs.current.set(`${notification.id}_dismiss`, dismissTimeout);
         }, index * 200); // Stagger notifications
+        
+        // Store timeout reference for cleanup
+        timeoutRefs.current.set(`${notification.id}_stagger`, staggerTimeout);
       }
     });
+    
+    // Cleanup function
+    return () => {
+      timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
   }, [notifications]);
 
   const getDismissDelay = (type) => {
@@ -41,6 +54,19 @@ const ProgressNotifications = ({
 
   const handleDismiss = (id) => {
     setVisibleNotifications(prev => prev.filter(n => n.id !== id));
+    
+    // Clear any pending timeouts for this notification
+    const staggerKey = `${id}_stagger`;
+    const dismissKey = `${id}_dismiss`;
+    if (timeoutRefs.current.has(staggerKey)) {
+      clearTimeout(timeoutRefs.current.get(staggerKey));
+      timeoutRefs.current.delete(staggerKey);
+    }
+    if (timeoutRefs.current.has(dismissKey)) {
+      clearTimeout(timeoutRefs.current.get(dismissKey));
+      timeoutRefs.current.delete(dismissKey);
+    }
+    
     if (onDismiss) {
       onDismiss(id);
     }
