@@ -476,7 +476,7 @@ export const airtableService = {
     }
   },
 
-  // ICP Completion Handler with competency tracking
+  // ICP Completion Handler with competency tracking and milestone triggers
   async handleICPCompletion(recordId, data) {
     const progressUpdate = {
       icp_completed: true,
@@ -491,7 +491,9 @@ export const airtableService = {
       time_per_tool: {
         ...this.getDefaultUsageAnalytics().time_per_tool,
         icp: data.timeSpent || 0
-      }
+      },
+      last_activity: new Date().toISOString(),
+      activity_count: (analyticsUpdate.activity_count || 0) + 1
     };
 
     // Track competency demonstration
@@ -503,6 +505,19 @@ export const airtableService = {
       timeSpent: data.timeSpent
     });
 
+    // Trigger milestone evaluation (professional achievement system)
+    try {
+      const { milestoneService } = await import('./milestoneService');
+      await milestoneService.checkMilestoneProgress(recordId, 'tool_completed', {
+        tool: 'icp',
+        score: data.score,
+        timestamp: new Date().toISOString(),
+        timeSpent: data.timeSpent
+      });
+    } catch (error) {
+      console.warn('Milestone tracking unavailable:', error);
+    }
+
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),
       this.updateUsageAnalytics(recordId, analyticsUpdate)
@@ -511,7 +526,7 @@ export const airtableService = {
     return progressUpdate;
   },
 
-  // Cost Calculator Completion Handler with competency tracking
+  // Cost Calculator Completion Handler with competency tracking and milestone triggers
   async handleCostCalculatorCompletion(recordId, data) {
     const progressUpdate = {
       cost_calculated: true,
@@ -532,7 +547,9 @@ export const airtableService = {
       time_per_tool: {
         ...currentAnalytics.time_per_tool,
         'cost-calculator': data.timeSpent || 0
-      }
+      },
+      last_activity: new Date().toISOString(),
+      activity_count: (currentAnalytics.activity_count || 0) + 1
     };
 
     // Track competency demonstration for value quantification
@@ -543,6 +560,19 @@ export const airtableService = {
       timeSpent: data.timeSpent
     });
 
+    // Trigger milestone evaluation
+    try {
+      const { milestoneService } = await import('./milestoneService');
+      await milestoneService.checkMilestoneProgress(recordId, 'tool_completed', {
+        tool: 'cost',
+        annualCost: data.annualCost,
+        timestamp: new Date().toISOString(),
+        timeSpent: data.timeSpent
+      });
+    } catch (error) {
+      console.warn('Milestone tracking unavailable:', error);
+    }
+
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),
       this.updateUsageAnalytics(recordId, analyticsUpdate)
@@ -551,7 +581,7 @@ export const airtableService = {
     return progressUpdate;
   },
 
-  // Business Case Completion Handler
+  // Business Case Completion Handler with competency tracking and milestone triggers
   async handleBusinessCaseCompletion(recordId, data) {
     const progressUpdate = {
       business_case_ready: true,
@@ -571,8 +601,31 @@ export const airtableService = {
       time_per_tool: {
         ...currentAnalytics.time_per_tool,
         'business-case': data.timeSpent || 0
-      }
+      },
+      last_activity: new Date().toISOString(),
+      activity_count: (currentAnalytics.activity_count || 0) + 1
     };
+
+    // Track competency demonstration for strategic communication
+    await this.trackCompetencyDemonstration(recordId, 'business_case', {
+      templateName: data.templateName,
+      competency: 'Strategic Communication',
+      level: 'Proficient',
+      timeSpent: data.timeSpent
+    });
+
+    // Trigger milestone evaluation
+    try {
+      const { milestoneService } = await import('./milestoneService');
+      await milestoneService.checkMilestoneProgress(recordId, 'tool_completed', {
+        tool: 'business_case',
+        template: data.templateName,
+        timestamp: new Date().toISOString(),
+        timeSpent: data.timeSpent
+      });
+    } catch (error) {
+      console.warn('Milestone tracking unavailable:', error);
+    }
 
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),
@@ -582,7 +635,7 @@ export const airtableService = {
     return progressUpdate;
   },
 
-  // Results Dashboard Access Handler
+  // Results Dashboard Access Handler with milestone triggers for workflow completion
   async handleResultsGenerated(recordId, data) {
     const progressUpdate = {
       results_generated: true,
@@ -601,8 +654,38 @@ export const airtableService = {
       time_per_tool: {
         ...currentAnalytics.time_per_tool,
         results: data.timeSpent || 0
-      }
+      },
+      last_activity: new Date().toISOString(),
+      activity_count: (currentAnalytics.activity_count || 0) + 1
     };
+
+    // Check if this completes the full workflow (all tools completed)
+    const allToolsCompleted = ['icp', 'cost-calculator', 'business-case', 'results'].every(
+      tool => completedTools.includes(tool)
+    );
+
+    // Trigger milestone evaluation for results access and potential workflow completion
+    try {
+      const { milestoneService } = await import('./milestoneService');
+      
+      // Check for results generation milestone
+      await milestoneService.checkMilestoneProgress(recordId, 'tool_completed', {
+        tool: 'results',
+        timestamp: new Date().toISOString(),
+        timeSpent: data.timeSpent
+      });
+
+      // Check for comprehensive workflow completion milestone
+      if (allToolsCompleted) {
+        await milestoneService.checkMilestoneProgress(recordId, 'workflow_completed', {
+          tools: completedTools,
+          timestamp: new Date().toISOString(),
+          totalTimeSpent: Object.values(analyticsUpdate.time_per_tool).reduce((sum, time) => sum + time, 0)
+        });
+      }
+    } catch (error) {
+      console.warn('Milestone tracking unavailable:', error);
+    }
 
     await Promise.all([
       this.updateWorkflowProgress(recordId, progressUpdate),

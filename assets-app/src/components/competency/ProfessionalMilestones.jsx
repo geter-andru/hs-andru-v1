@@ -1,401 +1,411 @@
 import React, { useState, useEffect } from 'react';
+import { Award, TrendingUp, Calendar, Filter, Eye } from 'lucide-react';
 import { useWorkflowProgress } from '../../hooks/useWorkflowProgress';
-
-// Hidden achievement system disguised as professional milestones
-const PROFESSIONAL_MILESTONES = {
-  // Foundation Milestones (Early achievements to build engagement)
-  FIRST_ANALYSIS: {
-    id: 'first_analysis',
-    title: 'Methodology Initiation',
-    description: 'Successfully completed your first customer analysis',
-    icon: '🎯',
-    points: 100,
-    category: 'Foundation',
-    requirement: 'Complete 1 ICP Analysis',
-    color: 'from-blue-600 to-blue-500'
-  },
-  
-  ACCURACY_THRESHOLD: {
-    id: 'accuracy_threshold',
-    title: 'Precision Specialist',
-    description: 'Achieved 80%+ accuracy in customer profiling',
-    icon: '🎪',
-    points: 150,
-    category: 'Proficiency',
-    requirement: 'Complete ICP Analysis with 80%+ score',
-    color: 'from-green-600 to-green-500'
-  },
-
-  // Engagement Milestones (Usage-based achievements)
-  COST_MASTER: {
-    id: 'cost_master',
-    title: 'Financial Impact Analyst',
-    description: 'Mastered revenue impact calculation methodologies',
-    icon: '📊',
-    points: 200,
-    category: 'Expertise',
-    requirement: 'Complete 3 Cost Calculator analyses',
-    color: 'from-purple-600 to-purple-500'
-  },
-
-  HIGH_VALUE_IDENTIFIER: {
-    id: 'high_value_identifier',
-    title: 'Strategic Value Recognition',
-    description: 'Identified high-impact revenue opportunities ($100K+)',
-    icon: '💎',
-    points: 250,
-    category: 'Strategic',
-    requirement: 'Identify $100K+ annual cost impact',
-    color: 'from-yellow-600 to-yellow-500'
-  },
-
-  // Communication Milestones
-  BUSINESS_CASE_ARCHITECT: {
-    id: 'business_case_architect',
-    title: 'Strategic Communications Expert',
-    description: 'Developed comprehensive business case frameworks',
-    icon: '🏗️',
-    points: 300,
-    category: 'Communication',
-    requirement: 'Complete 2 Business Case developments',
-    color: 'from-red-600 to-red-500'
-  },
-
-  // Productivity Milestones (Speed bonuses)
-  EFFICIENCY_EXPERT: {
-    id: 'efficiency_expert',
-    title: 'Process Optimization Specialist',
-    description: 'Demonstrated exceptional analysis efficiency',
-    icon: '⚡',
-    points: 175,
-    category: 'Efficiency',
-    requirement: 'Complete analysis in under 5 minutes',
-    color: 'from-cyan-600 to-cyan-500'
-  },
-
-  // Sharing/Export Milestones (Engagement depth)
-  KNOWLEDGE_SHARER: {
-    id: 'knowledge_sharer',
-    title: 'Strategic Insights Communicator',
-    description: 'Actively sharing strategic analyses with stakeholders',
-    icon: '📤',
-    points: 125,
-    category: 'Collaboration',
-    requirement: 'Export 5 strategic analyses',
-    color: 'from-indigo-600 to-indigo-500'
-  },
-
-  // Mastery Milestones (Long-term engagement)
-  COMPLETE_STRATEGIST: {
-    id: 'complete_strategist',
-    title: 'Comprehensive Business Strategist',
-    description: 'Mastered all core business analysis methodologies',
-    icon: '👑',
-    points: 500,
-    category: 'Mastery',
-    requirement: 'Complete full workflow 3 times',
-    color: 'from-gradient-to-r from-yellow-400 via-red-500 to-pink-500'
-  },
-
-  // Weekly/Monthly Milestones (Retention mechanics)
-  CONSISTENT_ANALYST: {
-    id: 'consistent_analyst',
-    title: 'Dedicated Professional Development',
-    description: 'Consistent engagement with business analysis tools',
-    icon: '📅',
-    points: 200,
-    category: 'Consistency',
-    requirement: 'Use platform 5 days in a row',
-    color: 'from-teal-600 to-teal-500'
-  }
-};
+import { milestoneService } from '../../services/milestoneService';
+import { useProgressNotifications } from '../notifications/ProgressNotifications';
+import MilestoneGallery from '../milestones/MilestoneGallery';
+import CompetencyFeedback from './CompetencyFeedback';
 
 const ProfessionalMilestones = ({ customerId, className = '' }) => {
   const { workflowProgress, usageAnalytics } = useWorkflowProgress(customerId);
   const [milestones, setMilestones] = useState({});
   const [recentAchievements, setRecentAchievements] = useState([]);
-  const [showAchievement, setShowAchievement] = useState(false);
-  const [currentAchievement, setCurrentAchievement] = useState(null);
+  const [milestoneStats, setMilestoneStats] = useState({});
+  const [activeView, setActiveView] = useState('overview'); // overview, gallery, feedback
+  const [loading, setLoading] = useState(true);
+  
+  const { 
+    showMilestoneReached, 
+    showProgressRecognition,
+    showCompetencyAdvancement 
+  } = useProgressNotifications();
 
-  // Check milestone completion based on user progress
+  // Initialize milestone tracking
   useEffect(() => {
-    if (!workflowProgress || !usageAnalytics) return;
+    const initializeMilestones = async () => {
+      if (!customerId) return;
 
-    const currentMilestones = { ...milestones };
-    const newAchievements = [];
-
-    // Check each milestone requirement
-    Object.entries(PROFESSIONAL_MILESTONES).forEach(([key, milestone]) => {
-      if (currentMilestones[milestone.id]?.achieved) return; // Already achieved
-
-      let achieved = false;
-
-      switch (milestone.id) {
-        case 'first_analysis':
-          achieved = workflowProgress.icp_completed;
-          break;
-
-        case 'accuracy_threshold':
-          achieved = workflowProgress.icp_completed && (workflowProgress.icp_score || 0) >= 80;
-          break;
-
-        case 'cost_master':
-          const costCompletions = usageAnalytics.tools_completed?.filter(tool => tool === 'cost').length || 0;
-          achieved = costCompletions >= 3;
-          break;
-
-        case 'high_value_identifier':
-          achieved = workflowProgress.cost_calculated && (workflowProgress.annual_cost || 0) >= 100000;
-          break;
-
-        case 'business_case_architect':
-          const businessCompletions = usageAnalytics.tools_completed?.filter(tool => tool === 'business_case').length || 0;
-          achieved = businessCompletions >= 2;
-          break;
-
-        case 'efficiency_expert':
-          // Check if any tool was completed in under 5 minutes (300 seconds)
-          const timePerTool = usageAnalytics.time_per_tool || {};
-          achieved = Object.values(timePerTool).some(time => time < 300);
-          break;
-
-        case 'knowledge_sharer':
-          achieved = (usageAnalytics.export_count || 0) >= 5;
-          break;
-
-        case 'complete_strategist':
-          const allToolsCompleted = workflowProgress.icp_completed && 
-                                   workflowProgress.cost_calculated && 
-                                   workflowProgress.business_case_ready;
-          // Simplified check - in reality, would track multiple completions
-          achieved = allToolsCompleted && (usageAnalytics.tools_completed?.length || 0) >= 9;
-          break;
-
-        case 'consistent_analyst':
-          // Simplified consistency check - would need more sophisticated tracking
-          achieved = (usageAnalytics.tools_completed?.length || 0) >= 5;
-          break;
+      try {
+        setLoading(true);
+        
+        // Initialize milestone service
+        const milestoneData = await milestoneService.initializeMilestones(customerId);
+        setMilestones(milestoneData.progress);
+        setRecentAchievements(milestoneData.recent);
+        
+        // Get stats
+        const stats = milestoneService.getMilestoneStats();
+        setMilestoneStats(stats);
+      } catch (error) {
+        console.error('Error initializing milestones:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (achieved) {
-        currentMilestones[milestone.id] = {
-          ...milestone,
-          achieved: true,
-          achievedAt: new Date().toISOString()
-        };
-        newAchievements.push(milestone);
-      } else {
-        // Track progress towards milestone
-        currentMilestones[milestone.id] = {
-          ...milestone,
-          achieved: false,
-          progress: calculateMilestoneProgress(milestone.id)
-        };
+    initializeMilestones();
+  }, [customerId]);
+
+  // Monitor for milestone progress and achievements
+  useEffect(() => {
+    const checkMilestoneProgress = async () => {
+      if (!workflowProgress || !usageAnalytics || !customerId) return;
+
+      try {
+        // Simulate different actions based on workflow progress
+        let actionType = null;
+        let actionData = {};
+
+        // Check for ICP completion
+        if (workflowProgress.icp_completed) {
+          actionType = 'tool_completed';
+          actionData = {
+            tool: 'icp',
+            score: workflowProgress.icp_score || 0,
+            timestamp: workflowProgress.analysis_date || new Date().toISOString()
+          };
+        }
+
+        // Check for cost calculation
+        if (workflowProgress.cost_calculated) {
+          actionType = 'tool_completed';
+          actionData = {
+            tool: 'cost',
+            annualCost: workflowProgress.annual_cost || 0,
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        // Check for business case completion
+        if (workflowProgress.business_case_ready) {
+          actionType = 'tool_completed';
+          actionData = {
+            tool: 'business_case',
+            template: workflowProgress.selected_template,
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        if (actionType) {
+          const milestoneCheck = await milestoneService.checkMilestoneProgress(
+            customerId,
+            actionType,
+            actionData
+          );
+
+          // Handle new achievements
+          if (milestoneCheck.newlyAchieved.length > 0) {
+            milestoneCheck.newlyAchieved.forEach(achievement => {
+              const milestone = achievement.milestone;
+              
+              // Show professional milestone notification
+              showMilestoneReached(
+                milestone.name,
+                milestone.reward.badge,
+                milestone.reward.progressPoints
+              );
+
+              // Show competency advancement
+              if (milestone.reward.competencyGain) {
+                showCompetencyAdvancement(
+                  milestone.reward.competencyGain.type,
+                  milestone.reward.competencyGain.amount
+                );
+              }
+
+              // Show progress recognition
+              showProgressRecognition(
+                milestone.category + ' Milestone',
+                milestone.reward.progressPoints
+              );
+            });
+
+            // Update local state
+            setRecentAchievements(prev => [
+              ...milestoneCheck.newlyAchieved.map(a => ({
+                milestone: a.milestone,
+                achievedAt: a.progress.achievedAt,
+                timestamp: new Date().toISOString()
+              })),
+              ...prev
+            ].slice(0, 10));
+          }
+
+          // Update milestone progress
+          setMilestones(milestoneService.userProgress);
+          setMilestoneStats(milestoneService.getMilestoneStats());
+        }
+      } catch (error) {
+        console.error('Error checking milestone progress:', error);
       }
-    });
+    };
 
-    // Show achievement notification
-    if (newAchievements.length > 0) {
-      setCurrentAchievement(newAchievements[0]);
-      setShowAchievement(true);
-      setRecentAchievements(prev => [...newAchievements, ...prev].slice(0, 5));
-      
-      setTimeout(() => setShowAchievement(false), 4000);
+    checkMilestoneProgress();
+  }, [workflowProgress, usageAnalytics, customerId, showMilestoneReached, showCompetencyAdvancement, showProgressRecognition]);
+
+  const getTotalAchieved = () => {
+    return Object.values(milestones).filter(m => m.achieved).length;
+  };
+
+  const getTotalAvailable = () => {
+    return Object.keys(milestoneService.milestones || {}).length;
+  };
+
+  const getTotalProgressPoints = () => {
+    return Object.entries(milestones)
+      .filter(([_, progress]) => progress.achieved)
+      .reduce((total, [milestoneId, _]) => {
+        const milestone = milestoneService.milestones[milestoneId];
+        return total + (milestone?.reward.progressPoints || 0);
+      }, 0);
+  };
+
+  const getRecentActivity = () => {
+    const activities = [];
+    
+    if (workflowProgress?.icp_completed) {
+      activities.push({
+        type: 'icp_completed',
+        timestamp: workflowProgress.analysis_date || new Date().toISOString(),
+        score: workflowProgress.icp_score
+      });
+    }
+    
+    if (workflowProgress?.cost_calculated) {
+      activities.push({
+        type: 'cost_calculated',
+        timestamp: new Date().toISOString(),
+        annualCost: workflowProgress.annual_cost
+      });
+    }
+    
+    if (workflowProgress?.business_case_ready) {
+      activities.push({
+        type: 'business_case_ready',
+        timestamp: new Date().toISOString(),
+        template: workflowProgress.selected_template
+      });
     }
 
-    setMilestones(currentMilestones);
-  }, [workflowProgress, usageAnalytics]);
-
-  const calculateMilestoneProgress = (milestoneId) => {
-    if (!workflowProgress || !usageAnalytics) return 0;
-
-    switch (milestoneId) {
-      case 'first_analysis':
-        return workflowProgress.icp_completed ? 100 : 0;
-
-      case 'accuracy_threshold':
-        return workflowProgress.icp_completed ? Math.min((workflowProgress.icp_score || 0) / 80 * 100, 100) : 0;
-
-      case 'cost_master':
-        const costCompletions = usageAnalytics.tools_completed?.filter(tool => tool === 'cost').length || 0;
-        return Math.min((costCompletions / 3) * 100, 100);
-
-      case 'high_value_identifier':
-        if (!workflowProgress.cost_calculated) return 0;
-        return Math.min(((workflowProgress.annual_cost || 0) / 100000) * 100, 100);
-
-      case 'knowledge_sharer':
-        return Math.min(((usageAnalytics.export_count || 0) / 5) * 100, 100);
-
-      default:
-        return 0;
-    }
+    return activities.slice(0, 5);
   };
 
-  const getAchievedMilestones = () => {
-    return Object.values(milestones).filter(m => m.achieved);
-  };
-
-  const getTotalMilestonePoints = () => {
-    return getAchievedMilestones().reduce((total, milestone) => total + milestone.points, 0);
-  };
-
-  const MilestoneCard = ({ milestone, achieved = false, progress = 0 }) => (
-    <div className={`relative overflow-hidden rounded-lg border p-4 transition-all duration-300 ${
-      achieved 
-        ? 'bg-gray-800 border-gray-600 shadow-lg' 
-        : 'bg-gray-900 border-gray-700 opacity-80'
-    }`}>
-      
-      {/* Achievement glow effect */}
-      {achieved && (
-        <div className={`absolute inset-0 bg-gradient-to-r ${milestone.color} opacity-10`}></div>
-      )}
-
-      <div className="relative">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <div className={`text-2xl p-2 rounded-lg ${
-              achieved 
-                ? `bg-gradient-to-r ${milestone.color}` 
-                : 'bg-gray-700 grayscale'
-            }`}>
-              {milestone.icon}
-            </div>
-            <div>
-              <h3 className={`font-semibold ${achieved ? 'text-white' : 'text-gray-400'}`}>
-                {milestone.title}
-              </h3>
-              <p className={`text-sm ${achieved ? 'text-gray-300' : 'text-gray-500'}`}>
-                {milestone.description}
-              </p>
-            </div>
+  const MilestoneOverview = () => (
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="text-2xl font-bold text-yellow-400">
+            {getTotalAchieved()}
           </div>
-          
-          <div className="text-right">
-            <div className={`px-2 py-1 rounded text-xs font-medium ${
-              achieved 
-                ? 'bg-green-900 text-green-300 border border-green-700' 
-                : 'bg-gray-700 text-gray-400'
-            }`}>
-              {achieved ? 'Achieved' : `${Math.round(progress)}%`}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">{milestone.points} points</p>
+          <div className="text-sm text-gray-400">Milestones Achieved</div>
+          <div className="text-xs text-gray-500 mt-1">
+            of {getTotalAvailable()} available
           </div>
         </div>
-
-        <div className="space-y-2">
-          <div className="text-xs text-gray-400">
-            <span className="font-medium">{milestone.category}</span> • {milestone.requirement}
+        
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="text-2xl font-bold text-blue-400">
+            {getTotalProgressPoints()}
           </div>
-          
-          {!achieved && progress > 0 && (
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div
-                className={`bg-gradient-to-r ${milestone.color} h-2 rounded-full transition-all duration-1000 ease-out`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
+          <div className="text-sm text-gray-400">Progress Points</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Professional development
+          </div>
+        </div>
+        
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="text-2xl font-bold text-green-400">
+            {milestoneStats.currentStreaks?.daily || 0}
+          </div>
+          <div className="text-sm text-gray-400">Current Streak</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Consecutive days
+          </div>
+        </div>
+        
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="text-2xl font-bold text-purple-400">
+            {Math.round((getTotalAchieved() / getTotalAvailable()) * 100)}%
+          </div>
+          <div className="text-sm text-gray-400">Completion</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Overall progress
+          </div>
+        </div>
+      </div>
 
-          {achieved && (
-            <div className="flex items-center space-x-2 text-sm text-green-400">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Milestone achieved</span>
-            </div>
-          )}
+      {/* Recent Achievements */}
+      {recentAchievements.length > 0 && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <Award className="w-5 h-5 mr-2 text-yellow-400" />
+            Recent Professional Achievements
+          </h3>
+          <div className="space-y-3">
+            {recentAchievements.slice(0, 3).map((achievement, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 bg-gray-900 rounded-lg border border-gray-700">
+                <div className="text-2xl">{achievement.milestone.icon}</div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-white">
+                    {achievement.milestone.name}
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    {achievement.milestone.description}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-yellow-400">
+                    +{achievement.milestone.reward.progressPoints}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(achievement.achievedAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Next Milestones */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <TrendingUp className="w-5 h-5 mr-2 text-blue-400" />
+          Next Professional Milestones
+        </h3>
+        <div className="space-y-4">
+          {milestoneStats.nextMilestones?.slice(0, 3).map((milestone, index) => {
+            const progress = (milestone.progress.current / (milestone.progress.required || 1)) * 100;
+            
+            return (
+              <div key={milestone.id} className="border border-gray-700 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-xl">{milestone.icon}</div>
+                    <div>
+                      <h4 className="font-medium text-white">{milestone.name}</h4>
+                      <p className="text-sm text-gray-400">{milestone.description}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-blue-900/50 text-blue-300 rounded-full border border-blue-700">
+                    {milestone.category}
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Progress</span>
+                    <span className="text-gray-300">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {milestone.progress.current} / {milestone.progress.required || 1}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 
-  return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Achievement Notification */}
-      {showAchievement && currentAchievement && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className={`bg-gradient-to-r ${currentAchievement.color} text-white px-6 py-4 rounded-lg shadow-2xl border border-yellow-400 max-w-sm`}>
-            <div className="flex items-start space-x-3">
-              <div className="text-2xl">{currentAchievement.icon}</div>
-              <div>
-                <div className="font-bold text-lg">Professional Milestone!</div>
-                <div className="font-semibold">{currentAchievement.title}</div>
-                <div className="text-sm opacity-90 mt-1">{currentAchievement.description}</div>
-                <div className="text-xs opacity-75 mt-2">+{currentAchievement.points} Progress Points</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Professional Milestones Dashboard */}
-      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-white mb-2">Professional Milestones</h2>
-            <p className="text-gray-400">Track your achievement in business analysis methodologies</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-yellow-400">
-              {getAchievedMilestones().length}/{Object.keys(PROFESSIONAL_MILESTONES).length}
-            </div>
-            <div className="text-sm text-gray-400">Milestones Achieved</div>
-          </div>
-        </div>
-
-        {/* Recent Achievements */}
-        {recentAchievements.length > 0 && (
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-600">
-            <h3 className="text-sm font-semibold text-white mb-3">Recent Achievements</h3>
-            <div className="flex flex-wrap gap-2">
-              {recentAchievements.slice(0, 3).map((achievement, index) => (
-                <div key={index} className={`flex items-center space-x-2 px-3 py-2 rounded-full bg-gradient-to-r ${achievement.color} text-white text-sm`}>
-                  <span>{achievement.icon}</span>
-                  <span>{achievement.title}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Milestone Categories */}
-        <div className="grid gap-4">
-          {Object.values(milestones).map((milestone) => (
-            <MilestoneCard
-              key={milestone.id}
-              milestone={milestone}
-              achieved={milestone.achieved}
-              progress={milestone.progress || 0}
-            />
-          ))}
-        </div>
-
-        {/* Summary Statistics */}
-        <div className="mt-6 pt-6 border-t border-gray-700">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-yellow-400">
-                {getTotalMilestonePoints()}
-              </div>
-              <div className="text-sm text-gray-400">Total Points Earned</div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-400">
-                {Math.round((getAchievedMilestones().length / Object.keys(PROFESSIONAL_MILESTONES).length) * 100)}%
-              </div>
-              <div className="text-sm text-gray-400">Completion Rate</div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-400">
-                {Object.values(milestones).filter(m => !m.achieved && m.progress > 50).length}
-              </div>
-              <div className="text-sm text-gray-400">Near Completion</div>
-            </div>
+  if (loading) {
+    return (
+      <div className={`bg-gray-900 border border-gray-700 rounded-lg p-6 ${className}`}>
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-700 rounded w-1/3" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-20 bg-gray-700 rounded" />
+            ))}
           </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Header with View Toggle */}
+      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2">
+              Professional Milestone System
+            </h2>
+            <p className="text-gray-400">
+              Track systematic development and professional achievement recognition
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-yellow-400">
+              {getTotalAchieved()}
+            </div>
+            <div className="text-sm text-gray-400">Achievements</div>
+          </div>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setActiveView('overview')}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              activeView === 'overview' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Overview
+          </button>
+          
+          <button
+            onClick={() => setActiveView('gallery')}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              activeView === 'gallery' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Full History
+          </button>
+          
+          <button
+            onClick={() => setActiveView('feedback')}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              activeView === 'feedback' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <Award className="w-4 h-4 mr-2" />
+            Live Feedback
+          </button>
+        </div>
+      </div>
+
+      {/* Content based on active view */}
+      {activeView === 'overview' && <MilestoneOverview />}
+      
+      {activeView === 'gallery' && (
+        <MilestoneGallery customerId={customerId} />
+      )}
+      
+      {activeView === 'feedback' && (
+        <CompetencyFeedback
+          customerId={customerId}
+          recentActions={getRecentActivity()}
+          competencyChanges={[]} // Will be populated by real competency tracking
+        />
+      )}
     </div>
   );
 };
