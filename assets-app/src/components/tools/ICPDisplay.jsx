@@ -23,12 +23,30 @@ const ICPDisplay = () => {
     const loadICPData = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        if (!session || !session.recordId || !session.accessToken) {
+          throw new Error('No valid session found. Please check your access link.');
+        }
+
+        console.log('Loading ICP data for session:', {
+          recordId: session.recordId,
+          customerId: session.customerId,
+          hasToken: !!session.accessToken
+        });
+
         const customerAssets = await airtableService.getCustomerAssets(
           session.recordId,
           session.accessToken
         );
+        
+        console.log('Customer assets loaded:', customerAssets);
+        
+        if (!customerAssets || !customerAssets.icpContent) {
+          throw new Error('No ICP content found for this customer');
+        }
+        
         setIcpData(customerAssets.icpContent);
-        setError(null);
       } catch (err) {
         console.error('Failed to load ICP data:', err);
         setError(err.message);
@@ -39,6 +57,9 @@ const ICPDisplay = () => {
 
     if (session) {
       loadICPData();
+    } else {
+      setLoading(false);
+      setError('No session available');
     }
   }, [session]);
 
@@ -139,8 +160,8 @@ const ICPDisplay = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating</h1>
-            <p className="text-secondary">Analyze and rate potential customers against your ideal profile</p>
+            <h1 className="text-2xl font-bold text-white">ICP Identification & Rating</h1>
+            <p className="text-gray-400">Analyze and rate potential customers against your ideal profile</p>
           </div>
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
@@ -154,10 +175,73 @@ const ICPDisplay = () => {
   if (error && !icpData) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">ICP Identification & Rating System</h1>
+            <p className="text-gray-400">Analyze and rate potential customers against your ideal customer profile</p>
+          </div>
+        </div>
         <Callout type="error" title="Error Loading ICP Data">
           {error}
         </Callout>
+        
+        {/* Show basic rating interface even if data fails to load */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">ICP Framework</h2>
+            <p className="text-gray-400 text-sm">ICP content is not available. You can still use the rating tool.</p>
+          </div>
+          
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
+            
+            <form onSubmit={handleRatingSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Enter company name to analyze"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isRating}
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={!companyName.trim() || isRating}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+              >
+                {isRating ? 'Analyzing Company...' : 'Calculate ICP Fit Score'}
+              </button>
+            </form>
+
+            {/* Rating Results */}
+            {ratingResult && (
+              <div className="mt-6 space-y-4">
+                <div className={`p-4 rounded-lg ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-900">{ratingResult.companyName}</h3>
+                    <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
+                      {ratingResult.overallScore}%
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">{ratingResult.recommendation} Prospect</p>
+                  
+                  <div className="space-y-2">
+                    {ratingResult.criteria.map((criterion, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span className="text-gray-700">{criterion.name}</span>
+                        <span className="font-medium">{criterion.score}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -166,8 +250,8 @@ const ICPDisplay = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary">ICP Identification & Rating System</h1>
-          <p className="text-secondary">Analyze and rate potential customers against your ideal customer profile</p>
+          <h1 className="text-2xl font-bold text-white">ICP Identification & Rating System</h1>
+          <p className="text-gray-400">Analyze and rate potential customers against your ideal customer profile</p>
         </div>
       </div>
 
@@ -179,27 +263,47 @@ const ICPDisplay = () => {
             onFrameworkUpdate={handleFrameworkUpdate}
           />
           {icpData && (
-            <div className="card card-padding glass">
-              <h2 className="text-lg font-semibold text-primary mb-4">ICP Details</h2>
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
               <ContentDisplay content={icpData} />
+            </div>
+          )}
+          
+          {/* Debug info in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
+              <h3 className="text-white text-sm font-medium mb-2">Debug Info:</h3>
+              <pre className="text-gray-400 text-xs overflow-auto">
+                {JSON.stringify({
+                  hasIcpData: !!icpData,
+                  loading,
+                  error,
+                  hasSession: !!session,
+                  sessionData: session ? {
+                    recordId: session.recordId,
+                    customerId: session.customerId,
+                    hasToken: !!session.accessToken
+                  } : null
+                }, null, 2)}
+              </pre>
             </div>
           )}
         </div>
 
         {/* Right Column: Interactive Rating Tool */}
         <div className="space-y-6">
-          <div className="card card-padding glass">
-            <h2 className="text-lg font-semibold text-primary mb-4">Company Fit Calculator</h2>
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
             
             <form onSubmit={handleRatingSubmit} className="space-y-4">
               <div>
-                <label className="form-label">Company Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                 <input
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Enter company name to analyze"
-                  className="form-input"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isRating}
                 />
               </div>
@@ -207,7 +311,7 @@ const ICPDisplay = () => {
               <button
                 type="submit"
                 disabled={!companyName.trim() || isRating}
-                className="btn btn-primary w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
               >
                 {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
               </button>
@@ -221,19 +325,20 @@ const ICPDisplay = () => {
 
             {ratingResult && (
               <div className="mt-6 space-y-4">
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold text-primary mb-3">
+                <div className="border-t border-gray-600 pt-4">
+                  <h3 className="font-semibold text-white mb-3">
                     Fit Analysis: {ratingResult.companyName}
                   </h3>
                   
                   {/* Overall Score */}
-                  <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)}`}>
+                  <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Overall Fit Score</span>
+                      <span className="text-sm font-medium text-gray-900">Overall Fit Score</span>
                       <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
                         {ratingResult.overallScore}/100
                       </span>
                     </div>
+                    <p className="text-xs text-gray-700 mt-1">{ratingResult.recommendation} Priority Prospect</p>
                   </div>
 
                   {/* Criteria Breakdown */}
