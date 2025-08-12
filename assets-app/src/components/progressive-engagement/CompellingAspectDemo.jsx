@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 const CompellingAspectDemo = ({ aspectType, onEngageWith, customerData }) => {
   const [demoData, setDemoData] = useState(null);
