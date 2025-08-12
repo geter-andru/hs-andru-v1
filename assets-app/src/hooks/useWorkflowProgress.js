@@ -3,10 +3,11 @@ import { airtableService } from '../services/airtableService';
 import { authService } from '../services/authService';
 
 // Custom hook for managing workflow progress
-export const useWorkflowProgress = () => {
+export const useWorkflowProgress = (customerId) => {
   const [workflowData, setWorkflowData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toolStartTime, setToolStartTime] = useState(null);
 
   const session = authService.getCurrentSession();
   const recordId = session?.recordId;
@@ -24,7 +25,12 @@ export const useWorkflowProgress = () => {
       setError(null);
       
       const customerData = await airtableService.getCustomerDataByRecordId(recordId);
-      setWorkflowData(customerData.workflowProgress);
+      setWorkflowData({
+        workflowProgress: customerData.workflowProgress,
+        userPreferences: customerData.userPreferences,
+        usageAnalytics: customerData.usageAnalytics,
+        customerData: customerData
+      });
     } catch (err) {
       console.error('Error loading workflow progress:', err);
       setError(err.message);
@@ -32,6 +38,27 @@ export const useWorkflowProgress = () => {
       setLoading(false);
     }
   }, [recordId]);
+
+  // Initialize workflow with default values
+  const initializeWorkflow = useCallback(async () => {
+    if (!recordId) return;
+    
+    try {
+      // Check if workflow data already exists
+      if (workflowData?.workflowProgress) return;
+      
+      // Initialize with defaults by updating with empty object
+      await airtableService.updateWorkflowProgress(recordId, {});
+      await airtableService.updateUserPreferences(recordId, {});
+      await airtableService.updateUsageAnalytics(recordId, {});
+      
+      // Reload data
+      await loadWorkflowProgress();
+    } catch (err) {
+      console.error('Error initializing workflow:', err);
+      setError(err.message);
+    }
+  }, [recordId, workflowData, loadWorkflowProgress]);
 
   // Update workflow progress
   const updateProgress = useCallback(async (progressUpdate) => {
@@ -41,7 +68,10 @@ export const useWorkflowProgress = () => {
 
     try {
       const updatedProgress = await airtableService.updateWorkflowProgress(recordId, progressUpdate);
-      setWorkflowData(updatedProgress);
+      setWorkflowData(prev => ({
+        ...prev,
+        workflowProgress: updatedProgress
+      }));
       return updatedProgress;
     } catch (err) {
       console.error('Error updating workflow progress:', err);
@@ -50,93 +80,135 @@ export const useWorkflowProgress = () => {
     }
   }, [recordId]);
 
-  // Tool completion handlers
-  const handleICPCompletion = useCallback(async (data) => {
+  // Complete tool workflow
+  const completeTool = useCallback(async (toolName, toolData = {}) => {
+    if (!recordId) return { success: false, error: 'No session' };
+    
     try {
-      const result = await airtableService.handleICPCompletion(recordId, data);
-      await loadWorkflowProgress(); // Refresh data
-      return result;
-    } catch (err) {
-      console.error('Error handling ICP completion:', err);
-      throw err;
-    }
-  }, [recordId, loadWorkflowProgress]);
+      // Track time spent if tool was started
+      if (toolStartTime) {
+        const timeSpent = Math.round((Date.now() - toolStartTime) / 1000);
+        toolData.timeSpent = timeSpent;
+        setToolStartTime(null);
+      }
 
-  const handleCostCalculatorCompletion = useCallback(async (data) => {
-    try {
-      const result = await airtableService.handleCostCalculatorCompletion(recordId, data);
-      await loadWorkflowProgress(); // Refresh data
-      return result;
-    } catch (err) {
-      console.error('Error handling Cost Calculator completion:', err);
-      throw err;
-    }
-  }, [recordId, loadWorkflowProgress]);
+      // Call appropriate completion handler
+      let result;
+      switch (toolName) {
+        case 'icp':
+          result = await airtableService.handleICPCompletion(recordId, toolData);
+          break;
+        case 'cost':
+          result = await airtableService.handleCostCalculatorCompletion(recordId, toolData);
+          break;
+        case 'business_case':
+          result = await airtableService.handleBusinessCaseCompletion(recordId, toolData);
+          break;
+        default:
+          throw new Error(`Unknown tool: ${toolName}`);
+      }
 
-  const handleBusinessCaseCompletion = useCallback(async (data) => {
-    try {
-      const result = await airtableService.handleBusinessCaseCompletion(recordId, data);
-      await loadWorkflowProgress(); // Refresh data
-      return result;
+      // Refresh workflow data
+      await loadWorkflowProgress();
+      
+      return { success: true, result };
     } catch (err) {
-      console.error('Error handling Business Case completion:', err);
-      throw err;
+      console.error(`Error completing tool ${toolName}:`, err);
+      return { success: false, error: err.message };
     }
-  }, [recordId, loadWorkflowProgress]);
+  }, [recordId, toolStartTime, loadWorkflowProgress]);
 
-  const handleResultsGenerated = useCallback(async (data) => {
+  // Start tool timer
+  const startTool = useCallback((toolName) => {
+    setToolStartTime(Date.now());
+    updateProgress({ last_active_tool: toolName });
+  }, [updateProgress]);
+
+  // Update user preferences
+  const updatePreferences = useCallback(async (preferencesUpdate) => {
+    if (!recordId) return;
+    
     try {
-      const result = await airtableService.handleResultsGenerated(recordId, data);
-      await loadWorkflowProgress(); // Refresh data
-      return result;
+      const updatedPreferences = await airtableService.updateUserPreferences(recordId, preferencesUpdate);
+      setWorkflowData(prev => ({
+        ...prev,
+        userPreferences: updatedPreferences
+      }));
+      return updatedPreferences;
     } catch (err) {
-      console.error('Error handling Results generation:', err);
-      throw err;
+      console.error('Error updating preferences:', err);
+      setError(err.message);
     }
-  }, [recordId, loadWorkflowProgress]);
+  }, [recordId]);
 
-  // Export and share tracking
-  const trackExport = useCallback(async (exportData) => {
+  // Track export
+  const trackExport = useCallback(async (exportType, format) => {
+    if (!recordId) return;
+    
     try {
-      await airtableService.trackExport(recordId, exportData);
+      await airtableService.trackExport(recordId, { format, tool: exportType });
+      await loadWorkflowProgress(); // Refresh to get updated export history
     } catch (err) {
       console.error('Error tracking export:', err);
     }
-  }, [recordId]);
+  }, [recordId, loadWorkflowProgress]);
 
-  const trackShare = useCallback(async (shareData) => {
-    try {
-      await airtableService.trackShare(recordId, shareData);
-    } catch (err) {
-      console.error('Error tracking share:', err);
-    }
-  }, [recordId]);
+  // Get workflow status for navigation
+  const getWorkflowStatus = useCallback(() => {
+    if (!workflowData?.workflowProgress) return null;
+    
+    const progress = workflowData.workflowProgress;
+    return {
+      canAccessCost: progress.icp_completed,
+      canAccessBusinessCase: progress.icp_completed && progress.cost_calculated,
+      canExport: progress.icp_completed && progress.cost_calculated && progress.business_case_ready,
+      nextRecommendedTool: !progress.icp_completed ? 'icp' :
+                         !progress.cost_calculated ? 'cost' :
+                         !progress.business_case_ready ? 'business_case' : 'completed',
+      completionPercentage: progress.completion_percentage || 0
+    };
+  }, [workflowData]);
 
-  // Load data on mount and when recordId changes
+  // Load data on mount
   useEffect(() => {
-    loadWorkflowProgress();
-  }, [loadWorkflowProgress]);
+    if (recordId) {
+      loadWorkflowProgress();
+    }
+  }, [loadWorkflowProgress, recordId]);
 
-  // Start session tracking on mount
+  // Start session tracking on mount (with error handling)
   useEffect(() => {
     if (recordId) {
       airtableService.startSession(recordId).catch(err => {
-        console.error('Error starting session:', err);
+        // Don't set error state for session tracking failures
+        console.warn('Session tracking failed (non-critical):', err.message);
       });
     }
   }, [recordId]);
 
   return {
-    workflowData,
+    // Data
+    workflowData: workflowData?.customerData,
+    workflowProgress: workflowData?.workflowProgress,
+    userPreferences: workflowData?.userPreferences,
+    usageAnalytics: workflowData?.usageAnalytics,
+    
+    // Status
     loading,
     error,
+    workflowStatus: getWorkflowStatus(),
+    
+    // Actions
     updateProgress,
-    handleICPCompletion,
-    handleCostCalculatorCompletion,
-    handleBusinessCaseCompletion,
-    handleResultsGenerated,
+    completeTool,
+    startTool,
+    updatePreferences,
     trackExport,
-    trackShare,
-    refreshData: loadWorkflowProgress
+    loadWorkflow: loadWorkflowProgress,
+    initializeWorkflow,
+    
+    // Helper methods
+    clearError: () => setError(null),
+    refreshWorkflow: loadWorkflowProgress
   };
 };

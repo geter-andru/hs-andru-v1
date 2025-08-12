@@ -9,6 +9,37 @@ let customerAssetsCache = new Map();
 let userProgressCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Default JSON structures for workflow tracking
+const DEFAULT_WORKFLOW_PROGRESS = {
+  icp_completed: false,
+  icp_score: null,
+  cost_calculated: false,
+  annual_cost: null,
+  business_case_ready: false,
+  selected_template: null,
+  last_active_tool: "icp",
+  completion_percentage: 0,
+  company_name: "",
+  analysis_date: null
+};
+
+const DEFAULT_USER_PREFERENCES = {
+  icp_framework_customized: false,
+  preferred_export_format: "pdf",
+  methodology_transparency: false,
+  custom_criteria: [],
+  export_history: []
+};
+
+const DEFAULT_USAGE_ANALYTICS = {
+  session_start: null,
+  time_per_tool: {},
+  export_count: 0,
+  share_count: 0,
+  tools_completed: [],
+  last_login: null
+};
+
 // Create axios instance with default config
 const airtableClient = axios.create({
   baseURL: `${BASE_URL}/${BASE_ID}`,
@@ -90,9 +121,9 @@ export const airtableService = {
             icpDescription: this.parseJsonField(record.fields['ICP Description']),
             costCalculatorContent: this.parseJsonField(record.fields['Cost Calculator Content']),
             businessCaseContent: this.parseJsonField(record.fields['Business Case Content']),
-            workflowProgress: this.parseJsonField(record.fields['Workflow_Progress']) || this.getDefaultWorkflowProgress(),
-            userPreferences: this.parseJsonField(record.fields['User_Preferences']) || this.getDefaultUserPreferences(),
-            usageAnalytics: this.parseJsonField(record.fields['Usage_Analytics']) || this.getDefaultUsageAnalytics(),
+            workflowProgress: this.parseJsonField(record.fields['Workflow Progress']) || this.getDefaultWorkflowProgress(),
+            userPreferences: this.parseJsonField(record.fields['User Preferences']) || this.getDefaultUserPreferences(),
+            usageAnalytics: this.parseJsonField(record.fields['Usage Analytics']) || this.getDefaultUsageAnalytics(),
             createdAt: record.fields['Created At'],
             lastAccessed: record.fields['Last Accessed']
           };
@@ -275,7 +306,14 @@ export const airtableService = {
   async updateWorkflowProgress(recordId, progressUpdate) {
     try {
       // Get current progress first
-      const currentData = await this.getCustomerDataByRecordId(recordId);
+      let currentData;
+      try {
+        currentData = await this.getCustomerDataByRecordId(recordId);
+      } catch (error) {
+        console.warn('Could not load existing data, using defaults:', error.message);
+        currentData = { workflowProgress: this.getDefaultWorkflowProgress() };
+      }
+      
       const currentProgress = currentData?.workflowProgress || this.getDefaultWorkflowProgress();
       
       // Merge with updates
@@ -300,7 +338,7 @@ export const airtableService = {
         records: [{
           id: recordId,
           fields: {
-            'Workflow_Progress': JSON.stringify(updatedProgress)
+            'Workflow Progress': JSON.stringify(updatedProgress)
           }
         }]
       });
@@ -318,7 +356,14 @@ export const airtableService = {
   // Update user preferences
   async updateUserPreferences(recordId, preferencesUpdate) {
     try {
-      const currentData = await this.getCustomerDataByRecordId(recordId);
+      let currentData;
+      try {
+        currentData = await this.getCustomerDataByRecordId(recordId);
+      } catch (error) {
+        console.warn('Could not load existing preferences, using defaults:', error.message);
+        currentData = { userPreferences: this.getDefaultUserPreferences() };
+      }
+      
       const currentPreferences = currentData?.userPreferences || this.getDefaultUserPreferences();
       
       const updatedPreferences = {
@@ -331,7 +376,7 @@ export const airtableService = {
         records: [{
           id: recordId,
           fields: {
-            'User_Preferences': JSON.stringify(updatedPreferences)
+            'User Preferences': JSON.stringify(updatedPreferences)
           }
         }]
       });
@@ -347,7 +392,14 @@ export const airtableService = {
   // Update usage analytics
   async updateUsageAnalytics(recordId, analyticsUpdate) {
     try {
-      const currentData = await this.getCustomerDataByRecordId(recordId);
+      let currentData;
+      try {
+        currentData = await this.getCustomerDataByRecordId(recordId);
+      } catch (error) {
+        console.warn('Could not load existing analytics, using defaults:', error.message);
+        currentData = { usageAnalytics: this.getDefaultUsageAnalytics() };
+      }
+      
       const currentAnalytics = currentData?.usageAnalytics || this.getDefaultUsageAnalytics();
       
       const updatedAnalytics = {
@@ -365,7 +417,7 @@ export const airtableService = {
         records: [{
           id: recordId,
           fields: {
-            'Usage_Analytics': JSON.stringify(updatedAnalytics)
+            'Usage Analytics': JSON.stringify(updatedAnalytics)
           }
         }]
       });
@@ -569,9 +621,9 @@ export const airtableService = {
         icpDescription: this.parseJsonField(record.fields['ICP Description']),
         costCalculatorContent: this.parseJsonField(record.fields['Cost Calculator Content']),
         businessCaseContent: this.parseJsonField(record.fields['Business Case Content']),
-        workflowProgress: this.parseJsonField(record.fields['Workflow_Progress']) || this.getDefaultWorkflowProgress(),
-        userPreferences: this.parseJsonField(record.fields['User_Preferences']) || this.getDefaultUserPreferences(),
-        usageAnalytics: this.parseJsonField(record.fields['Usage_Analytics']) || this.getDefaultUsageAnalytics(),
+        workflowProgress: this.parseJsonField(record.fields['Workflow Progress']) || this.getDefaultWorkflowProgress(),
+        userPreferences: this.parseJsonField(record.fields['User Preferences']) || this.getDefaultUserPreferences(),
+        usageAnalytics: this.parseJsonField(record.fields['Usage Analytics']) || this.getDefaultUsageAnalytics(),
         createdAt: record.fields['Created At'],
         lastAccessed: record.fields['Last Accessed']
       };
