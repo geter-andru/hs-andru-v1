@@ -5,11 +5,13 @@ import { useWorkflowProgress } from '../../hooks/useWorkflowProgress';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { Callout } from '../common/ContentDisplay';
 import { authService } from '../../services/authService';
+import CompetencyDashboard from '../competency/CompetencyDashboard';
 
 const CustomerDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { customerId } = useParams();
+  const [showCompetencyDashboard, setShowCompetencyDashboard] = useState(true);
   
   const {
     workflowData,
@@ -154,6 +156,13 @@ const CustomerDashboard = () => {
         workflowData={workflowProgress}
         workflowStatus={workflowStatus}
         completionPercentage={workflowProgress?.completion_percentage || 0}
+      />
+      
+      {/* Professional Development Center - Stealth Gamification */}
+      <CompetencyDashboard 
+        customerId={customerId}
+        isVisible={showCompetencyDashboard}
+        className="mb-8"
       />
       
       {/* Tool Content Area */}
