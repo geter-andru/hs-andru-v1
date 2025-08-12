@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import ICPFrameworkDisplay from './ICPFrameworkDisplay';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
@@ -11,6 +12,7 @@ const ICPDisplay = () => {
   const [companyName, setCompanyName] = useState('');
   const [ratingResult, setRatingResult] = useState(null);
   const [isRating, setIsRating] = useState(false);
+  const [icpFramework, setIcpFramework] = useState(null);
 
   const session = authService.getCurrentSession();
 
@@ -37,6 +39,10 @@ const ICPDisplay = () => {
     }
   }, [session]);
 
+  const handleFrameworkUpdate = (framework) => {
+    setIcpFramework(framework);
+  };
+
   const calculateFitScore = async (companyName) => {
     setIsRating(true);
     setRatingResult(null);
@@ -45,32 +51,31 @@ const ICPDisplay = () => {
       // Simulate company analysis (in real implementation, this would call an AI service or external API)
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
       
-      // Mock rating calculation based on company name characteristics
+      // Use custom framework if available, otherwise use defaults
+      const frameworkCriteria = icpFramework || [
+        { name: 'Company Size', weight: 25 },
+        { name: 'Technical Maturity', weight: 30 },
+        { name: 'Growth Stage', weight: 20 },
+        { name: 'Pain Point Severity', weight: 25 }
+      ];
+
+      // Calculate scores based on framework weights
+      const criteriaScores = frameworkCriteria.map(criterion => ({
+        name: criterion.name,
+        weight: criterion.weight,
+        score: Math.floor(Math.random() * 30) + 70, // 70-100 range
+        description: criterion.description || `Assessment of ${criterion.name.toLowerCase()}`
+      }));
+
+      // Calculate weighted overall score
+      const overallScore = Math.round(
+        criteriaScores.reduce((sum, c) => sum + (c.score * c.weight / 100), 0)
+      );
+
       const mockRating = {
         companyName,
-        overallScore: Math.floor(Math.random() * 40) + 60, // 60-100 range
-        criteria: [
-          {
-            name: 'Company Size',
-            score: Math.floor(Math.random() * 30) + 70,
-            description: 'Based on estimated employee count and revenue'
-          },
-          {
-            name: 'Technology Stack',
-            score: Math.floor(Math.random() * 40) + 60,
-            description: 'Alignment with target tech requirements'
-          },
-          {
-            name: 'Market Segment',
-            score: Math.floor(Math.random() * 35) + 65,
-            description: 'Fit within ideal customer segments'
-          },
-          {
-            name: 'Growth Stage',
-            score: Math.floor(Math.random() * 30) + 70,
-            description: 'Company maturity and growth trajectory'
-          }
-        ],
+        overallScore,
+        criteria: criteriaScores,
         recommendation: 'High Priority',
         nextSteps: [
           'Schedule discovery call within 2 weeks',
@@ -157,14 +162,16 @@ const ICPDisplay = () => {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Left Column: ICP Framework Content */}
         <div className="space-y-6">
-          <div className="card card-padding glass">
-            <h2 className="text-lg font-semibold text-primary mb-4">Your ICP Framework</h2>
-            {icpData ? (
+          <ICPFrameworkDisplay 
+            customerData={icpData}
+            onFrameworkUpdate={handleFrameworkUpdate}
+          />
+          {icpData && (
+            <div className="card card-padding glass">
+              <h2 className="text-lg font-semibold text-primary mb-4">ICP Details</h2>
               <ContentDisplay content={icpData} />
-            ) : (
-              <p className="text-muted">No ICP framework data available</p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Interactive Rating Tool */}
@@ -222,12 +229,21 @@ const ICPDisplay = () => {
                     {ratingResult.criteria.map((criterion, index) => (
                       <div key={index} className="border rounded-lg p-3">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">{criterion.name}</span>
+                          <span className="text-sm font-medium">
+                            {criterion.name} 
+                            <span className="text-xs text-secondary ml-1">({criterion.weight}%)</span>
+                          </span>
                           <span className={`font-semibold ${getScoreColor(criterion.score)}`}>
                             {criterion.score}/100
                           </span>
                         </div>
                         <p className="text-xs text-secondary">{criterion.description}</p>
+                        <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${criterion.score >= 80 ? 'bg-green-500' : criterion.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                            style={{ width: `${criterion.score}%` }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
