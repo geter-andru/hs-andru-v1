@@ -1,0 +1,325 @@
+/* Professional Gamification Animations and Styles */
+
+/* Fade in animation for new elements */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+/* Slide in from right for notifications */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out;
+}
+
+/* Slide effect for progress bars */
+@keyframes slide-right {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animate-slide-right {
+  animation: slide-right 1s ease-in-out;
+}
+
+/* Pulse animation for fresh achievements */
+@keyframes professional-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.animate-professional-pulse {
+  animation: professional-pulse 2s ease-in-out infinite;
+}
+
+/* Glow effect for high-value achievements */
+@keyframes achievement-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.4);
+  }
+}
+
+.animate-achievement-glow {
+  animation: achievement-glow 3s ease-in-out infinite;
+}
+
+/* Bounce effect for milestone achievements */
+@keyframes milestone-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-milestone-bounce {
+  animation: milestone-bounce 1s ease-in-out;
+}
+
+/* Progress bar filling animation */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--target-width, 0%);
+  }
+}
+
+.animate-progress-fill {
+  animation: progress-fill 1.5s ease-out;
+}
+
+/* Competency level advancement */
+@keyframes level-advancement {
+  0% {
+    transform: scale(1);
+    background-color: currentColor;
+  }
+  50% {
+    transform: scale(1.1);
+    background-color: #10b981;
+  }
+  100% {
+    transform: scale(1);
+    background-color: currentColor;
+  }
+}
+
+.animate-level-advancement {
+  animation: level-advancement 1s ease-in-out;
+}
+
+/* Tool unlock celebration */
+@keyframes tool-unlock {
+  0% {
+    transform: scale(0.8) rotate(-5deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-tool-unlock {
+  animation: tool-unlock 0.8s ease-out;
+}
+
+/* Streak counter animation */
+@keyframes streak-increment {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+    color: #f59e0b;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-streak-increment {
+  animation: streak-increment 0.6s ease-in-out;
+}
+
+/* Professional notification entrance */
+@keyframes notification-entrance {
+  0% {
+    transform: translateX(100%) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    transform: translateX(0%) scale(1.05);
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-notification-entrance {
+  animation: notification-entrance 0.5s ease-out;
+}
+
+/* Points counter animation */
+@keyframes points-increment {
+  0% {
+    transform: translateY(0px);
+    color: currentColor;
+  }
+  50% {
+    transform: translateY(-10px);
+    color: #10b981;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  100% {
+    transform: translateY(0px);
+    color: currentColor;
+  }
+}
+
+.animate-points-increment {
+  animation: points-increment 0.8s ease-out;
+}
+
+/* Mobile responsiveness helpers */
+@media (max-width: 768px) {
+  .mobile-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .mobile-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Consistency streak fire effect */
+@keyframes streak-fire {
+  0%, 100% {
+    transform: scale(1) rotate(-1deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(1deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(-0.5deg);
+  }
+  75% {
+    transform: scale(1.15) rotate(0.5deg);
+  }
+}
+
+.animate-streak-fire {
+  animation: streak-fire 2s ease-in-out infinite;
+}
+
+/* Milestone gallery hover effects */
+.milestone-card-hover {
+  transition: all 0.3s ease;
+}
+
+.milestone-card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Professional development shimmer effect */
+@keyframes professional-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.animate-professional-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.2) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200px 100%;
+  animation: professional-shimmer 2s infinite;
+}
+
+/* Smooth transitions for all interactive elements */
+.gamification-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+.gamification-transition:hover {
+  transform: translateY(-1px);
+}
+
+.gamification-transition:active {
+  transform: translateY(0);
+}
+
+/* Focus states for accessibility */
+.gamification-focus:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Loading shimmer for gamification elements */
+.gamification-loading {
+  background: linear-gradient(
+    90deg,
+    #374151 25%,
+    #4b5563 37%,
+    #374151 63%
+  );
+  background-size: 400% 100%;
+  animation: loading-shimmer 1.5s ease infinite;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
