@@ -7,6 +7,7 @@ import ICPDisplay from './components/tools/ICPDisplay';
 import CostCalculator from './components/tools/CostCalculator';
 import BusinessCaseBuilder from './components/tools/BusinessCaseBuilder';
 import ResultsDashboard from './components/results/ResultsDashboard';
+import CompetencyProtectedRoute from './components/routing/CompetencyProtectedRoute';
 
 // Landing page component for invalid routes
 const InvalidAccess = () => (
@@ -46,9 +47,23 @@ function App() {
               <Route index element={<Navigate to="dashboard/icp" replace />} />
               <Route path="dashboard" element={<CustomerDashboard />}>
                 <Route index element={<Navigate to="icp" replace />} />
+                {/* ICP Analysis - Always available (Foundation Level) */}
                 <Route path="icp" element={<ICPDisplay />} />
-                <Route path="cost-calculator" element={<CostCalculator />} />
-                <Route path="business-case" element={<BusinessCaseBuilder />} />
+                
+                {/* Cost Calculator - Requires demonstrated ICP competency */}
+                <Route path="cost-calculator" element={
+                  <CompetencyProtectedRoute requiredTool="cost-calculator">
+                    <CostCalculator />
+                  </CompetencyProtectedRoute>
+                } />
+                
+                {/* Business Case Builder - Requires demonstrated cost analysis competency */}
+                <Route path="business-case" element={
+                  <CompetencyProtectedRoute requiredTool="business-case">
+                    <BusinessCaseBuilder />
+                  </CompetencyProtectedRoute>
+                } />
+                
                 <Route path="results" element={<ResultsDashboard />} />
               </Route>
             </Route>

@@ -10,29 +10,40 @@ import {
   ArrowRight,
   TrendingUp,
   AlertTriangle,
-  Lightbulb
+  Lightbulb,
+  Unlock,
+  Star
 } from 'lucide-react';
+import MethodologyUnlockNotification, { useMethodologyUnlock } from '../notifications/MethodologyUnlockNotification';
+import { competencyService } from '../../services/competencyService';
 
 const EnhancedTabNavigation = ({ 
   activeTab, 
   onTabChange, 
   workflowData = {},
   workflowStatus = {},
-  completionPercentage = 0
+  completionPercentage = 0,
+  customerId
 }) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
+  const [toolAccessStatus, setToolAccessStatus] = useState({});
+  const [previousAccessStatus, setPreviousAccessStatus] = useState({});
+  const { notification, showUnlockNotification, hideNotification } = useMethodologyUnlock();
 
-  // Tab configuration with enhanced workflow awareness
+  // Tab configuration with competency-based progressive access
   const tabConfig = [
     {
       id: 'icp',
       name: 'ICP Analysis',
       icon: Target,
       step: 1,
-      description: 'Identify & rate ideal customers',
-      isAvailable: () => true, // Always available
+      description: 'Customer identification and profiling methodology',
+      professionalLevel: 'Foundation Level',
+      competencyArea: 'Customer Intelligence',
+      isAvailable: () => true, // Always available - foundation tool
       isCompleted: () => workflowData.icp_completed,
       getBadge: () => workflowData.icp_completed && workflowData.icp_score ? `${workflowData.icp_score}% match` : null,
+      getUnlockReason: () => 'Foundational customer analysis methodology - always accessible',
       route: 'icp'
     },
     {
@@ -40,10 +51,14 @@ const EnhancedTabNavigation = ({
       name: 'Cost Calculator',
       icon: Calculator,
       step: 2,
-      description: 'Calculate cost of inaction',
-      isAvailable: () => workflowStatus?.canAccessCost || workflowData.icp_completed,
+      description: 'Revenue impact analysis methodology',
+      professionalLevel: 'Developing Level',
+      competencyArea: 'Value Quantification',
+      isAvailable: () => toolAccessStatus['cost-calculator']?.hasAccess || false,
       isCompleted: () => workflowData.cost_calculated,
       getBadge: () => workflowData.cost_calculated && workflowData.annual_cost ? `$${formatLargeNumber(workflowData.annual_cost)} risk` : null,
+      getUnlockReason: () => toolAccessStatus['cost-calculator']?.reason || 'Customer analysis competency required',
+      getProgress: () => toolAccessStatus['cost-calculator']?.progress || { required: 3, completed: 0 },
       route: 'cost-calculator'
     },
     {
@@ -51,10 +66,14 @@ const EnhancedTabNavigation = ({
       name: 'Business Case',
       icon: FileText,
       step: 3,
-      description: 'Build pilot-to-contract cases',
-      isAvailable: () => workflowStatus?.canAccessBusinessCase || workflowData.cost_calculated,
+      description: 'Strategic proposal development framework',
+      professionalLevel: 'Proficient Level',
+      competencyArea: 'Strategic Development',
+      isAvailable: () => toolAccessStatus['business-case']?.hasAccess || false,
       isCompleted: () => workflowData.business_case_ready,
       getBadge: () => workflowData.selected_template || (workflowData.business_case_ready ? 'Complete' : null),
+      getUnlockReason: () => toolAccessStatus['business-case']?.reason || 'Value articulation mastery required',
+      getProgress: () => toolAccessStatus['business-case']?.progress || { required: 2, completed: 0 },
       route: 'business-case'
     },
     {
@@ -63,9 +82,12 @@ const EnhancedTabNavigation = ({
       icon: BarChart3,
       step: 4,
       description: 'Executive results & insights',
-      isAvailable: () => workflowStatus?.canExport || workflowData.business_case_ready,
+      professionalLevel: 'Executive Level',
+      competencyArea: 'Strategic Communication',
+      isAvailable: () => workflowData.business_case_ready || completionPercentage > 75,
       isCompleted: () => completionPercentage === 100,
       getBadge: () => completionPercentage === 100 ? 'Ready' : null,
+      getUnlockReason: () => 'Complete strategic business case development',
       route: 'results'
     }
   ];
@@ -85,6 +107,45 @@ const EnhancedTabNavigation = ({
     const completedTabs = tabConfig.filter(tab => tab.isCompleted()).length;
     return (completedTabs / tabConfig.length) * 100;
   };
+
+  // Load tool access status and check for unlocks
+  useEffect(() => {
+    if (!customerId) return;
+
+    const checkAccessStatus = async () => {
+      try {
+        const recordId = customerId; // Assuming customerId is the recordId
+        const accessStatus = await competencyService.getToolAccessStatus(recordId);
+        
+        if (accessStatus) {
+          // Check for new unlocks
+          const unlockCheck = await competencyService.checkForUnlocks(recordId, previousAccessStatus);
+          
+          if (unlockCheck.hasUnlocks && unlockCheck.unlocks.length > 0) {
+            const firstUnlock = unlockCheck.unlocks[0];
+            showUnlockNotification(
+              firstUnlock.tool,
+              firstUnlock.competencyAchieved,
+              firstUnlock.level
+            );
+          }
+
+          setPreviousAccessStatus(toolAccessStatus);
+          setToolAccessStatus(accessStatus);
+        }
+      } catch (error) {
+        console.warn('Error checking tool access status:', error);
+        // Fallback to basic workflow-based access
+        setToolAccessStatus({
+          'icp': { hasAccess: true },
+          'cost-calculator': { hasAccess: workflowData.icp_completed },
+          'business-case': { hasAccess: workflowData.cost_calculated }
+        });
+      }
+    };
+
+    checkAccessStatus();
+  }, [customerId, workflowData, showUnlockNotification, previousAccessStatus, toolAccessStatus]);
 
   // Animate progress bar
   useEffect(() => {
@@ -148,10 +209,13 @@ const EnhancedTabNavigation = ({
     }
   };
 
-  // Handle tab click
+  // Handle tab click with competency validation
   const handleTabClick = (tab) => {
     if (tab.isAvailable() && onTabChange) {
       onTabChange(tab.route);
+    } else if (!tab.isAvailable()) {
+      // Show competency requirement tooltip or modal
+      console.log(`Access denied: ${tab.getUnlockReason()}`);
     }
   };
 
@@ -204,6 +268,14 @@ const EnhancedTabNavigation = ({
 
   return (
     <div className="space-y-6">
+      {/* Methodology Unlock Notification */}
+      <MethodologyUnlockNotification
+        isVisible={notification.isVisible}
+        onClose={hideNotification}
+        unlockedTool={notification.unlockedTool}
+        competencyAchieved={notification.competencyAchieved}
+        nextSteps={notification.nextSteps}
+      />
       {/* Progress Overview */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -248,12 +320,16 @@ const EnhancedTabNavigation = ({
           const status = getTabStatus(tab);
           const Icon = tab.icon;
           const badge = tab.getBadge();
+          const progress = tab.getProgress ? tab.getProgress() : null;
+          const isLocked = status === 'locked';
 
           return (
             <div
               key={tab.id}
               onClick={() => handleTabClick(tab)}
-              className={`relative p-4 rounded-lg border-2 transition-all duration-300 cursor-pointer ${getStatusStyling(status)}`}
+              className={`relative p-4 rounded-lg border-2 transition-all duration-300 ${
+                isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+              } ${getStatusStyling(status)}`}
             >
               {/* Step Number Badge */}
               <div className="absolute -top-2 -left-2 w-6 h-6 bg-gray-800 border-2 border-gray-600 rounded-full flex items-center justify-center">
@@ -265,19 +341,64 @@ const EnhancedTabNavigation = ({
                 {getStatusIcon(status)}
               </div>
 
+              {/* Professional Level Badge */}
+              {tab.professionalLevel && (
+                <div className="absolute top-2 left-2">
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    isLocked ? 'bg-gray-700 text-gray-500' : 'bg-blue-900 text-blue-300 border border-blue-700'
+                  }`}>
+                    {tab.professionalLevel}
+                  </div>
+                </div>
+              )}
+
               {/* Tab Content */}
-              <div className="mt-2">
+              <div className="mt-8">
                 <div className="flex items-center space-x-3 mb-2">
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{tab.name}</span>
                 </div>
                 
-                <p className="text-xs opacity-75 mb-3">{tab.description}</p>
+                <p className="text-xs opacity-75 mb-2">{tab.description}</p>
                 
-                {/* Badge */}
-                {badge && (
+                {/* Competency Area */}
+                {tab.competencyArea && (
+                  <p className="text-xs text-blue-400 mb-3 font-medium">
+                    {tab.competencyArea}
+                  </p>
+                )}
+
+                {/* Locked Tool - Show Progress Requirements */}
+                {isLocked && progress && (
+                  <div className="space-y-2 mb-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Progress Required</span>
+                      <span className="text-gray-300">{progress.completed}/{progress.required}</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-green-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min((progress.completed / progress.required) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 leading-tight">
+                      {tab.getUnlockReason()}
+                    </p>
+                  </div>
+                )}
+
+                {/* Badge for Available/Completed Tools */}
+                {badge && !isLocked && (
                   <div className="inline-block px-2 py-1 bg-gray-800/50 rounded-full text-xs font-medium border border-gray-600">
                     {badge}
+                  </div>
+                )}
+
+                {/* Locked Tool - Competency Requirement */}
+                {isLocked && (
+                  <div className="inline-flex items-center space-x-1 px-2 py-1 bg-gray-800 rounded-full text-xs font-medium border border-gray-600">
+                    <Lock className="w-3 h-3" />
+                    <span>Competency Required</span>
                   </div>
                 )}
               </div>

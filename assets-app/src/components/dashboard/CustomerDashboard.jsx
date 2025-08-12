@@ -156,6 +156,7 @@ const CustomerDashboard = () => {
         workflowData={workflowProgress}
         workflowStatus={workflowStatus}
         completionPercentage={workflowProgress?.completion_percentage || 0}
+        customerId={customerId}
       />
       
       {/* Professional Development Center - Stealth Gamification */}
