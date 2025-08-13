@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import LoadingSpinner from '../common/LoadingSpinner';
+import AdminModeIndicator from '../admin/AdminModeIndicator';
 import { authService } from '../../services/authService';
 import { airtableService } from '../../services/airtableService';
 
@@ -133,6 +134,11 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-primary">
       <Header />
+      
+      {/* Admin Mode Indicator */}
+      {customerData?.isAdmin && (
+        <AdminModeIndicator isVisible={true} position="top-right" />
+      )}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         <Outlet />
