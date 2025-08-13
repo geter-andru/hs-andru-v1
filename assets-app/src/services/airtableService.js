@@ -1950,6 +1950,9 @@ export const airtableService = {
         toolAccessStatus: this.parseJsonField(record.fields['Tool Access Status']) || this.getDefaultToolAccessStatus(),
         professionalMilestones: this.parseJsonField(record.fields['Professional Milestones']) || this.getDefaultProfessionalMilestones(),
         dailyObjectives: this.parseJsonField(record.fields['Daily Objectives']) || this.getDefaultDailyObjectives(),
+        // Enhanced ICP fields for personalized analysis
+        detailedIcpAnalysis: this.parseJsonField(record.fields['Detailed ICP Analysis']),
+        targetBuyerPersonas: this.parseJsonField(record.fields['Target Buyer Personas']),
         createdAt: record.fields['Created At'],
         lastAccessed: record.fields['Last Accessed']
       };

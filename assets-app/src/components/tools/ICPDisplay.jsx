@@ -4,6 +4,8 @@ import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
 import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
 import ICPFrameworkDisplay from './ICPFrameworkDisplay';
+import BuyerPersonaDetail from '../icp-analysis/BuyerPersonaDetail';
+import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
@@ -18,6 +20,9 @@ const ICPDisplay = () => {
   const [isRating, setIsRating] = useState(false);
   const [icpFramework, setIcpFramework] = useState(null);
   const [startTime, setStartTime] = useState(Date.now());
+  const [activeTab, setActiveTab] = useState('framework');
+  const [detailedAnalysis, setDetailedAnalysis] = useState(null);
+  const [buyerPersonas, setBuyerPersonas] = useState(null);
 
   const session = authService.getCurrentSession();
 
@@ -53,6 +58,20 @@ const ICPDisplay = () => {
         }
         
         setIcpData(customerAssets.icpContent);
+        
+        // Load enhanced ICP data if available
+        if (customerAssets.detailedIcpAnalysis) {
+          setDetailedAnalysis(customerAssets.detailedIcpAnalysis);
+        }
+        
+        if (customerAssets.targetBuyerPersonas) {
+          setBuyerPersonas(customerAssets.targetBuyerPersonas);
+        }
+        
+        // Set default active tab based on available data
+        if (customerAssets.detailedIcpAnalysis || customerAssets.targetBuyerPersonas) {
+          setActiveTab('enhanced');
+        }
       } catch (err) {
         console.error('Failed to load ICP data:', err);
         setError(err.message);
@@ -279,7 +298,190 @@ const ICPDisplay = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Tabbed Interface */}
+      {(detailedAnalysis || buyerPersonas) && (
+        <div className="bg-gray-900 border border-gray-700 rounded-lg">
+          <div className="border-b border-gray-700">
+            <nav className="flex space-x-8 px-6 py-3">
+              <button
+                onClick={() => setActiveTab('framework')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'framework'
+                    ? 'border-blue-500 text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
+                }`}
+              >
+                ICP Framework
+              </button>
+              {(detailedAnalysis || buyerPersonas) && (
+                <button
+                  onClick={() => setActiveTab('enhanced')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'enhanced'
+                      ? 'border-blue-500 text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  Detailed Analysis
+                  <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                    AI Generated
+                  </span>
+                </button>
+              )}
+              <button
+                onClick={() => setActiveTab('rating')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'rating'
+                    ? 'border-blue-500 text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
+                }`}
+              >
+                Company Rating
+              </button>
+            </nav>
+          </div>
+          
+          <div className="p-6">
+            {activeTab === 'framework' && (
+              <div className="space-y-6">
+                <ICPFrameworkDisplay 
+                  customerData={icpData}
+                  onFrameworkUpdate={handleFrameworkUpdate}
+                />
+                {icpData && (
+                  <div>
+                    <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
+                    <ContentDisplay content={icpData} />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'enhanced' && (
+              <div className="space-y-8">
+                {buyerPersonas && (
+                  <BuyerPersonaDetail persona={buyerPersonas} />
+                )}
+                
+                {detailedAnalysis && (
+                  <AllSectionsGrid sections={detailedAnalysis} />
+                )}
+                
+                {!buyerPersonas && !detailedAnalysis && (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg mb-4">
+                      Enhanced ICP analysis not yet available
+                    </div>
+                    <p className="text-gray-500">
+                      Complete your initial assessment to unlock AI-generated detailed analysis
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'rating' && (
+              <div className="max-w-md">
+                <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
+                
+                <form onSubmit={handleRatingSubmit} className="space-y-4">
+                  <div>
+                    <label 
+                      htmlFor="company-name-input-tab"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
+                      Company Name
+                    </label>
+                    <input
+                      id="company-name-input-tab"
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Enter company name to analyze"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isRating}
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={!companyName.trim() || isRating}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                  >
+                    {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
+                  </button>
+                </form>
+
+                {isRating && (
+                  <div className="mt-4">
+                    <LoadingSpinner message="Analyzing company fit..." />
+                  </div>
+                )}
+
+                {ratingResult && (
+                  <div className="mt-6 space-y-4">
+                    <div className="border-t border-gray-600 pt-4">
+                      <h3 className="font-semibold text-white mb-3">
+                        Fit Analysis: {ratingResult.companyName}
+                      </h3>
+                      
+                      {/* Overall Score */}
+                      <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900">Overall Fit Score</span>
+                          <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
+                            {ratingResult.overallScore}/100
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 mt-1">{ratingResult.recommendation} Priority Prospect</p>
+                      </div>
+
+                      {/* Criteria Breakdown */}
+                      <div className="space-y-3">
+                        {ratingResult.criteria.map((criterion, index) => (
+                          <div key={index} className="border rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium">
+                                {criterion.name} 
+                                <span className="text-xs text-secondary ml-1">({criterion.weight}%)</span>
+                              </span>
+                              <span className={`font-semibold ${getScoreColor(criterion.score)}`}>
+                                {criterion.score}/100
+                              </span>
+                            </div>
+                            <p className="text-xs text-secondary">{criterion.description}</p>
+                            <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full ${criterion.score >= 80 ? 'bg-green-500' : criterion.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                style={{ width: `${criterion.score}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Recommendation */}
+                      <div className="mt-4">
+                        <Callout type="success" title={`Recommendation: ${ratingResult.recommendation}`}>
+                          <ul className="mt-2 space-y-1">
+                            {ratingResult.nextSteps.map((step, index) => (
+                              <li key={index} className="text-sm">• {step}</li>
+                            ))}
+                          </ul>
+                        </Callout>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Fallback to original layout if no enhanced data */}
+      {!detailedAnalysis && !buyerPersonas && (
+        <div className="grid lg:grid-cols-2 gap-6">
         {/* Left Column: ICP Framework Content */}
         <div className="space-y-6">
           <ICPFrameworkDisplay 
@@ -418,7 +620,8 @@ const ICPDisplay = () => {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

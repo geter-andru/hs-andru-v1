@@ -8,10 +8,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { airtableService } from '../../services/airtableService';
+import BuyerPersonaDetail from '../icp-analysis/BuyerPersonaDetail';
+import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
 
 const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
   const [personalizedData, setPersonalizedData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [icpAnalysisData, setIcpAnalysisData] = useState(null);
+  const [showICPAnalysis, setShowICPAnalysis] = useState(false);
 
   useEffect(() => {
     const loadPersonalizedWelcome = async () => {
@@ -22,12 +26,22 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
         const estimatedValue = calculateEstimatedValue(data);
         const compellingOpportunities = generateCompellingPreviews(data);
         
+        // Load ICP analysis data for the wow moment
+        const icpData = {
+          detailedAnalysis: data.detailedIcpAnalysis,
+          buyerPersonas: data.targetBuyerPersonas,
+          hasAnalysis: !!(data.detailedIcpAnalysis || data.targetBuyerPersonas)
+        };
+        
         setPersonalizedData({
-          customerName: data.customer_name || 'Strategic Leader',
+          customerName: data.customerName || 'Strategic Leader',
           company: data.company || 'Your Organization',
           estimatedValue,
           opportunities: compellingOpportunities
         });
+        
+        setIcpAnalysisData(icpData);
+        
       } catch (error) {
         console.error('Error loading personalized welcome:', error);
         // Fallback to generic compelling content
@@ -37,6 +51,7 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           estimatedValue: 250,
           opportunities: getDefaultOpportunities()
         });
+        setIcpAnalysisData({ hasAnalysis: false });
       } finally {
         setLoading(false);
       }
@@ -52,29 +67,34 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
     return Math.round(baseValue * companyMultiplier);
   };
 
-  const generateCompellingPreviews = (data) => [
-    {
-      icon: '🎯',
-      title: 'Rate this company',
-      preview: 'Tesla → 8.5/10 fit score',
-      insight: 'Champion tier prospect identification',
-      engagement: 'immediate_rating'
-    },
-    {
-      icon: '💰',
-      title: 'Current delay cost',
-      preview: '$127K over 6 months',
-      insight: 'Revenue loss timeline visualization',
-      engagement: 'financial_impact'
-    },
-    {
-      icon: '📋',
-      title: 'Executive business case',
-      preview: 'Ready for stakeholder review',
-      insight: 'Auto-populated strategic framework',
-      engagement: 'business_case'
-    }
-  ];
+  const generateCompellingPreviews = (data) => {
+    const hasICPAnalysis = !!(data.detailedIcpAnalysis || data.targetBuyerPersonas);
+    
+    return [
+      {
+        icon: '🎯',
+        title: hasICPAnalysis ? 'Your Personalized ICP Analysis' : 'Rate this company',
+        preview: hasICPAnalysis ? 'Complete buyer persona & market fit analysis ready' : 'Tesla → 8.5/10 fit score',
+        insight: hasICPAnalysis ? 'AI-generated strategic intelligence based on your data' : 'Champion tier prospect identification',
+        engagement: hasICPAnalysis ? 'icp_analysis' : 'immediate_rating',
+        isPersonalized: hasICPAnalysis
+      },
+      {
+        icon: '💰',
+        title: 'Current delay cost',
+        preview: '$127K over 6 months',
+        insight: 'Revenue loss timeline visualization',
+        engagement: 'financial_impact'
+      },
+      {
+        icon: '📋',
+        title: 'Executive business case',
+        preview: 'Ready for stakeholder review',
+        insight: 'Auto-populated strategic framework',
+        engagement: 'business_case'
+      }
+    ];
+  };
 
   const getDefaultOpportunities = () => [
     {
@@ -180,15 +200,32 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
                 scale: 1.02,
                 transition: { duration: 0.2 }
               }}
-              onClick={() => onStartEngagement(opportunity.engagement)}
+              onClick={() => {
+                if (opportunity.engagement === 'icp_analysis') {
+                  setShowICPAnalysis(true);
+                } else {
+                  onStartEngagement(opportunity.engagement);
+                }
+              }}
             >
-              <div className="bg-gradient-to-r from-gray-800/80 to-gray-700/80 rounded-xl p-6 border border-gray-600/50 hover:border-blue-500/50 transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
+              <div className={`rounded-xl p-6 transition-all duration-300 group-hover:shadow-2xl ${
+                opportunity.isPersonalized 
+                  ? 'bg-gradient-to-r from-blue-800/60 to-purple-800/60 border border-blue-500/70 hover:border-blue-400/80 group-hover:shadow-blue-500/30' 
+                  : 'bg-gradient-to-r from-gray-800/80 to-gray-700/80 border border-gray-600/50 hover:border-blue-500/50 group-hover:shadow-blue-500/20'
+              }`}>
                 <div className="flex items-start space-x-4">
                   <div className="text-3xl">{opportunity.icon}</div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
-                      {opportunity.title}
-                    </h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors">
+                        {opportunity.title}
+                      </h3>
+                      {opportunity.isPersonalized && (
+                        <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-xs font-bold px-2 py-1 rounded-full">
+                          ✨ PERSONALIZED
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xl font-medium text-blue-300 mb-2">
                       {opportunity.preview}
                     </p>
@@ -245,6 +282,73 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           Professional methodology framework
         </p>
       </motion.div>
+
+      {/* ICP Analysis Modal/Overlay */}
+      <AnimatePresence>
+        {showICPAnalysis && icpAnalysisData?.hasAnalysis && (
+          <motion.div
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowICPAnalysis(false)}
+          >
+            <motion.div
+              className="bg-gray-900 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-gray-700"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 p-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold text-white">
+                    Your Personalized ICP Analysis
+                  </h2>
+                  <p className="text-gray-300 mt-2">
+                    AI-generated strategic intelligence based on your business data
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowICPAnalysis(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="p-6">
+                {icpAnalysisData?.buyerPersonas && (
+                  <BuyerPersonaDetail persona={icpAnalysisData.buyerPersonas} />
+                )}
+                
+                {icpAnalysisData?.detailedAnalysis && (
+                  <div className="mt-8">
+                    <AllSectionsGrid sections={icpAnalysisData.detailedAnalysis} />
+                  </div>
+                )}
+                
+                <motion.div
+                  className="mt-8 text-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <button
+                    onClick={() => {
+                      setShowICPAnalysis(false);
+                      onStartEngagement('strategic_analysis');
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300"
+                  >
+                    Continue to Strategic Tools
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
