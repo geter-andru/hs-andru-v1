@@ -1,8 +1,8 @@
 /**
  * WelcomeHero Component - Phase 1: Initial Welcome Experience
  * 
- * Replaces complex dashboard with focused, compelling value demonstration
- * that creates immediate engagement within first 10 seconds.
+ * Restructured with new DashboardLayout for optimal page layout and focus.
+ * Features personalized ICP content as primary "wow moment" with contextual sidebar.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +10,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { airtableService } from '../../services/airtableService';
 import BuyerPersonaDetail from '../icp-analysis/BuyerPersonaDetail';
 import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
+import DashboardLayout from '../layout/DashboardLayout';
+import SidebarSection from '../layout/SidebarSection';
+import { MobileOptimizedButton, MobileOptimizedCard } from '../layout/MobileOptimized';
 
 const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
   const [personalizedData, setPersonalizedData] = useState(null);
@@ -120,6 +123,49 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
     }
   ];
 
+  // Sidebar content for contextual guidance
+  const WelcomeHeroSidebar = ({ timeToValue, nextSteps, firstTip }) => {
+    return (
+      <div className="space-y-6">
+        <SidebarSection icon="🚀" title="WHAT'S NEXT">
+          <ul className="space-y-2">
+            {nextSteps.map((step, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {step}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="⏱️" title="TIME TO VALUE">
+          <p className="text-gray-300 text-sm">{timeToValue}</p>
+        </SidebarSection>
+        
+        <SidebarSection icon="💡" title="FIRST TIP">
+          <p className="text-gray-300 text-sm">"{firstTip}"</p>
+        </SidebarSection>
+      </div>
+    );
+  };
+
+  // Highlight Card Component
+  const HighlightCard = ({ icon, title, content, action, onClick }) => {
+    return (
+      <MobileOptimizedCard
+        hover={true}
+        onClick={onClick}
+        className="group cursor-pointer"
+      >
+        <div className="text-3xl mb-4">{icon}</div>
+        <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
+          {title}
+        </h3>
+        <p className="text-gray-300 mb-4">{content}</p>
+        <p className="text-blue-400 text-sm group-hover:text-blue-300 transition-colors">
+          {action} →
+        </p>
+      </MobileOptimizedCard>
+    );
+  };
+
   if (loading) {
     return (
       <div className="welcome-hero-loading">
@@ -136,30 +182,45 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
     );
   }
 
+  // Prepare sidebar content
+  const sidebarContent = personalizedData ? (
+    <WelcomeHeroSidebar 
+      timeToValue="15 minutes total"
+      nextSteps={["Full ICP Analysis", "Cost Calculator", "Business Case"]}
+      firstTip="Use the ICP in tomorrow's prospect research call"
+    />
+  ) : null;
+
   return (
-    <motion.div 
-      className="welcome-hero-container"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    <DashboardLayout 
+      sidebarContent={sidebarContent} 
+      currentPhase="welcome"
+      customerName={personalizedData?.customerName}
+      companyName={personalizedData?.company}
     >
-      {/* Personalized Greeting */}
       <motion.div 
-        className="personalized-greeting mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
+        className="space-y-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
-        <h1 className="text-4xl font-bold text-white mb-3">
-          Welcome back, {personalizedData.customerName}
-        </h1>
-        <p className="text-xl text-gray-300 mb-2">
-          from {personalizedData.company}
-        </p>
-        <p className="text-lg text-blue-300 font-medium">
-          Your Strategic Revenue Intelligence is ready.
-        </p>
-      </motion.div>
+        {/* Personalized Greeting */}
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+        >
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            Welcome back, {personalizedData.customerName}
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-300 mb-2">
+            from {personalizedData.company}
+          </p>
+          <p className="text-base sm:text-lg text-blue-300 font-medium">
+            Your Strategic Revenue Intelligence is ready.
+          </p>
+        </motion.div>
 
       {/* Value Teaser */}
       <motion.div 
@@ -181,106 +242,138 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
         </div>
       </motion.div>
 
-      {/* Immediate Value Demo */}
-      <motion.div 
-        className="immediate-value-demo mb-10"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.6 }}
-      >
-        <div className="compelling-previews grid gap-6">
-          {personalizedData.opportunities.map((opportunity, index) => (
-            <motion.div
-              key={index}
-              className="preview-card group cursor-pointer"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + (index * 0.1), duration: 0.5 }}
-              whileHover={{ 
-                scale: 1.02,
-                transition: { duration: 0.2 }
-              }}
-              onClick={() => {
-                if (opportunity.engagement === 'icp_analysis') {
-                  setShowICPAnalysis(true);
-                } else {
-                  onStartEngagement(opportunity.engagement);
-                }
-              }}
-            >
-              <div className={`rounded-xl p-6 transition-all duration-300 group-hover:shadow-2xl ${
-                opportunity.isPersonalized 
-                  ? 'bg-gradient-to-r from-blue-800/60 to-purple-800/60 border border-blue-500/70 hover:border-blue-400/80 group-hover:shadow-blue-500/30' 
-                  : 'bg-gradient-to-r from-gray-800/80 to-gray-700/80 border border-gray-600/50 hover:border-blue-500/50 group-hover:shadow-blue-500/20'
-              }`}>
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">{opportunity.icon}</div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors">
-                        {opportunity.title}
-                      </h3>
-                      {opportunity.isPersonalized && (
-                        <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-xs font-bold px-2 py-1 rounded-full">
-                          ✨ PERSONALIZED
-                        </span>
-                      )}
+        {/* Three-Column Highlights */}
+        <motion.div 
+          className="grid md:grid-cols-3 gap-6 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
+          <HighlightCard 
+            icon="🎯"
+            title="WHO TO TARGET"
+            content="Your specific ideal customer profile"
+            action="See detailed scoring criteria"
+            onClick={() => onStartEngagement('icp_analysis')}
+          />
+          <HighlightCard 
+            icon="💰"
+            title="DEAL CHARACTERISTICS" 
+            content="Typical deal size and buying process"
+            action="View financial analysis"
+            onClick={() => onStartEngagement('financial_impact')}
+          />
+          <HighlightCard 
+            icon="🚫"
+            title="WHO TO AVOID"
+            content="Save time and resources"
+            action="Understand buying vs technical interest"
+            onClick={() => onStartEngagement('immediate_rating')}
+          />
+        </motion.div>
+
+        {/* Immediate Value Demo */}
+        <motion.div 
+          className="immediate-value-demo mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+        >
+          <div className="compelling-previews grid gap-6">
+            {personalizedData.opportunities.map((opportunity, index) => (
+              <motion.div
+                key={index}
+                className="preview-card group cursor-pointer"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.0 + (index * 0.1), duration: 0.5 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
+                }}
+                onClick={() => {
+                  if (opportunity.engagement === 'icp_analysis') {
+                    setShowICPAnalysis(true);
+                  } else {
+                    onStartEngagement(opportunity.engagement);
+                  }
+                }}
+              >
+                <div className={`rounded-xl p-6 transition-all duration-300 group-hover:shadow-2xl ${
+                  opportunity.isPersonalized 
+                    ? 'bg-gradient-to-r from-blue-800/60 to-purple-800/60 border border-blue-500/70 hover:border-blue-400/80 group-hover:shadow-blue-500/30' 
+                    : 'bg-gradient-to-r from-gray-800/80 to-gray-700/80 border border-gray-600/50 hover:border-blue-500/50 group-hover:shadow-blue-500/20'
+                }`}>
+                  <div className="flex items-start space-x-4">
+                    <div className="text-3xl">{opportunity.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors">
+                          {opportunity.title}
+                        </h3>
+                        {opportunity.isPersonalized && (
+                          <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-xs font-bold px-2 py-1 rounded-full">
+                            ✨ PERSONALIZED
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xl font-medium text-blue-300 mb-2">
+                        {opportunity.preview}
+                      </p>
+                      <p className="text-gray-400 group-hover:text-gray-300 transition-colors">
+                        {opportunity.insight}
+                      </p>
                     </div>
-                    <p className="text-xl font-medium text-blue-300 mb-2">
-                      {opportunity.preview}
-                    </p>
-                    <p className="text-gray-400 group-hover:text-gray-300 transition-colors">
-                      {opportunity.insight}
-                    </p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
 
-      {/* Primary Action */}
-      <motion.div 
-        className="primary-action mb-8"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.1, duration: 0.5 }}
-      >
-        <button
-          onClick={() => onStartEngagement('strategic_analysis')}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30"
+        {/* Single Prominent CTA */}
+        <motion.div 
+          className="text-center mb-6"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
         >
-          Start Strategic Analysis
-        </button>
-      </motion.div>
+          <MobileOptimizedButton
+            size="large"
+            onClick={() => onStartEngagement('strategic_analysis')}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30"
+          >
+            See Full Analysis & Rating Tools
+          </MobileOptimizedButton>
+        </motion.div>
 
-      {/* Progress Hint */}
-      <motion.div 
-        className="progress-hint text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.3, duration: 0.5 }}
-      >
-        <div className="flex items-center justify-center space-x-4 text-gray-400">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <span>3 integrated tools</span>
+        {/* Progress Hint */}
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4, duration: 0.5 }}
+        >
+          <p className="text-gray-400">
+            2 more strategic frameworks after this
+          </p>
+          <div className="flex items-center justify-center space-x-4 text-gray-400 mt-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-sm">3 integrated tools</span>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-sm">15 minutes total</span>
+            </div>
           </div>
-          <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span>15 minutes total</span>
-          </div>
-        </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Professional methodology framework
-        </p>
+        </motion.div>
       </motion.div>
 
       {/* ICP Analysis Modal/Overlay */}
@@ -349,7 +442,7 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </DashboardLayout>
   );
 };
 

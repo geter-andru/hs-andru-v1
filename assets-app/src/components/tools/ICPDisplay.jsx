@@ -6,6 +6,9 @@ import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary'
 import ICPFrameworkDisplay from './ICPFrameworkDisplay';
 import BuyerPersonaDetail from '../icp-analysis/BuyerPersonaDetail';
 import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
+import DashboardLayout from '../layout/DashboardLayout';
+import SidebarSection from '../layout/SidebarSection';
+import { TabButton, MobileTabNavigation, MobileOptimizedInput, MobileOptimizedButton } from '../layout/MobileOptimized';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
@@ -25,6 +28,165 @@ const ICPDisplay = () => {
   const [buyerPersonas, setBuyerPersonas] = useState(null);
 
   const session = authService.getCurrentSession();
+
+  // Sidebar component for contextual guidance
+  const ICPAnalysisSidebar = ({ usage, progress }) => {
+    return (
+      <div className="space-y-6">
+        <SidebarSection icon="💡" title="WHEN TO USE">
+          <ul className="space-y-1">
+            {usage.when.map((item, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {item}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="🎯" title="HOW TO USE">
+          <div className="space-y-2">
+            {usage.how.map((item, index) => (
+              <p key={index} className="text-gray-300 text-sm">{item}</p>
+            ))}
+          </div>
+        </SidebarSection>
+        
+        <SidebarSection icon="✅" title="SUCCESS TIP">
+          <p className="text-gray-300 text-sm">"{usage.success}"</p>
+        </SidebarSection>
+        
+        <SidebarSection icon="📊" title="YOUR PROGRESS">
+          <div className="space-y-1 text-sm text-gray-300">
+            <p>{progress.companiesRated} companies rated</p>
+            <p>{progress.championTier} Champion tier</p>
+          </div>
+        </SidebarSection>
+      </div>
+    );
+  };
+
+  // Tab Content Component
+  const TabContent = ({ activeTab, sections, icpData }) => {
+    if (activeTab === 'all_sections') {
+      return <AllSectionsGrid sections={sections} />;
+    }
+    
+    if (activeTab === 'framework') {
+      return (
+        <div className="space-y-6">
+          <ICPFrameworkDisplay 
+            customerData={icpData}
+            onFrameworkUpdate={handleFrameworkUpdate}
+          />
+          {icpData && (
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
+              <ContentDisplay content={icpData} />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (activeTab === 'rating') {
+      return (
+        <div className="max-w-md">
+          <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
+          
+          <form onSubmit={handleRatingSubmit} className="space-y-4">
+            <MobileOptimizedInput
+              label="Company Name"
+              value={companyName}
+              onChange={setCompanyName}
+              placeholder="Enter company name to analyze"
+              disabled={isRating}
+            />
+            
+            <MobileOptimizedButton
+              type="submit"
+              disabled={!companyName.trim() || isRating}
+              className="w-full"
+            >
+              {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
+            </MobileOptimizedButton>
+          </form>
+
+          {isRating && (
+            <div className="mt-4">
+              <LoadingSpinner message="Analyzing company fit..." />
+            </div>
+          )}
+
+          {ratingResult && (
+            <div className="mt-6 space-y-4">
+              <div className="border-t border-gray-600 pt-4">
+                <h3 className="font-semibold text-white mb-3">
+                  Fit Analysis: {ratingResult.companyName}
+                </h3>
+                
+                {/* Overall Score */}
+                <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">Overall Fit Score</span>
+                    <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
+                      {ratingResult.overallScore}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-700 mt-1">{ratingResult.recommendation} Priority Prospect</p>
+                </div>
+
+                {/* Criteria Breakdown */}
+                <div className="space-y-3">
+                  {ratingResult.criteria.map((criterion, index) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">
+                          {criterion.name} 
+                          <span className="text-xs text-secondary ml-1">({criterion.weight}%)</span>
+                        </span>
+                        <span className={`font-semibold ${getScoreColor(criterion.score)}`}>
+                          {criterion.score}/100
+                        </span>
+                      </div>
+                      <p className="text-xs text-secondary">{criterion.description}</p>
+                      <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${criterion.score >= 80 ? 'bg-green-500' : criterion.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                          style={{ width: `${criterion.score}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Recommendation */}
+                <div className="mt-4">
+                  <Callout type="success" title={`Recommendation: ${ratingResult.recommendation}`}>
+                    <ul className="mt-2 space-y-1">
+                      {ratingResult.nextSteps.map((step, index) => (
+                        <li key={index} className="text-sm">• {step}</li>
+                      ))}
+                    </ul>
+                  </Callout>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Individual section content
+    if (sections && sections[activeTab]) {
+      return (
+        <div dangerouslySetInnerHTML={{ __html: sections[activeTab] }} />
+      );
+    }
+
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-400">No content available for this section</p>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const loadICPData = async () => {
@@ -289,340 +451,141 @@ const ICPDisplay = () => {
     );
   }
 
+  // Prepare sidebar content
+  const sidebarContent = (
+    <ICPAnalysisSidebar 
+      usage={{
+        when: ["Prospect research", "Qualification", "Team training"],
+        how: [
+          "Ask these questions in discovery calls:",
+          "• What's driving this evaluation now?",
+          "• Who else is involved in this decision?"
+        ],
+        success: "8.5+ scores = prioritize outreach"
+      }}
+      progress={{
+        companiesRated: 3,
+        championTier: 1
+      }}
+    />
+  );
+
+  // Define tab structure for better UX
+  const tabStructure = [
+    { key: 'framework', label: 'ICP Framework' },
+    ...(detailedAnalysis || buyerPersonas ? [{ key: 'enhanced', label: 'Detailed Analysis' }] : []),
+    ...(detailedAnalysis ? [
+      { key: 'pain_points', label: 'Pain Points' },
+      { key: 'goals_objectives', label: 'Goals & Objectives' },
+      { key: 'decision_making', label: 'Decision Making' },
+      { key: 'behavioral_characteristics', label: 'Behavior' },
+      { key: 'all_sections', label: 'All Sections' }
+    ] : []),
+    { key: 'rating', label: 'Company Rating' }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <DashboardLayout 
+      sidebarContent={sidebarContent} 
+      currentPhase="icp-analysis"
+    >
+      <div className="space-y-8">
+        {/* Your ICP Analysis Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">ICP Identification & Rating System</h1>
-          <p className="text-gray-400">Analyze and rate potential customers against your ideal customer profile</p>
-        </div>
-      </div>
-
-      {/* Tabbed Interface */}
-      {(detailedAnalysis || buyerPersonas) && (
-        <div className="bg-gray-900 border border-gray-700 rounded-lg">
-          <div className="border-b border-gray-700">
-            <nav className="flex space-x-8 px-6 py-3">
-              <button
-                onClick={() => setActiveTab('framework')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'framework'
-                    ? 'border-blue-500 text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
-                }`}
-              >
-                ICP Framework
-              </button>
-              {(detailedAnalysis || buyerPersonas) && (
-                <button
-                  onClick={() => setActiveTab('enhanced')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'enhanced'
-                      ? 'border-blue-500 text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
-                  }`}
-                >
-                  Detailed Analysis
-                  <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    AI Generated
-                  </span>
-                </button>
-              )}
-              <button
-                onClick={() => setActiveTab('rating')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'rating'
-                    ? 'border-blue-500 text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-300'
-                }`}
-              >
-                Company Rating
-              </button>
-            </nav>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">Your ICP Analysis</h1>
           
-          <div className="p-6">
-            {activeTab === 'framework' && (
-              <div className="space-y-6">
-                <ICPFrameworkDisplay 
-                  customerData={icpData}
-                  onFrameworkUpdate={handleFrameworkUpdate}
-                />
-                {icpData && (
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
-                    <ContentDisplay content={icpData} />
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {activeTab === 'enhanced' && (
-              <div className="space-y-8">
-                {buyerPersonas && (
-                  <BuyerPersonaDetail persona={buyerPersonas} />
-                )}
-                
-                {detailedAnalysis && (
-                  <AllSectionsGrid sections={detailedAnalysis} />
-                )}
-                
-                {!buyerPersonas && !detailedAnalysis && (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg mb-4">
-                      Enhanced ICP analysis not yet available
-                    </div>
-                    <p className="text-gray-500">
-                      Complete your initial assessment to unlock AI-generated detailed analysis
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {activeTab === 'rating' && (
-              <div className="max-w-md">
-                <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
-                
-                <form onSubmit={handleRatingSubmit} className="space-y-4">
-                  <div>
-                    <label 
-                      htmlFor="company-name-input-tab"
-                      className="block text-sm font-medium text-gray-300 mb-2"
-                    >
-                      Company Name
-                    </label>
-                    <input
-                      id="company-name-input-tab"
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Enter company name to analyze"
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={isRating}
-                    />
-                  </div>
-                  
-                  <button
-                    type="submit"
-                    disabled={!companyName.trim() || isRating}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
-                  >
-                    {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
-                  </button>
-                </form>
-
-                {isRating && (
-                  <div className="mt-4">
-                    <LoadingSpinner message="Analyzing company fit..." />
-                  </div>
-                )}
-
-                {ratingResult && (
-                  <div className="mt-6 space-y-4">
-                    <div className="border-t border-gray-600 pt-4">
-                      <h3 className="font-semibold text-white mb-3">
-                        Fit Analysis: {ratingResult.companyName}
-                      </h3>
-                      
-                      {/* Overall Score */}
-                      <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-900">Overall Fit Score</span>
-                          <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
-                            {ratingResult.overallScore}/100
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-700 mt-1">{ratingResult.recommendation} Priority Prospect</p>
-                      </div>
-
-                      {/* Criteria Breakdown */}
-                      <div className="space-y-3">
-                        {ratingResult.criteria.map((criterion, index) => (
-                          <div key={index} className="border rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium">
-                                {criterion.name} 
-                                <span className="text-xs text-secondary ml-1">({criterion.weight}%)</span>
-                              </span>
-                              <span className={`font-semibold ${getScoreColor(criterion.score)}`}>
-                                {criterion.score}/100
-                              </span>
-                            </div>
-                            <p className="text-xs text-secondary">{criterion.description}</p>
-                            <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full ${criterion.score >= 80 ? 'bg-green-500' : criterion.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                style={{ width: `${criterion.score}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Recommendation */}
-                      <div className="mt-4">
-                        <Callout type="success" title={`Recommendation: ${ratingResult.recommendation}`}>
-                          <ul className="mt-2 space-y-1">
-                            {ratingResult.nextSteps.map((step, index) => (
-                              <li key={index} className="text-sm">• {step}</li>
-                            ))}
-                          </ul>
-                        </Callout>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Fallback to original layout if no enhanced data */}
-      {!detailedAnalysis && !buyerPersonas && (
-        <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left Column: ICP Framework Content */}
-        <div className="space-y-6">
-          <ICPFrameworkDisplay 
-            customerData={icpData}
-            onFrameworkUpdate={handleFrameworkUpdate}
-          />
+          {/* Personalized ICP Summary */}
           {icpData && (
-            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
+            <div 
+              className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8"
+              style={{ minHeight: '30vh' }}
+            >
+              <h2 className="text-lg font-semibold text-white mb-4">ICP Summary</h2>
               <ContentDisplay content={icpData} />
             </div>
           )}
-          
-          {/* Debug info in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
-              <h3 className="text-white text-sm font-medium mb-2">Debug Info:</h3>
-              <pre className="text-gray-400 text-xs overflow-auto">
-                {JSON.stringify({
-                  hasIcpData: !!icpData,
-                  loading,
-                  error,
-                  hasSession: !!session,
-                  sessionData: session ? {
-                    recordId: session.recordId,
-                    customerId: session.customerId,
-                    hasToken: !!session.accessToken
-                  } : null
-                }, null, 2)}
-              </pre>
+        </div>
+
+        {/* Mobile Tab Navigation */}
+        <MobileTabNavigation
+          tabs={tabStructure}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+
+        {/* Desktop Tab Navigation - Sticky */}
+        <div className="hidden lg:block sticky top-0 z-10 bg-gray-900 border-b border-gray-700">
+          <div className="flex space-x-6 overflow-x-auto px-2">
+            {tabStructure.map((tab) => (
+              <TabButton
+                key={tab.key}
+                active={activeTab === tab.key}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label}
+                {tab.key === 'enhanced' && (detailedAnalysis || buyerPersonas) && (
+                  <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                    AI Generated
+                  </span>
+                )}
+              </TabButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="min-h-[40vh]">
+          {activeTab === 'enhanced' && (
+            <div className="space-y-8">
+              {buyerPersonas && (
+                <BuyerPersonaDetail persona={buyerPersonas} />
+              )}
+              
+              {detailedAnalysis && (
+                <AllSectionsGrid sections={detailedAnalysis} />
+              )}
+              
+              {!buyerPersonas && !detailedAnalysis && (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-4">
+                    Enhanced ICP analysis not yet available
+                  </div>
+                  <p className="text-gray-500">
+                    Complete your initial assessment to unlock AI-generated detailed analysis
+                  </p>
+                </div>
+              )}
             </div>
+          )}
+          
+          {activeTab !== 'enhanced' && (
+            <TabContent 
+              activeTab={activeTab} 
+              sections={detailedAnalysis} 
+              icpData={icpData}
+            />
           )}
         </div>
 
-        {/* Right Column: Interactive Rating Tool */}
-        <div className="space-y-6">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
-            
-            <form onSubmit={handleRatingSubmit} className="space-y-4">
-              <div>
-                <label 
-                  htmlFor="company-name-input-main"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
-                  Company Name
-                </label>
-                <input
-                  id="company-name-input-main"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Enter company name to analyze"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isRating}
-                  aria-describedby="company-name-main-help"
-                />
-                <div id="company-name-main-help" className="sr-only">
-                  Enter the name of the company you want to analyze against your ideal customer profile
-                </div>
-              </div>
-              
-              <button
-                type="submit"
-                disabled={!companyName.trim() || isRating}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-md font-medium transition-colors"
-                aria-describedby="calculate-main-button-help"
-              >
-                {isRating ? 'Analyzing...' : 'Calculate Fit Score'}
-              </button>
-              <div id="calculate-main-button-help" className="sr-only">
-                Click to start analyzing the company against your ideal customer profile criteria
-              </div>
-            </form>
-
-            {isRating && (
-              <div className="mt-4">
-                <LoadingSpinner message="Analyzing company fit..." />
-              </div>
-            )}
-
-            {ratingResult && (
-              <div className="mt-6 space-y-4">
-                <div className="border-t border-gray-600 pt-4">
-                  <h3 className="font-semibold text-white mb-3">
-                    Fit Analysis: {ratingResult.companyName}
-                  </h3>
-                  
-                  {/* Overall Score */}
-                  <div className={`rounded-lg p-4 mb-4 ${getScoreBackground(ratingResult.overallScore)} border border-gray-600`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">Overall Fit Score</span>
-                      <span className={`text-2xl font-bold ${getScoreColor(ratingResult.overallScore)}`}>
-                        {ratingResult.overallScore}/100
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-700 mt-1">{ratingResult.recommendation} Priority Prospect</p>
-                  </div>
-
-                  {/* Criteria Breakdown */}
-                  <div className="space-y-3">
-                    {ratingResult.criteria.map((criterion, index) => (
-                      <div key={index} className="border rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">
-                            {criterion.name} 
-                            <span className="text-xs text-secondary ml-1">({criterion.weight}%)</span>
-                          </span>
-                          <span className={`font-semibold ${getScoreColor(criterion.score)}`}>
-                            {criterion.score}/100
-                          </span>
-                        </div>
-                        <p className="text-xs text-secondary">{criterion.description}</p>
-                        <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full ${criterion.score >= 80 ? 'bg-green-500' : criterion.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                            style={{ width: `${criterion.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Recommendation */}
-                  <div className="mt-4">
-                    <Callout type="success" title={`Recommendation: ${ratingResult.recommendation}`}>
-                      <ul className="mt-2 space-y-1">
-                        {ratingResult.nextSteps.map((step, index) => (
-                          <li key={index} className="text-sm">• {step}</li>
-                        ))}
-                      </ul>
-                    </Callout>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Transition Section */}
+        {activeTab !== 'rating' && (
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Now Rate Your Prospects Using These Criteria
+            </h3>
+            <p className="text-gray-300 mb-4">
+              Use the scoring system below to evaluate how well your prospects match this ideal profile.
+            </p>
+            <MobileOptimizedButton
+              onClick={() => setActiveTab('rating')}
+              className="w-full sm:w-auto"
+            >
+              Start Rating Companies →
+            </MobileOptimizedButton>
           </div>
-        </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 };
 
