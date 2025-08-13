@@ -323,15 +323,12 @@ const CustomerDashboard = () => {
     );
   }
 
-  // Check if user should see the Progressive Engagement experience
-  const shouldUseProgressiveEngagement = () => {
-    // Use Progressive Engagement by default, unless explicitly set to integrated dashboard
-    return dashboardLayout === 'progressive';
-  };
+  // Always use Progressive Engagement experience for simplified UI
+  const shouldUseProgressiveEngagement = true;
 
   return (
     <>
-      {shouldUseProgressiveEngagement() ? (
+      {shouldUseProgressiveEngagement ? (
         /* Progressive Engagement Experience - Complete Replacement */
         <ProgressiveEngagementContainer
           customerId={customerId}
