@@ -17,17 +17,17 @@ export const useNavigation = (customerId, initialPhase = 'welcome') => {
     setNavigationHistory(prev => [...prev, phase]);
     setCurrentPhase(phase);
     
-    // Update URL if needed - use relative paths to maintain customer context
+    // Update URL with proper customer context
     if (phase === 'welcome') {
-      navigate('../dashboard', { relative: 'path' });
+      navigate(`/customer/${customerId}/dashboard`);
     } else if (phase === 'icp-analysis') {
-      navigate('icp', { relative: 'path' });
+      navigate(`/customer/${customerId}/dashboard/icp`);
     } else if (phase === 'cost-calculator') {
-      navigate('cost-calculator', { relative: 'path' });
+      navigate(`/customer/${customerId}/dashboard/cost-calculator`);
     } else if (phase === 'business-case') {
-      navigate('business-case', { relative: 'path' });
+      navigate(`/customer/${customerId}/dashboard/business-case`);
     }
-  }, [navigate]);
+  }, [navigate, customerId]);
 
   const goBack = useCallback(() => {
     if (navigationHistory.length > 1) {
@@ -44,8 +44,8 @@ export const useNavigation = (customerId, initialPhase = 'welcome') => {
   const goHome = useCallback(() => {
     setCurrentPhase('welcome');
     setNavigationHistory(['welcome']);
-    navigate('../dashboard', { relative: 'path' });
-  }, [navigate]);
+    navigate(`/customer/${customerId}/dashboard`);
+  }, [navigate, customerId]);
 
   const canGoBack = navigationHistory.length > 1;
 
