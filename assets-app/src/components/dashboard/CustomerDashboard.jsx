@@ -20,7 +20,7 @@ const CustomerDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { customerId } = useParams();
-  const [dashboardLayout, setDashboardLayout] = useState('integrated'); // 'integrated' or 'classic'
+  const [dashboardLayout, setDashboardLayout] = useState('progressive'); // 'progressive' or 'integrated'
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -325,8 +325,8 @@ const CustomerDashboard = () => {
 
   // Check if user should see the Progressive Engagement experience
   const shouldUseProgressiveEngagement = () => {
-    // Use Progressive Engagement for new users or when explicitly enabled
-    return workflowProgress?.completion_percentage < 100 || dashboardLayout === 'integrated';
+    // Use Progressive Engagement by default, unless explicitly set to integrated dashboard
+    return dashboardLayout === 'progressive';
   };
 
   return (
