@@ -2,20 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
+import DashboardLayout from '../layout/DashboardLayout';
+import SidebarSection from '../layout/SidebarSection';
 import ImplementationGuidance from '../guidance/ImplementationGuidance';
 import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
 import ExportStrategyGuide from '../guidance/ExportStrategyGuide';
+import NavigationControls from '../navigation/NavigationControls';
+import { PrimaryButton, SecondaryButton } from '../ui/ButtonComponents';
+import useNavigation from '../../hooks/useNavigation';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const BusinessCaseBuilder = () => {
   const { onBusinessCaseReady } = useOutletContext() || {};
+  const { throwError } = useAsyncError();
+  const navigation = useNavigation(null, 'business-case');
   const [businessCaseData, setBusinessCaseData] = useState(null);
   const [customerAssets, setCustomerAssets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTemplate, setActiveTemplate] = useState('pilot');
   const [startTime, setStartTime] = useState(Date.now());
+  const [isNavigating, setIsNavigating] = useState(false);
   const [formData, setFormData] = useState({
     // Executive Summary
     companyName: '',
@@ -53,6 +62,83 @@ const BusinessCaseBuilder = () => {
   const [autoPopulated, setAutoPopulated] = useState(new Set()); // Track which fields were auto-populated
 
   const session = authService.getCurrentSession();
+
+  // Sidebar component for contextual guidance
+  const BusinessCaseSidebar = ({ usage }) => {
+    return (
+      <div className="space-y-6">
+        <SidebarSection icon="💡" title="WHEN TO USE">
+          <ul className="space-y-1">
+            {usage.when.map((item, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {item}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="🎯" title="TARGET AUDIENCE">
+          <ul className="space-y-1">
+            {usage.audience.map((item, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {item}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="📋" title="PRESENTATION TIPS">
+          <p className="text-gray-300 text-sm">"{usage.presentationTip}"</p>
+        </SidebarSection>
+        
+        <SidebarSection icon="⚡" title="SUCCESS FACTORS">
+          <ul className="space-y-1">
+            {usage.successFactors.map((factor, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {factor}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+      </div>
+    );
+  };
+
+  // Navigation handlers
+  const handleGoBack = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goBack();
+    } catch (error) {
+      console.error('Navigation back error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleGoHome = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goHome();
+    } catch (error) {
+      console.error('Navigation home error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleCompleteBusinessCase = () => {
+    setIsNavigating(true);
+    try {
+      if (onBusinessCaseReady) {
+        onBusinessCaseReady({
+          selectedTemplate: activeTemplate,
+          formData,
+          hasCompleted: true,
+          timeSpent: Date.now() - startTime
+        });
+      }
+      navigation.goToPhase('results');
+    } catch (error) {
+      console.error('Business case completion error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
 
   const templates = {
     pilot: {
@@ -629,7 +715,7 @@ const BusinessCaseBuilder = () => {
   if (error && !businessCaseData) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Business Case Builder</h1>
+        <h1 className="text-2xl font-bold text-white">Business Case Builder</h1>
         <Callout type="error" title="Error Loading Business Case Data">
           {error}
         </Callout>
@@ -637,27 +723,58 @@ const BusinessCaseBuilder = () => {
     );
   }
 
+  // Prepare sidebar content
+  const sidebarContent = (
+    <BusinessCaseSidebar 
+      usage={{
+        when: ["Executive presentations", "Budget approvals", "Stakeholder alignment"],
+        audience: ["CEO", "CFO", "Board members", "VP Sales", "CTO"],
+        presentationTip: "Focus on ROI and risk mitigation for executives",
+        successFactors: [
+          "Clear problem definition",
+          "Quantified business impact", 
+          "Realistic implementation plan",
+          "Strong ROI justification"
+        ]
+      }}
+    />
+  );
+
   return (
-    <div className="space-y-6">
+    <DashboardLayout 
+      sidebarContent={sidebarContent} 
+      currentPhase="business-case"
+    >
+      <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Business Case Builder</h1>
-          <p className="text-gray-600">Create compelling business cases for pilot programs and full deployments</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Business Case Builder</h1>
+          <p className="text-gray-400">Create compelling business cases for pilot programs and full deployments</p>
         </div>
         <div className="flex space-x-2">
-          <button
-            onClick={() => setPreviewMode(!previewMode)}
-            className="btn btn-secondary"
+          <SecondaryButton
+            onClick={() => {
+              try {
+                setPreviewMode(!previewMode);
+              } catch (error) {
+                console.error('Preview mode toggle error:', error);
+              }
+            }}
           >
             {previewMode ? 'Edit Mode' : 'Preview'}
-          </button>
-          <button
-            onClick={() => exportDocument('html')}
-            className="btn btn-primary"
+          </SecondaryButton>
+          <PrimaryButton
+            onClick={() => {
+              try {
+                exportDocument('html');
+              } catch (error) {
+                console.error('Export error:', error);
+              }
+            }}
             disabled={!formData.companyName}
           >
             Export Document
-          </button>
+          </PrimaryButton>
         </div>
       </div>
 
@@ -668,8 +785,14 @@ const BusinessCaseBuilder = () => {
           {Object.entries(templates).map(([key, template]) => (
             <button
               key={key}
-              onClick={() => setActiveTemplate(key)}
-              className={`p-4 border-2 rounded-lg text-left transition-all duration-300 hover-lift ${
+              onClick={() => {
+                try {
+                  setActiveTemplate(key);
+                } catch (error) {
+                  console.error('Template selection error:', error);
+                }
+              }}
+              className={`p-4 border-2 rounded-lg text-left transition-all duration-300 hover-lift min-h-[44px] touch-manipulation ${
                 activeTemplate === key
                   ? 'border-brand bg-brand/10 shadow-brand/30'
                   : 'border-glass-border bg-surface/50 hover:border-brand/50'
@@ -727,18 +850,23 @@ const BusinessCaseBuilder = () => {
                           className="form-input flex-1"
                           placeholder="Acme Corporation"
                         />
-                        <button
-                          type="button"
-                          onClick={autoPopulateFields}
+                        <SecondaryButton
+                          onClick={() => {
+                            try {
+                              autoPopulateFields();
+                            } catch (error) {
+                              console.error('Auto-populate error:', error);
+                            }
+                          }}
                           disabled={!formData.companyName?.trim()}
-                          className="btn btn-secondary whitespace-nowrap"
+                          className="whitespace-nowrap"
                           title="Auto-populate fields using data from ICP and Cost Calculator analysis"
                         >
                           <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                           Auto-fill
-                        </button>
+                        </SecondaryButton>
                       </div>
                       {autoPopulated.size > 0 && (
                         <p className="text-xs text-brand mt-1">
@@ -921,8 +1049,29 @@ const BusinessCaseBuilder = () => {
           }}
         />
       </div>
-    </div>
+      </div>
+
+      {/* Navigation Controls */}
+      <NavigationControls
+        currentPhase={navigation.currentPhase}
+        onGoBack={handleGoBack}
+        onGoHome={handleGoHome}
+        onNextPhase={handleCompleteBusinessCase}
+        canGoBack={true}
+        nextLabel="Complete Business Case"
+        disabled={isNavigating}
+      />
+    </DashboardLayout>
   );
 };
 
-export default BusinessCaseBuilder;
+const BusinessCaseBuilderWithErrorBoundary = (props) => (
+  <AsyncErrorBoundary 
+    fallbackMessage="Failed to load the Business Case Builder. This might be due to a configuration issue or temporary service disruption."
+    onRetry={() => window.location.reload()}
+  >
+    <BusinessCaseBuilder {...props} />
+  </AsyncErrorBoundary>
+);
+
+export default BusinessCaseBuilderWithErrorBoundary;

@@ -11,12 +11,16 @@ import SidebarSection from '../layout/SidebarSection';
 import { TabButton, MobileTabNavigation, MobileOptimizedInput, MobileOptimizedButton } from '../layout/MobileOptimized';
 import ImplementationGuidance from '../guidance/ImplementationGuidance';
 import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
+import NavigationControls from '../navigation/NavigationControls';
+import { PrimaryButton, SecondaryButton } from '../ui/ButtonComponents';
+import useNavigation from '../../hooks/useNavigation';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
 const ICPDisplay = () => {
   const { onICPComplete } = useOutletContext() || {};
   const { throwError } = useAsyncError();
+  const navigation = useNavigation(null, 'icp-analysis');
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,6 +32,7 @@ const ICPDisplay = () => {
   const [activeTab, setActiveTab] = useState('framework');
   const [detailedAnalysis, setDetailedAnalysis] = useState(null);
   const [buyerPersonas, setBuyerPersonas] = useState(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const session = authService.getCurrentSession();
 
@@ -188,6 +193,47 @@ const ICPDisplay = () => {
         <p className="text-gray-400">No content available for this section</p>
       </div>
     );
+  };
+
+  // Navigation handlers
+  const handleGoBack = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goBack();
+    } catch (error) {
+      console.error('Navigation back error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleGoHome = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goHome();
+    } catch (error) {
+      console.error('Navigation home error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleContinueToCalculator = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goToPhase('cost-calculator');
+      if (onICPComplete) {
+        onICPComplete({
+          hasCompleted: true,
+          ratingResult,
+          activeTab
+        });
+      }
+    } catch (error) {
+      console.error('Navigation to cost calculator error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
   };
 
   useEffect(() => {
@@ -578,12 +624,18 @@ const ICPDisplay = () => {
             <p className="text-gray-300 mb-4">
               Use the scoring system below to evaluate how well your prospects match this ideal profile.
             </p>
-            <MobileOptimizedButton
-              onClick={() => setActiveTab('rating')}
+            <PrimaryButton
+              onClick={() => {
+                try {
+                  setActiveTab('rating');
+                } catch (error) {
+                  console.error('Tab change error:', error);
+                }
+              }}
               className="w-full sm:w-auto"
             >
               Start Rating Companies →
-            </MobileOptimizedButton>
+            </PrimaryButton>
           </div>
         )}
 
@@ -613,6 +665,17 @@ const ICPDisplay = () => {
           }}
         />
       </div>
+
+      {/* Navigation Controls */}
+      <NavigationControls
+        currentPhase={navigation.currentPhase}
+        onGoBack={handleGoBack}
+        onGoHome={handleGoHome}
+        onNextPhase={handleContinueToCalculator}
+        canGoBack={true}
+        nextLabel="Continue to Cost Calculator"
+        disabled={isNavigating}
+      />
     </DashboardLayout>
   );
 };

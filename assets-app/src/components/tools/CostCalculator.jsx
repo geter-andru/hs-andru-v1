@@ -10,6 +10,9 @@ import { MobileOptimizedInput, MobileOptimizedButton, MobileOptimizedCard } from
 import ImplementationGuidance from '../guidance/ImplementationGuidance';
 import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
 import ExportStrategyGuide from '../guidance/ExportStrategyGuide';
+import NavigationControls from '../navigation/NavigationControls';
+import { PrimaryButton, SecondaryButton } from '../ui/ButtonComponents';
+import useNavigation from '../../hooks/useNavigation';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
@@ -18,6 +21,7 @@ import { TIMING, SCORES, BUSINESS, VALIDATION } from '../../constants/app';
 const CostCalculator = () => {
   const { onCostCalculated } = useOutletContext() || {};
   const { throwError } = useAsyncError();
+  const navigation = useNavigation(null, 'cost-calculator');
   const [costData, setCostData] = useState(null);
   const [icpData, setIcpData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +29,7 @@ const CostCalculator = () => {
   const [calculations, setCalculations] = useState(null);
   const [autoPopulated, setAutoPopulated] = useState(new Set());
   const [startTime, setStartTime] = useState(Date.now());
+  const [isNavigating, setIsNavigating] = useState(false);
   const [formData, setFormData] = useState({
     currentRevenue: '',
     targetGrowthRate: '20',
@@ -540,7 +545,53 @@ const CostCalculator = () => {
 
   const handleCalculate = (e) => {
     e.preventDefault();
-    calculateCostOfInaction();
+    try {
+      calculateCostOfInaction();
+    } catch (error) {
+      console.error('Calculation error:', error);
+      setError('Failed to calculate cost analysis');
+    }
+  };
+
+  // Navigation handlers
+  const handleGoBack = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goBack();
+    } catch (error) {
+      console.error('Navigation back error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleGoHome = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goHome();
+    } catch (error) {
+      console.error('Navigation home error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleContinueToBusinessCase = () => {
+    setIsNavigating(true);
+    try {
+      navigation.goToPhase('business-case');
+      if (onCostCalculated) {
+        onCostCalculated({
+          totalAnnualCost: calculations?.totalCostOfInaction || 0,
+          calculations,
+          hasCompleted: true
+        });
+      }
+    } catch (error) {
+      console.error('Navigation to business case error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
   };
 
   const exportResults = async () => {
@@ -650,6 +701,24 @@ Generated on: ${new Date().toLocaleDateString()}
             )}
           </div>
           
+          {/* Auto-populate from ICP button */}
+          {icpData && (
+            <div className="mb-6">
+              <PrimaryButton
+                onClick={() => {
+                  try {
+                    autoPopulateFromICP();
+                  } catch (error) {
+                    console.error('Auto-populate error:', error);
+                  }
+                }}
+                className="w-full sm:w-auto"
+              >
+                Auto-populate from ICP Analysis
+              </PrimaryButton>
+            </div>
+          )}
+          
           {/* Cost Timeline Chart - 40% of space */}
           <MobileOptimizedCard 
             className="mb-8"
@@ -684,8 +753,8 @@ Generated on: ${new Date().toLocaleDateString()}
                 />
                 <InputField
                   label="Growth Rate"
-                  value={formData.growthRate}
-                  onChange={(value) => handleInputChange('growthRate', value)}
+                  value={formData.targetGrowthRate}
+                  onChange={(value) => handleInputChange('targetGrowthRate', value)}
                   suffix="%"
                 />
               </div>
@@ -699,8 +768,8 @@ Generated on: ${new Date().toLocaleDateString()}
                 />
                 <InputField
                   label="Deal Size"
-                  value={formData.avgDealSize}
-                  onChange={(value) => handleInputChange('avgDealSize', value)}
+                  value={formData.averageDealSize}
+                  onChange={(value) => handleInputChange('averageDealSize', value)}
                   prefix="$"
                 />
               </div>
@@ -720,13 +789,14 @@ Generated on: ${new Date().toLocaleDateString()}
                 />
               </div>
 
-              <MobileOptimizedButton
+              <PrimaryButton
                 type="submit"
                 className="w-full"
                 disabled={!isFormValid}
+                onClick={handleCalculate}
               >
                 Calculate Impact
-              </MobileOptimizedButton>
+              </PrimaryButton>
             </form>
           </MobileOptimizedCard>
 
@@ -757,12 +827,18 @@ Generated on: ${new Date().toLocaleDateString()}
                   value={`${calculations.urgencyMultiplier}x`}
                 />
                 
-                <MobileOptimizedButton
-                  onClick={exportResults}
+                <PrimaryButton
+                  onClick={() => {
+                    try {
+                      exportResults();
+                    } catch (error) {
+                      console.error('Export error:', error);
+                    }
+                  }}
                   className="w-full mt-6"
                 >
                   Export to Presentation
-                </MobileOptimizedButton>
+                </PrimaryButton>
               </div>
             ) : (
               <div className="text-center py-8">
@@ -820,6 +896,17 @@ Generated on: ${new Date().toLocaleDateString()}
           }}
         />
       </div>
+
+      {/* Navigation Controls */}
+      <NavigationControls
+        currentPhase={navigation.currentPhase}
+        onGoBack={handleGoBack}
+        onGoHome={handleGoHome}
+        onNextPhase={handleContinueToBusinessCase}
+        canGoBack={true}
+        nextLabel="Continue to Business Case"
+        disabled={isNavigating}
+      />
     </DashboardLayout>
   );
 };

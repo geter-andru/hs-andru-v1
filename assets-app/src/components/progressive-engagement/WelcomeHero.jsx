@@ -13,12 +13,17 @@ import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
 import DashboardLayout from '../layout/DashboardLayout';
 import SidebarSection from '../layout/SidebarSection';
 import { MobileOptimizedButton, MobileOptimizedCard } from '../layout/MobileOptimized';
+import NavigationControls from '../navigation/NavigationControls';
+import { PrimaryButton } from '../ui/ButtonComponents';
+import useNavigation from '../../hooks/useNavigation';
 
 const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
+  const navigation = useNavigation(customerId, 'welcome');
   const [personalizedData, setPersonalizedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [icpAnalysisData, setIcpAnalysisData] = useState(null);
   const [showICPAnalysis, setShowICPAnalysis] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const loadPersonalizedWelcome = async () => {
@@ -148,11 +153,20 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
 
   // Highlight Card Component
   const HighlightCard = ({ icon, title, content, action, onClick }) => {
+    const handleClick = () => {
+      try {
+        if (onClick) {
+          onClick();
+        }
+      } catch (error) {
+        console.error('HighlightCard click error:', error);
+      }
+    };
+
     return (
-      <MobileOptimizedCard
-        hover={true}
-        onClick={onClick}
-        className="group cursor-pointer"
+      <button
+        onClick={handleClick}
+        className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition-colors duration-200 text-left w-full group cursor-pointer min-h-[44px] touch-manipulation"
       >
         <div className="text-3xl mb-4">{icon}</div>
         <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
@@ -162,8 +176,34 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
         <p className="text-blue-400 text-sm group-hover:text-blue-300 transition-colors">
           {action} →
         </p>
-      </MobileOptimizedCard>
+      </button>
     );
+  };
+
+  // Navigation handlers
+  const handleStartAnalysis = async () => {
+    setIsNavigating(true);
+    try {
+      navigation.goToPhase('icp-analysis');
+      if (onStartEngagement) {
+        onStartEngagement('icp-analysis');
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const handleHighlightClick = (toolType) => {
+    try {
+      navigation.goToPhase(toolType);
+      if (onStartEngagement) {
+        onStartEngagement(toolType);
+      }
+    } catch (error) {
+      console.error('Highlight navigation error:', error);
+    }
   };
 
   if (loading) {
@@ -254,21 +294,21 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
             title="WHO TO TARGET"
             content="Your specific ideal customer profile"
             action="See detailed scoring criteria"
-            onClick={() => onStartEngagement('icp_analysis')}
+            onClick={() => handleHighlightClick('icp-analysis')}
           />
           <HighlightCard 
             icon="💰"
             title="DEAL CHARACTERISTICS" 
             content="Typical deal size and buying process"
             action="View financial analysis"
-            onClick={() => onStartEngagement('financial_impact')}
+            onClick={() => handleHighlightClick('cost-calculator')}
           />
           <HighlightCard 
             icon="🚫"
             title="WHO TO AVOID"
             content="Save time and resources"
             action="Understand buying vs technical interest"
-            onClick={() => onStartEngagement('immediate_rating')}
+            onClick={() => handleHighlightClick('icp-analysis')}
           />
         </motion.div>
 
@@ -343,13 +383,13 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.2, duration: 0.5 }}
         >
-          <MobileOptimizedButton
-            size="large"
-            onClick={() => onStartEngagement('strategic_analysis')}
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30"
+          <PrimaryButton
+            onClick={handleStartAnalysis}
+            loading={isNavigating}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-lg py-4 px-8"
           >
             See Full Analysis & Rating Tools
-          </MobileOptimizedButton>
+          </PrimaryButton>
         </motion.div>
 
         {/* Progress Hint */}
@@ -442,6 +482,17 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Navigation Controls */}
+      <NavigationControls
+        currentPhase={navigation.currentPhase}
+        onGoBack={navigation.goBack}
+        onGoHome={navigation.goHome}
+        onNextPhase={handleStartAnalysis}
+        canGoBack={false} // First screen
+        nextLabel="Start Analysis"
+        disabled={isNavigating}
+      />
     </DashboardLayout>
   );
 };
