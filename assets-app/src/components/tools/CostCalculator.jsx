@@ -4,6 +4,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
 import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
+import DashboardLayout from '../layout/DashboardLayout';
+import SidebarSection from '../layout/SidebarSection';
+import { MobileOptimizedInput, MobileOptimizedButton, MobileOptimizedCard } from '../layout/MobileOptimized';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
@@ -30,6 +33,129 @@ const CostCalculator = () => {
   });
 
   const session = authService.getCurrentSession();
+
+  // Sidebar component for contextual guidance
+  const CostCalculatorSidebar = ({ usage }) => {
+    return (
+      <div className="space-y-6">
+        <SidebarSection icon="💡" title="WHEN TO USE">
+          <ul className="space-y-1">
+            {usage.when.map((item, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {item}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="🗣️" title="HOW TO PRESENT">
+          <p className="text-gray-300 text-sm">"{usage.presentation}"</p>
+        </SidebarSection>
+        
+        <SidebarSection icon="📊" title="EXPORT OPTIONS">
+          <ul className="space-y-1">
+            {usage.exports.map((item, index) => (
+              <li key={index} className="text-gray-300 text-sm">• {item}</li>
+            ))}
+          </ul>
+        </SidebarSection>
+        
+        <SidebarSection icon="⚡" title="URGENCY PHRASES">
+          {usage.urgencyPhrases.map((phrase, index) => (
+            <p key={index} className="text-gray-300 text-sm">"{phrase}"</p>
+          ))}
+        </SidebarSection>
+      </div>
+    );
+  };
+
+  // Cost Timeline Chart Component
+  const CostTimelineChart = ({ data }) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center">
+          <p className="text-gray-400">Enter parameters to see cost timeline</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis dataKey="month" stroke="#9CA3AF" />
+            <YAxis stroke="#9CA3AF" />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#374151', 
+                border: '1px solid #6B7280',
+                borderRadius: '8px',
+                color: '#fff'
+              }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="cumulativeLoss" 
+              stroke="#EF4444" 
+              strokeWidth={3}
+              dot={{ fill: '#EF4444', strokeWidth: 2, r: 6 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  // Input Field Component
+  const InputField = ({ label, value, onChange, prefix, suffix, disabled }) => {
+    return (
+      <MobileOptimizedInput
+        label={label}
+        value={value}
+        onChange={onChange}
+        prefix={prefix}
+        suffix={suffix}
+        disabled={disabled}
+        type="number"
+      />
+    );
+  };
+
+  // Result Metric Component
+  const ResultMetric = ({ icon, label, value, highlight = false }) => {
+    return (
+      <div className={`p-4 rounded-lg border ${
+        highlight 
+          ? 'bg-blue-900/30 border-blue-600/50' 
+          : 'bg-gray-700/50 border-gray-600/50'
+      }`}>
+        <div className="flex items-center space-x-3 mb-2">
+          <span className="text-2xl">{icon}</span>
+          <span className="text-sm font-medium text-gray-300">{label}</span>
+        </div>
+        <div className={`text-2xl font-bold ${
+          highlight ? 'text-blue-400' : 'text-white'
+        }`}>
+          ${value}
+        </div>
+      </div>
+    );
+  };
+
+  // Technical Cost Breakdown Component
+  const TechnicalCostBreakdown = ({ costs }) => {
+    if (!costs) return null;
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(costs).map(([category, amount]) => (
+          <div key={category} className="flex justify-between items-center p-3 bg-gray-700/30 rounded-lg">
+            <span className="text-gray-300 capitalize">{category.replace('_', ' ')}</span>
+            <span className="text-white font-semibold">${amount.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   useEffect(() => {
     const loadCostData = async () => {
@@ -477,207 +603,183 @@ Generated on: ${new Date().toLocaleDateString()}
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Cost of Inaction Calculator</h1>
-          <p className="text-secondary">Calculate the financial impact of delayed decisions and missed opportunities</p>
-        </div>
-        {calculations && (
-          <button
-            onClick={exportResults}
-            className="btn btn-secondary min-h-[44px] touch-manipulation"
-          >
-            Export Results
-          </button>
-        )}
-      </div>
+  // Prepare sidebar content
+  const sidebarContent = (
+    <CostCalculatorSidebar 
+      usage={{
+        when: ["Discovery calls", "Proposal meetings", "Urgency creation"],
+        presentation: "Let's look at the cost of waiting to implement...",
+        exports: ["Executive PDF", "Slide deck format", "Email template"],
+        urgencyPhrases: [
+          "Every month of delay costs $21K",
+          "Time is money in technical organizations",
+          "Opportunity cost compounds daily"
+        ]
+      }}
+    />
+  );
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left Column: Methodology and Input Form */}
-        <div className="space-y-6">
-          <div className="card card-padding glass">
-            <h2 className="text-lg font-semibold text-primary mb-4">Calculation Methodology</h2>
-            {costData ? (
-              <ContentDisplay content={costData} />
-            ) : (
-              <p className="text-muted">No methodology data available</p>
+  return (
+    <DashboardLayout 
+      sidebarContent={sidebarContent} 
+      currentPhase="cost-calculator"
+    >
+      <div className="space-y-8">
+        {/* Financial Impact Visualization Header */}
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Financial Impact Visualization
+              </h1>
+              <p className="text-gray-400">
+                Calculate the financial impact of delayed decisions and missed opportunities
+              </p>
+            </div>
+            {calculations && (
+              <MobileOptimizedButton
+                onClick={exportResults}
+                variant="secondary"
+                className="mt-4 sm:mt-0"
+              >
+                Export Results
+              </MobileOptimizedButton>
             )}
           </div>
+          
+          {/* Cost Timeline Chart - 40% of space */}
+          <MobileOptimizedCard 
+            className="mb-8"
+            style={{ minHeight: '40vh' }}
+          >
+            <h2 className="text-xl font-semibold text-white mb-6">
+              Cost of Inaction Timeline
+            </h2>
+            <CostTimelineChart data={calculations?.timeline} />
+          </MobileOptimizedCard>
+        </div>
 
-          <div className="card card-padding glass">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-primary">Business Metrics</h2>
-              <button
-                type="button"
-                onClick={autoPopulateFromICP}
-                disabled={!icpData}
-                className="btn btn-secondary min-h-[44px] touch-manipulation"
-                title="Auto-populate fields using ICP Analysis data"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Auto-fill from ICP
-              </button>
-            </div>
-            {autoPopulationSummary.hasAnyAutoPopulated && (
-              <div className="mb-4 p-3 bg-brand/10 border border-brand/20 rounded-lg">
-                <p className="text-sm text-brand">
-                  ✨ {autoPopulationSummary.count} fields auto-populated from your ICP Analysis
-                </p>
+        {/* Input/Results Split - 50/50 */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          {/* Input Panel */}
+          <MobileOptimizedCard>
+            <h3 className="text-lg font-semibold text-white mb-4">Input Parameters</h3>
+            {costData && (
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-300 mb-3">Methodology</h4>
+                <ContentDisplay content={costData} />
               </div>
             )}
+            
             <form onSubmit={handleCalculate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {renderFormField(
-                  'currentRevenue', 
-                  'Current Annual Revenue ($)', 
-                  'e.g., 5000000 (from ICP demographics)'
-                )}
-                
-                {renderFormField(
-                  'targetGrowthRate', 
-                  'Target Growth Rate (%)', 
-                  'e.g., 25 (from ICP growth stage)'
-                )}
-                
-                {renderFormField(
-                  'averageDealSize', 
-                  'Average Deal Size ($)', 
-                  'e.g., 75000 (from ICP budget patterns)'
-                )}
-                
-                {renderFormField(
-                  'salesCycleLength', 
-                  'Sales Cycle (days)', 
-                  'e.g., 90 (from ICP decision complexity)'
-                )}
-                
-                {renderFormField(
-                  'conversionRate', 
-                  'Conversion Rate (%)', 
-                  'e.g., 18 (from ICP fit score)'
-                )}
-                
-                {renderFormField(
-                  'churnRate', 
-                  'Annual Churn Rate (%)', 
-                  'e.g., 4 (from ICP retention factors)'
-                )}
+                <InputField
+                  label="Current Revenue"
+                  value={formData.currentRevenue}
+                  onChange={(value) => handleInputChange('currentRevenue', value)}
+                  prefix="$"
+                />
+                <InputField
+                  label="Growth Rate"
+                  value={formData.growthRate}
+                  onChange={(value) => handleInputChange('growthRate', value)}
+                  suffix="%"
+                />
               </div>
               
-              {renderFormField(
-                'timeframe', 
-                'Analysis Timeframe', 
-                'months', 
-                'select',
-                [
-                  { value: '6', label: '6 months (urgent situations)' },
-                  { value: '12', label: '12 months (standard)' },
-                  { value: '18', label: '18 months (strategic planning)' },
-                  { value: '24', label: '24 months (long-term analysis)' }
-                ]
-              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField
+                  label="Sales Cycle (months)"
+                  value={formData.salesCycleLength}
+                  onChange={(value) => handleInputChange('salesCycleLength', value)}
+                  suffix="months"
+                />
+                <InputField
+                  label="Deal Size"
+                  value={formData.avgDealSize}
+                  onChange={(value) => handleInputChange('avgDealSize', value)}
+                  prefix="$"
+                />
+              </div>
               
-              <button type="submit" className="btn btn-primary w-full min-h-[44px] touch-manipulation">
-                Calculate Cost of Inaction
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField
+                  label="Close Rate"
+                  value={formData.conversionRate}
+                  onChange={(value) => handleInputChange('conversionRate', value)}
+                  suffix="%"
+                />
+                <InputField
+                  label="Delay Period"
+                  value={formData.timeframe}
+                  onChange={(value) => handleInputChange('timeframe', value)}
+                  suffix="months"
+                />
+              </div>
+
+              <MobileOptimizedButton
+                type="submit"
+                className="w-full"
+                disabled={!isFormValid}
+              >
+                Calculate Impact
+              </MobileOptimizedButton>
             </form>
-          </div>
-        </div>
+          </MobileOptimizedCard>
 
-        {/* Right Column: Results and Visualizations */}
-        <div className="space-y-6">
-          {calculations ? (
-            <>
-              <div className="card card-padding glass">
-                <h2 className="text-lg font-semibold text-primary mb-4">Cost Analysis Results</h2>
+          {/* Results Panel */}
+          <MobileOptimizedCard>
+            <h3 className="text-lg font-semibold text-white mb-4">Impact Analysis</h3>
+            {calculations ? (
+              <div className="space-y-4">
+                <ResultMetric
+                  icon="💰"
+                  label="TOTAL IMPACT"
+                  value={calculations.totalImpact.toLocaleString()}
+                  highlight={true}
+                />
+                <ResultMetric
+                  icon="⏱️"
+                  label="MONTHLY LOSS"
+                  value={calculations.monthlyLoss.toLocaleString()}
+                />
+                <ResultMetric
+                  icon="📈"
+                  label="OPPORTUNITY COST"
+                  value={calculations.opportunityCost.toLocaleString()}
+                />
+                <ResultMetric
+                  icon="🚨"
+                  label="URGENCY FACTOR"
+                  value={`${calculations.urgencyMultiplier}x`}
+                />
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-red-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-red-600">
-                      ${calculations.totalCostOfInaction.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-red-800">Total Cost of Inaction</div>
-                  </div>
-                  
-                  <div className="bg-yellow-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-600">
-                      ${calculations.monthlyImpact.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-yellow-800">Monthly Impact</div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-medium text-primary">Impact Breakdown:</h3>
-                  {calculations.impactCategories.map((category, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium">{category.category}</span>
-                        <span className="text-red-600 font-semibold">
-                          ${category.impact.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="text-sm text-secondary">
-                        Current: ${category.currentState.toLocaleString()} → 
-                        Potential: ${category.withImprovement.toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <MobileOptimizedButton
+                  onClick={exportResults}
+                  className="w-full mt-6"
+                >
+                  Export to Presentation
+                </MobileOptimizedButton>
               </div>
-
-              <div className="card card-padding glass">
-                <h3 className="text-lg font-semibold text-primary mb-4">Revenue Projection</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={calculations.projections}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="withAction" 
-                      stroke="#10b981" 
-                      strokeWidth={2}
-                      name="With Action"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="withoutAction" 
-                      stroke="#ef4444" 
-                      strokeWidth={2}
-                      name="Without Action"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-400">Enter parameters to see impact analysis</p>
               </div>
-
-              <div className="card card-padding glass">
-                <h3 className="text-lg font-semibold text-primary mb-4">Monthly Revenue Gap</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={calculations.projections}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                    <Bar dataKey="gap" fill="#f59e0b" name="Revenue Gap" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </>
-          ) : (
-            <div className="card card-padding glass text-center text-muted">
-              <p>Enter your business metrics and click "Calculate Cost of Inaction" to see results</p>
-            </div>
-          )}
+            )}
+          </MobileOptimizedCard>
         </div>
+
+        {/* Technical Founder Costs - 20% of space */}
+        {calculations?.technicalCosts && (
+          <MobileOptimizedCard>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Technical Founder Costs
+            </h3>
+            <TechnicalCostBreakdown costs={calculations.technicalCosts} />
+          </MobileOptimizedCard>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
