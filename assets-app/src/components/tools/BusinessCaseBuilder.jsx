@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
 import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import ImplementationGuidance from '../guidance/ImplementationGuidance';
+import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
+import ExportStrategyGuide from '../guidance/ExportStrategyGuide';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
@@ -879,6 +882,44 @@ const BusinessCaseBuilder = () => {
             </div>
           )}
         </div>
+
+        {/* Implementation Guidance */}
+        <ImplementationGuidance 
+          toolType="business-case"
+          context={{
+            templateType: activeTemplate,
+            hasCompleted: !!businessCaseData,
+            customerType: session?.customerId
+          }}
+          customerData={businessCaseData}
+        />
+
+        {/* Export Strategy Guide */}
+        {businessCaseData && (
+          <ExportStrategyGuide 
+            results={businessCaseData}
+            stakeholderTypes={["CEO", "CFO", "VP Sales", "CTO", "VP Product"]}
+            onExport={(stakeholder, strategy) => {
+              console.log('Exporting business case for:', stakeholder);
+              exportDocument('html');
+            }}
+          />
+        )}
+
+        {/* Success Metrics Tracking */}
+        <SuccessMetricsPanel 
+          toolType="business-case"
+          metrics={{
+            toolsUsed: businessCaseData ? 1 : 0,
+            conversations: 0,
+            successRate: 0,
+            lastUsed: businessCaseData ? "Today" : "Never"
+          }}
+          onTrackUsage={(type) => {
+            console.log('Tracking usage:', type);
+            // Could save to Airtable here
+          }}
+        />
       </div>
     </div>
   );

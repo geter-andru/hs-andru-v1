@@ -9,6 +9,8 @@ import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
 import DashboardLayout from '../layout/DashboardLayout';
 import SidebarSection from '../layout/SidebarSection';
 import { TabButton, MobileTabNavigation, MobileOptimizedInput, MobileOptimizedButton } from '../layout/MobileOptimized';
+import ImplementationGuidance from '../guidance/ImplementationGuidance';
+import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 
@@ -584,6 +586,32 @@ const ICPDisplay = () => {
             </MobileOptimizedButton>
           </div>
         )}
+
+        {/* Implementation Guidance */}
+        <ImplementationGuidance 
+          toolType="icp-analysis"
+          context={{
+            hasCompletedRating: !!ratingResult,
+            customerProfile: session?.customerId,
+            icpScore: ratingResult?.overallScore || 0
+          }}
+          customerData={icpData}
+        />
+
+        {/* Success Metrics Tracking */}
+        <SuccessMetricsPanel 
+          toolType="icp-analysis"
+          metrics={{
+            toolsUsed: 1,
+            companiesRated: ratingResult ? 1 : 0,
+            successRate: ratingResult?.overallScore >= 70 ? 100 : 0,
+            lastUsed: "Today"
+          }}
+          onTrackUsage={(type) => {
+            console.log('Tracking usage:', type);
+            // Could save to Airtable here
+          }}
+        />
       </div>
     </DashboardLayout>
   );

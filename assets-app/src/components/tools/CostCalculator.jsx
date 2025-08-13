@@ -7,6 +7,9 @@ import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary'
 import DashboardLayout from '../layout/DashboardLayout';
 import SidebarSection from '../layout/SidebarSection';
 import { MobileOptimizedInput, MobileOptimizedButton, MobileOptimizedCard } from '../layout/MobileOptimized';
+import ImplementationGuidance from '../guidance/ImplementationGuidance';
+import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
+import ExportStrategyGuide from '../guidance/ExportStrategyGuide';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
@@ -778,6 +781,44 @@ Generated on: ${new Date().toLocaleDateString()}
             <TechnicalCostBreakdown costs={calculations.technicalCosts} />
           </MobileOptimizedCard>
         )}
+
+        {/* Implementation Guidance */}
+        <ImplementationGuidance 
+          toolType="cost-calculator"
+          context={{
+            totalImpact: calculations?.totalImpact || 0,
+            monthlyLoss: calculations?.monthlyLoss || 0,
+            customerType: session?.customerId
+          }}
+          customerData={costData}
+        />
+
+        {/* Export Strategy Guide */}
+        {calculations && (
+          <ExportStrategyGuide 
+            results={calculations}
+            stakeholderTypes={["CEO", "CFO", "VP Sales", "CTO", "VP Product"]}
+            onExport={(stakeholder, strategy) => {
+              console.log('Exporting for:', stakeholder, strategy);
+              exportResults();
+            }}
+          />
+        )}
+
+        {/* Success Metrics Tracking */}
+        <SuccessMetricsPanel 
+          toolType="cost-calculator"
+          metrics={{
+            toolsUsed: calculations ? 1 : 0,
+            conversations: 0,
+            successRate: 0,
+            lastUsed: calculations ? "Today" : "Never"
+          }}
+          onTrackUsage={(type) => {
+            console.log('Tracking usage:', type);
+            // Could save to Airtable here
+          }}
+        />
       </div>
     </DashboardLayout>
   );
