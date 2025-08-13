@@ -9,8 +9,8 @@ import AllSectionsGrid from '../icp-analysis/AllSectionsGrid';
 import DashboardLayout from '../layout/DashboardLayout';
 import SidebarSection from '../layout/SidebarSection';
 import { TabButton, MobileTabNavigation, MobileOptimizedInput, MobileOptimizedButton } from '../layout/MobileOptimized';
-import ImplementationGuidance from '../guidance/ImplementationGuidance';
-import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
+import { GuidanceIntegration, ContextualHelp, QuickTip } from '../guidance';
+import { useContextualHelp } from '../guidance/ToolGuidanceWrapper';
 import NavigationControls from '../navigation/NavigationControls';
 import { PrimaryButton, SecondaryButton } from '../ui/ButtonComponents';
 import useNavigation from '../../hooks/useNavigation';
@@ -35,38 +35,27 @@ const ICPDisplay = () => {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const session = authService.getCurrentSession();
+  const { guidance, getHelpFor, getQuickTip } = useContextualHelp('icp-analysis');
 
-  // Sidebar component for contextual guidance
+  // Enhanced sidebar with integrated guidance
   const ICPAnalysisSidebar = ({ usage, progress }) => {
     return (
-      <div className="space-y-6">
-        <SidebarSection icon="💡" title="WHEN TO USE">
-          <ul className="space-y-1">
-            {usage.when.map((item, index) => (
-              <li key={index} className="text-gray-300 text-sm">• {item}</li>
-            ))}
-          </ul>
-        </SidebarSection>
-        
-        <SidebarSection icon="🎯" title="HOW TO USE">
-          <div className="space-y-2">
-            {usage.how.map((item, index) => (
-              <p key={index} className="text-gray-300 text-sm">{item}</p>
-            ))}
-          </div>
-        </SidebarSection>
-        
-        <SidebarSection icon="✅" title="SUCCESS TIP">
-          <p className="text-gray-300 text-sm">"{usage.success}"</p>
-        </SidebarSection>
-        
-        <SidebarSection icon="📊" title="YOUR PROGRESS">
-          <div className="space-y-1 text-sm text-gray-300">
-            <p>{progress.companiesRated} companies rated</p>
-            <p>{progress.championTier} Champion tier</p>
-          </div>
-        </SidebarSection>
-      </div>
+      <GuidanceIntegration
+        toolName="icp-analysis"
+        userProgress={{
+          icp_complete: !!ratingResult,
+          icp_progress: ratingResult ? 100 : (companyName ? 50 : 0),
+          companiesRated: ratingResult ? 1 : 0,
+          timeSpent: Math.floor((Date.now() - startTime) / 60000),
+          actionsTaken: ratingResult ? 3 : 1
+        }}
+        customerData={icpData}
+        showInSidebar={true}
+        onGuidanceAction={(action, context) => {
+          console.log('Guidance action taken:', action.title);
+          // Could track usage here
+        }}
+      />
     );
   };
 
@@ -78,16 +67,37 @@ const ICPDisplay = () => {
     
     if (activeTab === 'framework') {
       return (
-        <div className="space-y-6">
+        <div className="space-y-6" data-guidance="icp-framework">
+          <div className="flex items-center space-x-2 mb-4">
+            <h2 className="text-lg font-semibold text-white">ICP Framework</h2>
+            <ContextualHelp 
+              {...getHelpFor('icp-framework')}
+              type="tooltip"
+              position="right"
+            />
+          </div>
+          
           <ICPFrameworkDisplay 
             customerData={icpData}
             onFrameworkUpdate={handleFrameworkUpdate}
           />
+          
           {icpData && (
             <div>
-              <h2 className="text-lg font-semibold text-white mb-4">ICP Details</h2>
+              <div className="flex items-center space-x-2 mb-4">
+                <h2 className="text-lg font-semibold text-white">ICP Details</h2>
+                <ContextualHelp 
+                  title="Your ICP Analysis"
+                  content="This detailed analysis helps you understand your ideal customer characteristics and behavior patterns."
+                  type="tooltip"
+                />
+              </div>
               <ContentDisplay content={icpData} />
             </div>
+          )}
+          
+          {!ratingResult && (
+            <QuickTip tip={getQuickTip('first-time')} className="mt-4" />
           )}
         </div>
       );
@@ -95,8 +105,15 @@ const ICPDisplay = () => {
 
     if (activeTab === 'rating') {
       return (
-        <div className="max-w-md">
-          <h2 className="text-lg font-semibold text-white mb-4">Company Fit Calculator</h2>
+        <div className="max-w-md" data-guidance="company-rating">
+          <div className="flex items-center space-x-2 mb-4">
+            <h2 className="text-lg font-semibold text-white">Company Fit Calculator</h2>
+            <ContextualHelp 
+              {...getHelpFor('company-rating')}
+              type="tooltip"
+              position="right"
+            />
+          </div>
           
           <form onSubmit={handleRatingSubmit} className="space-y-4">
             <MobileOptimizedInput
@@ -173,6 +190,20 @@ const ICPDisplay = () => {
                       ))}
                     </ul>
                   </Callout>
+                  
+                  {ratingResult.overallScore >= 80 && (
+                    <QuickTip 
+                      tip="High score! This is a priority prospect - schedule a meeting within 2 weeks." 
+                      className="mt-3" 
+                    />
+                  )}
+                  
+                  {ratingResult.overallScore < 60 && (
+                    <QuickTip 
+                      tip={getQuickTip('low-score')} 
+                      className="mt-3" 
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -533,10 +564,26 @@ const ICPDisplay = () => {
   ];
 
   return (
-    <DashboardLayout 
-      sidebarContent={sidebarContent} 
-      currentPhase="icp-analysis"
+    <GuidanceIntegration
+      toolName="icp-analysis"
+      userProgress={{
+        icp_complete: !!ratingResult,
+        icp_progress: ratingResult ? 100 : (companyName ? 50 : 0),
+        companiesRated: ratingResult ? 1 : 0,
+        timeSpent: Math.floor((Date.now() - startTime) / 60000),
+        actionsTaken: ratingResult ? 3 : 1
+      }}
+      customerData={icpData}
+      onGuidanceAction={(action, context) => {
+        console.log('Main guidance action:', action.title);
+        // Track comprehensive usage
+      }}
     >
+      <DashboardLayout 
+        sidebarContent={sidebarContent} 
+        currentPhase="icp-analysis"
+        data-guidance="sidebar"
+      >
       <div className="space-y-8">
         {/* Your ICP Analysis Header */}
         <div>
@@ -639,31 +686,37 @@ const ICPDisplay = () => {
           </div>
         )}
 
-        {/* Implementation Guidance */}
-        <ImplementationGuidance 
-          toolType="icp-analysis"
-          context={{
-            hasCompletedRating: !!ratingResult,
-            customerProfile: session?.customerId,
-            icpScore: ratingResult?.overallScore || 0
-          }}
-          customerData={icpData}
-        />
-
-        {/* Success Metrics Tracking */}
-        <SuccessMetricsPanel 
-          toolType="icp-analysis"
-          metrics={{
-            toolsUsed: 1,
-            companiesRated: ratingResult ? 1 : 0,
-            successRate: ratingResult?.overallScore >= 70 ? 100 : 0,
-            lastUsed: "Today"
-          }}
-          onTrackUsage={(type) => {
-            console.log('Tracking usage:', type);
-            // Could save to Airtable here
-          }}
-        />
+        {/* Enhanced Implementation Guidance */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <h3 className="text-lg font-semibold text-white">Next Steps</h3>
+            <ContextualHelp 
+              title="Implementation Guidance"
+              content="AI-generated recommendations based on your current progress and tool usage patterns."
+              type="tooltip"
+            />
+          </div>
+          
+          {ratingResult ? (
+            <div className="space-y-3">
+              <QuickTip tip={getQuickTip('completed-icp')} />
+              <div className="flex items-center space-x-3 text-sm text-gray-300">
+                <span>✅ ICP Analysis Complete</span>
+                <span>•</span>
+                <span>Score: {ratingResult.overallScore}/100</span>
+                <span>•</span>
+                <span>Ready for Cost Calculator</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <QuickTip tip="Complete a company rating to unlock the next phase of your sales intelligence journey." />
+              <div className="text-sm text-gray-400">
+                Progress: Framework reviewed, ready to rate prospects
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation Controls */}
@@ -676,7 +729,8 @@ const ICPDisplay = () => {
         nextLabel="Continue to Cost Calculator"
         disabled={isNavigating}
       />
-    </DashboardLayout>
+      </DashboardLayout>
+    </GuidanceIntegration>
   );
 };
 
