@@ -11,11 +11,12 @@ import UnlockRequirementsModal from '../dashboard/UnlockRequirementsModal';
 import Phase4Test from './Phase4Test';
 import WelcomeExperienceTest from './WelcomeExperienceTest';
 import DashboardTest from './DashboardTest';
+import Phase1DashboardTest from './Phase1DashboardTest';
 
 const Phase1Test = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
-  const [activeTest, setActiveTest] = useState('phase1'); // 'phase1', 'phase4', 'welcome', or 'dashboard'
+  const [activeTest, setActiveTest] = useState('phase1'); // 'phase1', 'phase4', 'welcome', 'dashboard', or 'phase1-dashboard'
 
   // Mock competency data
   const competencyData = {
@@ -98,6 +99,11 @@ const Phase1Test = () => {
     return <DashboardTest />;
   }
 
+  // Return Phase 1 Dashboard test if selected
+  if (activeTest === 'phase1-dashboard') {
+    return <Phase1DashboardTest />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       <div className="max-w-7xl mx-auto">
@@ -135,6 +141,16 @@ const Phase1Test = () => {
               }`}
             >
               Welcome Experience
+            </button>
+            <button
+              onClick={() => setActiveTest('phase1-dashboard')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTest === 'phase1-dashboard'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Phase 5 Dashboard
             </button>
             <button
               onClick={() => setActiveTest('dashboard')}

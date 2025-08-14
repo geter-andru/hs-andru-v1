@@ -1,0 +1,65 @@
+/* Professional Circular Progressbar Styling for Business Intelligence Presentation */
+
+.CircularProgressbar {
+  /* Professional drop shadow for sophistication */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.CircularProgressbar-text {
+  /* Business-appropriate typography */
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-size: 20px;
+}
+
+.CircularProgressbar-path {
+  /* Smooth professional animation curve */
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.CircularProgressbar-trail {
+  /* Professional trail color for business KPI appearance */
+  stroke: #374151;
+}
+
+/* Professional color variants for competency levels */
+.gauge-foundation .CircularProgressbar-path {
+  stroke: #f59e0b;
+}
+
+.gauge-developing .CircularProgressbar-path {
+  stroke: #3b82f6;
+}
+
+.gauge-proficient .CircularProgressbar-path {
+  stroke: #10b981;
+}
+
+/* Hover effect for professional interaction */
+.CircularProgressbar:hover {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
+  transform: scale(1.02);
+  transition: all 0.2s ease-out;
+}
+
+/* Professional glow effect for active states */
+.CircularProgressbar-path.active {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Responsive sizing for different screen sizes */
+@media (max-width: 640px) {
+  .CircularProgressbar-text {
+    font-size: 16px;
+  }
+}
+
+/* Business intelligence theme integration */
+.dark-theme .CircularProgressbar-text {
+  fill: #ffffff;
+}
+
+.dark-theme .CircularProgressbar-trail {
+  stroke: #374151;
+}
