@@ -9,22 +9,66 @@ Complete professional competency tracking system with Airtable integration and W
 
 ### **Database Connection**
 - **Base ID**: `app0jJkgTCqn46vp9`
+- **Table ID**: `tblV61SJBcLwKv0WP` (Customer Assets)
 - **API Key**: `pat5kFmJsBxfL5Yqr.f44840b8b82995ec43ac998191c43f19d0471c9550d0fea9e0327cc4f4aa4815`
 - **Environment File**: `.env` (contains connection variables)
 
-### **Tables & Schema**
-1. **Customer Assets** (Primary table with 25+ fields)
-   - Core customer data, competency scores, tool unlocks
-   - Phase 4 competency scoring fields
-   - Professional development tracking fields
+### **Complete Table Schema**
 
-2. **Customer Actions** (10 fields)
-   - Real-world business action tracking
-   - Points system for competency advancement
+#### **1. Customer Assets Table** (Primary - 32+ fields)
+**Core Customer Data:**
+- Customer ID (Auto Number: CUST_{0000})
+- Customer Name, Email, Company, Access Token
+- Created At, Last Accessed (Date/Time)
+- Payment Status (Pending/Completed/Failed/Refunded)
+- Content Status (Pending/Generating/Ready/Error/Expired)
+- Usage Count (Number)
 
-3. **Customer Competency History** (10 fields) 
-   - Assessment history and progression tracking
-   - Baseline vs current comparisons
+**Content Storage:**
+- ICP Content (JSON string - 5-section framework)
+- Cost Calculator Content (JSON string - financial projections)
+- Business Case Content (JSON string - proposal templates)
+- Tool Access Status (JSON string - unlock tracking)
+
+**Phase 4 Competency Fields:**
+- `baseline_customer_analysis`, `baseline_value_communication`, `baseline_sales_execution` (Numbers 0-100)
+- `current_customer_analysis`, `current_value_communication`, `current_sales_execution` (Numbers 0-100)
+- `total_progress_points` (Number - cumulative points earned)
+- `icp_unlocked`, `cost_calculator_unlocked`, `business_case_unlocked` (Checkboxes)
+
+**Professional Development:**
+- Competency Progress (JSON - scores, levels, achievements)
+- Professional Milestones (JSON - achievement history, career progression)
+- Daily Objectives (JSON - goals and completion tracking)
+- User Preferences (JSON - settings and preferences)
+- Detailed ICP Analysis (JSON - comprehensive analysis)
+- Target Buyer Personas (JSON - buyer persona data)
+- Competency Level (Text - current professional level)
+- Achievement IDs (Text - comma-separated achievement list)
+- Last Assessment Date, Last Action Date (Date/Time)
+- Development Plan Active (Checkbox)
+- Development Focus (Select: balanced/strength_based/gap_focused/career_accelerated)
+- Learning Velocity (Number - points per week)
+
+#### **2. Customer Actions Table** (10 fields) - Real-World Action Tracking
+- Customer ID (Text - links to Customer Assets)
+- Action Type (Select: customer_meeting, prospect_qualification, value_proposition_delivery, roi_presentation, proposal_creation, deal_closure, referral_generation, case_study_development)
+- Action Description (Long Text)
+- Impact Level (Select: low, medium, high, critical)
+- Points Awarded (Number - calculated with impact multipliers)
+- Category (Select: customerAnalysis, valueCommunication, salesExecution)
+- Action Date, Created At (Date/Time)
+- Evidence Link (URL - optional supporting documentation)
+- Verified (Checkbox - honor system verification)
+
+#### **3. Customer Competency History Table** (10 fields) - Assessment Tracking
+- Customer ID (Text - links to Customer Assets)
+- Assessment Date, Created At (Date/Time)
+- Customer Analysis Score, Value Communication Score, Sales Execution Score (Numbers 0-100)
+- Total Progress Points (Number - points at time of assessment)
+- Assessment Type (Select: baseline, progress, retake)
+- Competency Level (Text - level at time of assessment)
+- Notes (Long Text - assessment notes)
 
 ### **Test Data**
 - **Admin User**: CUST_4 with token `admin-demo-token-2025`
@@ -150,40 +194,53 @@ Complete professional competency tracking system with Airtable integration and W
 
 ---
 
-## 🗃️ **Complete Airtable Schema**
+## 🔧 **Airtable Implementation Guide**
 
-### **Customer Assets Table Fields (25+ fields)**
+### **Setup Requirements**
+**Manual Setup Required** (API limitations - tables/fields must be created in Airtable UI):
+1. **Customer Actions Table**: Create new table with 10 fields
+2. **Customer Competency History Table**: Create new table with 10 fields  
+3. **Customer Assets Enhancements**: Add 7 new fields to existing table
 
-#### **Core Customer Data**
-- Customer ID, Customer Name, Email, Company, Access Token
-- ICP Content, Cost Calculator Content, Business Case Content
-- Payment Status, Content Status, Usage Count
+### **Action Categories & Point System**
+**8 Professional Action Types:**
+- `customer_meeting` (100 base points) - Customer Discovery Meeting
+- `prospect_qualification` (75 base points) - Systematic qualification framework
+- `value_proposition_delivery` (150 base points) - Value proposition presentation
+- `roi_presentation` (200 base points) - ROI analysis to decision makers
+- `proposal_creation` (250 base points) - Business proposal development
+- `deal_closure` (500 base points) - Successfully closed opportunity
+- `referral_generation` (300 base points) - Qualified referral generation
+- `case_study_development` (400 base points) - Customer success documentation
 
-#### **Competency Scoring Fields** (Phase 4)
-- `baseline_customer_analysis`, `baseline_value_communication`, `baseline_sales_execution`
-- `current_customer_analysis`, `current_value_communication`, `current_sales_execution`
-- `total_progress_points`
+**Impact Multipliers:**
+- Low (0.8x), Medium (1.0x), High (1.5x), Critical (2.0x)
 
-#### **Tool Unlock Fields**
-- `icp_unlocked`, `cost_calculator_unlocked`, `business_case_unlocked`
+### **Competency Assessment Framework**
+**3 Core Categories** (0-100 scale):
+- Customer Analysis (baseline vs current tracking)
+- Value Communication (baseline vs current tracking)  
+- Sales Execution (baseline vs current tracking)
 
-#### **Professional Development Fields**
-- `Competency Progress` (JSON) - Competency scores, levels, achievements
-- `Professional Milestones` (JSON) - Achievement history, career progression
-- `Daily Objectives` (JSON) - Daily goals and completion tracking
-- `Competency Level`, `Achievement IDs`, `Learning Velocity`
-- `Development Plan Active`, `Development Focus`
-- `Last Assessment Date`, `Last Action Date`
+**6 Professional Levels:**
+- Customer Intelligence Foundation (1,000 points)
+- Value Communication Developing (2,500 points)
+- Sales Strategy Proficient (5,000 points)
+- Revenue Development Advanced (10,000 points)
+- Market Execution Expert (20,000 points)
+- Revenue Intelligence Master (50,000 points)
 
-### **Customer Actions Table (10 fields)**
-- Customer ID, Action Type, Action Description, Impact Level
-- Points Awarded, Category, Action Date, Evidence Link
-- Verified, Created At
+### **Data Integration Architecture**
+**Services:**
+- `enhancedAirtableService.js` - Complete CRUD operations
+- `competencySyncService.js` - Optimistic updates with caching
+- `assessmentService.js` - Professional competency assessment
 
-### **Customer Competency History Table (10 fields)**
-- Customer ID, Assessment Date, Competency Scores (3 categories)
-- Total Progress Points, Assessment Type, Competency Level
-- Notes, Created At
+**Security Considerations:**
+- Honor-based verification system (MVP)
+- Client-side calculations (production needs server-side)
+- Rate limiting recommended (max 10 actions/hour)
+- Audit trail for all competency changes
 
 ---
 
