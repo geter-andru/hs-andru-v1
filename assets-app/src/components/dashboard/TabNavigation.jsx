@@ -70,11 +70,14 @@ const TabNavigation = ({
           return (
             <motion.button
               key={tab.id}
-              onClick={() => onTabClick(tab.id)}
-              disabled={!tab.unlocked}
-              whileHover={tab.unlocked ? { scale: 1.02 } : undefined}
-              whileTap={tab.unlocked ? { scale: 0.98 } : undefined}
-              className={`relative p-6 rounded-lg border-2 transition-all duration-300 text-left ${getTabStyling(tab, isActive)}`}
+              onClick={() => {
+                console.log('TabNavigation: Button clicked for:', tab.id, 'unlocked:', tab.unlocked);
+                onTabClick(tab.id);
+              }}
+              disabled={false} // Temporarily enable all buttons for testing
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`relative p-6 rounded-lg border-2 transition-all duration-300 text-left cursor-pointer ${getTabStyling(tab, isActive)}`}
             >
               {/* Tab Icon and Status */}
               <div className="flex items-start justify-between mb-4">

@@ -15,6 +15,8 @@ import { Callout } from '../common/ContentDisplay';
 import TabNavigation from './TabNavigation';
 import ProgressSidebar from './ProgressSidebar';
 import UnlockRequirementsModal from './UnlockRequirementsModal';
+import ICPDetailModal from '../modals/ICPDetailModal';
+import PersonaDetailModal from '../modals/PersonaDetailModal';
 import ICPDisplay from '../tools/ICPDisplay';
 import CostCalculator from '../tools/CostCalculator';
 import BusinessCaseBuilder from '../tools/BusinessCaseBuilder';
@@ -31,6 +33,8 @@ const EnhancedCustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState('icp-analysis');
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedLockedTool, setSelectedLockedTool] = useState(null);
+  const [showICPModal, setShowICPModal] = useState(false);
+  const [showPersonaModal, setShowPersonaModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Professional competency data structure
@@ -194,6 +198,11 @@ const EnhancedCustomerDashboard = () => {
     navigate(`/customer/${customerId}/dashboard/${tabId}${queryString}`);
   }, [tabConfig, customerId, navigate]);
 
+  // Progress point award system with modal trigger handling
+  const handleProgressUpdate = useCallback((progressData) => {
+    awardProgressPoints(progressData.points, progressData.category);
+  }, [awardProgressPoints]);
+
   // Progress point award system
   const awardProgressPoints = useCallback(async (points, category) => {
     try {
@@ -269,7 +278,7 @@ const EnhancedCustomerDashboard = () => {
     }, [awardProgressPoints])
   };
 
-  // Render current tool component
+  // Render current tool component with modal integration
   const renderActiveToolComponent = () => {
     const activeTabConfig = tabConfig.find(tab => tab.id === activeTab);
     if (!activeTabConfig || !activeTabConfig.unlocked) {
@@ -279,6 +288,53 @@ const EnhancedCustomerDashboard = () => {
             <div className="text-4xl mb-4">🔒</div>
             <h3 className="text-lg font-medium text-white mb-2">Methodology Locked</h3>
             <p className="text-gray-400">Complete requirements to unlock this tool</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Enhanced ICP Display with modal integration
+    if (activeTab === 'icp-analysis') {
+      return (
+        <div className="space-y-6">
+          <ICPDisplay />
+          
+          {/* Professional Deep-Dive Actions */}
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Professional Deep-Dive Analysis</h3>
+            <p className="text-gray-400 mb-6">
+              Access comprehensive frameworks and interactive tools to master customer intelligence
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => setShowICPModal(true)}
+                className="flex items-center space-x-3 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg hover:bg-blue-900/30 transition-colors text-left"
+              >
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🎯</span>
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-300">ICP Analysis Deep-Dive</h4>
+                  <p className="text-sm text-blue-100">Interactive rating system & export tools</p>
+                  <p className="text-xs text-blue-400 mt-1">+90 progress points available</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setShowPersonaModal(true)}
+                className="flex items-center space-x-3 p-4 bg-green-900/20 border border-green-500/30 rounded-lg hover:bg-green-900/30 transition-colors text-left"
+              >
+                <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">👥</span>
+                </div>
+                <div>
+                  <h4 className="font-medium text-green-300">Buyer Persona Deep-Dive</h4>
+                  <p className="text-sm text-green-100">Psychology profiles & practice scenarios</p>
+                  <p className="text-xs text-green-400 mt-1">+275 progress points available</p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -378,6 +434,22 @@ const EnhancedCustomerDashboard = () => {
         onClose={() => setShowUnlockModal(false)}
         tool={selectedLockedTool}
         competencyData={competencyData}
+      />
+
+      {/* ICP Detail Modal */}
+      <ICPDetailModal
+        isOpen={showICPModal}
+        onClose={() => setShowICPModal(false)}
+        icpContent={customerData?.icpContent}
+        onProgressUpdate={handleProgressUpdate}
+      />
+
+      {/* Persona Detail Modal */}
+      <PersonaDetailModal
+        isOpen={showPersonaModal}
+        onClose={() => setShowPersonaModal(false)}
+        personaContent={customerData?.personaContent}
+        onProgressUpdate={handleProgressUpdate}
       />
     </div>
   );

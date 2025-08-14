@@ -420,6 +420,38 @@ const ProgressSidebar = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Test Action Buttons */}
+      {onAwardPoints && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-gray-900 border border-gray-800 rounded-lg p-4"
+        >
+          <h4 className="text-white font-medium mb-3 text-center">Test Actions</h4>
+          <div className="space-y-2">
+            <button
+              onClick={() => onAwardPoints(50, 'customerAnalysis')}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded transition-colors"
+            >
+              Award 50 Points (Customer Analysis)
+            </button>
+            <button
+              onClick={() => onAwardPoints(75, 'valueCommunication')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3 rounded transition-colors"
+            >
+              Award 75 Points (Value Communication)
+            </button>
+            <button
+              onClick={() => onAwardPoints(100, 'salesExecution')}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-3 rounded transition-colors"
+            >
+              Award 100 Points (Sales Execution)
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

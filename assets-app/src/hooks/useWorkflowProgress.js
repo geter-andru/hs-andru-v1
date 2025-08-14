@@ -11,9 +11,17 @@ export const useWorkflowProgress = (customerId) => {
 
   const session = authService.getCurrentSession();
   const recordId = session?.recordId;
+  
+  // If customerId is null or undefined, don't load workflow data
+  const shouldLoad = customerId && customerId !== null;
 
   // Load initial workflow progress
   const loadWorkflowProgress = useCallback(async () => {
+    if (!shouldLoad) {
+      setLoading(false);
+      return;
+    }
+    
     if (!recordId) {
       setError('No valid session found');
       setLoading(false);
@@ -37,7 +45,7 @@ export const useWorkflowProgress = (customerId) => {
     } finally {
       setLoading(false);
     }
-  }, [recordId]);
+  }, [recordId, shouldLoad]);
 
   // Initialize workflow with default values
   const initializeWorkflow = useCallback(async () => {
@@ -78,7 +86,7 @@ export const useWorkflowProgress = (customerId) => {
       setError(err.message);
       throw err;
     }
-  }, [recordId]);
+  }, [recordId, shouldLoad]);
 
   // Complete tool workflow
   const completeTool = useCallback(async (toolName, toolData = {}) => {
@@ -139,7 +147,7 @@ export const useWorkflowProgress = (customerId) => {
       console.error('Error updating preferences:', err);
       setError(err.message);
     }
-  }, [recordId]);
+  }, [recordId, shouldLoad]);
 
   // Track export
   const trackExport = useCallback(async (exportType, format) => {
@@ -171,10 +179,12 @@ export const useWorkflowProgress = (customerId) => {
 
   // Load data on mount
   useEffect(() => {
-    if (recordId) {
+    if (shouldLoad && recordId) {
       loadWorkflowProgress();
+    } else if (!shouldLoad) {
+      setLoading(false);
     }
-  }, [loadWorkflowProgress, recordId]);
+  }, [loadWorkflowProgress, recordId, shouldLoad]);
 
   // Start session tracking on mount (with error handling)
   useEffect(() => {
@@ -203,7 +213,7 @@ export const useWorkflowProgress = (customerId) => {
         sessionCleanup();
       }
     };
-  }, [recordId]);
+  }, [recordId, shouldLoad]);
 
   return {
     // Data

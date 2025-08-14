@@ -8,10 +8,14 @@ import React, { useState } from 'react';
 import TabNavigation from '../dashboard/TabNavigation';
 import ProgressSidebar from '../dashboard/ProgressSidebar';
 import UnlockRequirementsModal from '../dashboard/UnlockRequirementsModal';
+import Phase4Test from './Phase4Test';
+import WelcomeExperienceTest from './WelcomeExperienceTest';
+import DashboardTest from './DashboardTest';
 
 const Phase1Test = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
+  const [activeTest, setActiveTest] = useState('phase1'); // 'phase1', 'phase4', 'welcome', or 'dashboard'
 
   // Mock competency data
   const competencyData = {
@@ -62,25 +66,88 @@ const Phase1Test = () => {
   ];
 
   const handleTabClick = (tabId) => {
+    console.log('Tab clicked:', tabId); // Debug log
     const tab = tabConfig.find(t => t.id === tabId);
     if (!tab.unlocked) {
+      console.log('Tab is locked, showing modal for:', tab.label); // Debug log
       setSelectedTool(tab);
       setShowModal(true);
     } else {
       console.log('Navigate to:', tabId);
+      alert(`Navigating to: ${tab.label}`); // Visual feedback for unlocked tabs
     }
   };
 
   const handleAwardPoints = (points, category) => {
     console.log(`Awarded ${points} points to ${category}`);
+    alert(`Awarded ${points} points to ${category}!`); // Visual feedback
   };
+
+  // Return Phase 4 test if selected
+  if (activeTest === 'phase4') {
+    return <Phase4Test />;
+  }
+
+  // Return Welcome Experience test if selected
+  if (activeTest === 'welcome') {
+    return <WelcomeExperienceTest />;
+  }
+
+  // Return Dashboard test if selected
+  if (activeTest === 'dashboard') {
+    return <DashboardTest />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8 text-center">
-          Phase 1: Professional Competency System Test
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-white">
+            Professional Competency System Test
+          </h1>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTest('phase1')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTest === 'phase1'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Phase 1 Test
+            </button>
+            <button
+              onClick={() => setActiveTest('phase4')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTest === 'phase4'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Phase 4 Integration Test
+            </button>
+            <button
+              onClick={() => setActiveTest('welcome')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTest === 'welcome'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Welcome Experience
+            </button>
+            <button
+              onClick={() => setActiveTest('dashboard')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTest === 'dashboard'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Full Dashboard
+            </button>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Main Content Area */}

@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { implementationGuidanceService } from '../../services/implementationGuidanceService';
 import { authService } from '../../services/authService';
 import GuidanceIntegration from './GuidanceIntegration';
-import { ContextualHelp, QuickTip } from './ContextualHelp';
+import { ContextualHelp, QuickTip } from './index';
 
 const ToolGuidanceWrapper = ({ 
   toolName, 

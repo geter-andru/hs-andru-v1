@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useWorkflowProgress } from '../hooks/useWorkflowProgress';
 import EnhancedTabNavigation from '../components/navigation/EnhancedTabNavigation';
+import WelcomeHero from '../components/progressive-engagement/WelcomeHero';
 import ICPDisplay from '../components/tools/ICPDisplay';
 import CostCalculator from '../components/tools/CostCalculator';
 import BusinessCaseBuilder from '../components/tools/BusinessCaseBuilder';
@@ -15,7 +16,60 @@ const CustomerDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Workflow management hook
+  // Authentication state
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Handle authentication
+  useEffect(() => {
+    const authenticateUser = async () => {
+      try {
+        setAuthLoading(true);
+        setAuthError(null);
+        
+        // Get token from URL params
+        const urlParams = new URLSearchParams(location.search);
+        const token = urlParams.get('token');
+        
+        if (!customerId || !token) {
+          setAuthError('Missing customer ID or access token');
+          setAuthLoading(false);
+          return;
+        }
+        
+        // Validate credentials
+        const result = await authService.validateCredentials(customerId, token);
+        
+        if (!result.valid) {
+          setAuthError(result.error || 'Invalid credentials');
+          setAuthLoading(false);
+          return;
+        }
+        
+        // Generate session
+        authService.generateSession(result.customerData, token);
+        setIsAuthenticated(true);
+        
+      } catch (error) {
+        console.error('Authentication error:', error);
+        setAuthError(error.message);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    
+    // Check existing session first
+    const existingSession = authService.getCurrentSession();
+    if (existingSession && existingSession.customerId === customerId) {
+      setIsAuthenticated(true);
+      setAuthLoading(false);
+    } else {
+      authenticateUser();
+    }
+  }, [customerId, location.search]);
+  
+  // Workflow management hook (only after authentication)
   const {
     workflowData,
     workflowProgress,
@@ -29,17 +83,19 @@ const CustomerDashboard = () => {
     updateProgress,
     trackExport: trackExportAction,
     initializeWorkflow
-  } = useWorkflowProgress(customerId);
+  } = useWorkflowProgress(isAuthenticated ? customerId : null);
 
   // Track current active tool
   const [currentTool, setCurrentTool] = useState('icp');
 
   // Get current active tab from route
   const getActiveTab = () => {
+    if (location.pathname.includes('welcome') || location.pathname === `/customer/${customerId}`) return 'welcome';
     if (location.pathname.includes('cost-calculator')) return 'cost';
     if (location.pathname.includes('business-case')) return 'business_case';
     if (location.pathname.includes('results')) return 'results';
-    return 'icp';
+    if (location.pathname.includes('icp')) return 'icp';
+    return 'welcome'; // Default to welcome for new customers
   };
 
   // Handle tab navigation with workflow tracking
@@ -68,6 +124,18 @@ const CustomerDashboard = () => {
 
   // Tool completion callbacks
   const toolCallbacks = {
+    // Welcome Experience Completion
+    onWelcomeComplete: async (nextPhase) => {
+      try {
+        console.log('Welcome experience completed, navigating to:', nextPhase);
+        // Navigate to the next phase (typically ICP analysis)
+        const targetPhase = nextPhase === 'icp-analysis' ? 'icp' : nextPhase;
+        handleTabChange(targetPhase);
+      } catch (error) {
+        console.error('Error completing welcome experience:', error);
+      }
+    },
+
     // ICP Tool Completion
     onICPComplete: async (data) => {
       try {
@@ -151,6 +219,15 @@ const CustomerDashboard = () => {
     const activeTab = getActiveTab();
     
     switch (activeTab) {
+      case 'welcome':
+        return (
+          <WelcomeHero 
+            customerId={customerId}
+            customerData={workflowData}
+            onStartEngagement={toolCallbacks.onWelcomeComplete}
+          />
+        );
+        
       case 'icp':
         return (
           <ICPDisplay 
@@ -195,12 +272,46 @@ const CustomerDashboard = () => {
         );
       
       default:
-        return <ICPDisplay onICPComplete={toolCallbacks.onICPComplete} />;
+        return (
+          <WelcomeHero 
+            customerId={customerId}
+            customerData={workflowData}
+            onStartEngagement={toolCallbacks.onWelcomeComplete}
+          />
+        );
     }
   };
 
-  // Loading state
-  if (loading) {
+  // Authentication loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <LoadingSpinner message="Authenticating..." />
+      </div>
+    );
+  }
+
+  // Authentication error state
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-black p-8 flex items-center justify-center">
+        <Callout type="error" title="Authentication Error">
+          {authError}
+          <div className="mt-4 text-center">
+            <a 
+              href="/test" 
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Try test environment instead
+            </a>
+          </div>
+        </Callout>
+      </div>
+    );
+  }
+
+  // Workflow loading state
+  if (!isAuthenticated || loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <LoadingSpinner message="Loading workflow progress..." />
@@ -208,7 +319,7 @@ const CustomerDashboard = () => {
     );
   }
 
-  // Error state
+  // Workflow error state
   if (error) {
     return (
       <div className="min-h-screen bg-black p-8">
@@ -219,52 +330,64 @@ const CustomerDashboard = () => {
     );
   }
 
+  const activeTab = getActiveTab();
+  const showWelcomeExperience = activeTab === 'welcome';
+
   return (
     <div className="min-h-screen bg-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Workflow Progress Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Business Assessment Platform
-          </h1>
-          <p className="text-gray-400">
-            {workflowProgress?.company_name && `Company: ${workflowProgress.company_name} • `}
-            Progress: {workflowProgress?.completion_percentage || 0}% Complete
-          </p>
-        </div>
-
-        {/* Enhanced Navigation */}
-        <div className="mb-8">
-          <EnhancedTabNavigation 
-            activeTab={getActiveTab()}
-            onTabChange={handleTabChange}
-            workflowData={workflowProgress}
-            workflowStatus={workflowStatus}
-            completionPercentage={workflowProgress?.completion_percentage || 0}
-          />
-        </div>
-        
-        {/* Tool Content Area */}
+      {showWelcomeExperience ? (
+        // Full-screen welcome experience with DashboardLayout built-in
         <div className="tool-content">
           {renderCurrentTool()}
         </div>
-        
-        {/* Debug Info (remove in production) */}
-        {process.env.NODE_ENV === 'development' && (
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
+          {/* Workflow Progress Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Business Assessment Platform
+            </h1>
+            <p className="text-gray-400">
+              {workflowProgress?.company_name && `Company: ${workflowProgress.company_name} • `}
+              Progress: {workflowProgress?.completion_percentage || 0}% Complete
+            </p>
+          </div>
+
+          {/* Enhanced Navigation */}
+          <div className="mb-8">
+            <EnhancedTabNavigation 
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              workflowData={workflowProgress}
+              workflowStatus={workflowStatus}
+              completionPercentage={workflowProgress?.completion_percentage || 0}
+            />
+          </div>
+          
+          {/* Tool Content Area */}
+          <div className="tool-content">
+            {renderCurrentTool()}
+          </div>
+        </div>
+      )}
+      
+      {/* Debug Info (remove in production) */}
+      {process.env.NODE_ENV === 'development' && !showWelcomeExperience && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mt-8 p-4 bg-gray-900 rounded-lg">
             <h3 className="text-white font-medium mb-2">Debug Info:</h3>
             <pre className="text-gray-400 text-sm overflow-auto">
               {JSON.stringify({
-                activeTab: getActiveTab(),
+                activeTab: activeTab,
                 workflowStatus,
                 completionPercentage: workflowProgress?.completion_percentage,
                 toolsCompleted: usageAnalytics?.tools_completed
               }, null, 2)}
             </pre>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
