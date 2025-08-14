@@ -8,7 +8,8 @@
 export { default as implementationGuidanceService } from '../../services/implementationGuidanceService';
 
 // Components
-export { default as ContextualHelp, QuickTip, ActionCard, SalesExecutionChecklist, GuidancePanel } from './ContextualHelp';
+export { default as ContextualHelp } from './ContextualHelp';
+export { QuickTip, ActionCard, SalesExecutionChecklist, GuidancePanel } from './ContextualHelp';
 export { default as ProgressTracker, ProgressRing, MilestoneTracker, QuickStats, UsageAnalytics } from './ProgressTracking';
 export { default as ImplementationRoadmap, JourneyOverview, PhaseMetrics, ImplementationTimeline, QuickActions } from './ImplementationRoadmap';
 export { default as ActionableInsights, InsightSummary, PerformanceMetrics } from './ActionableInsights';
