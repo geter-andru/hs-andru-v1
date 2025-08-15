@@ -8,6 +8,8 @@ import QuickActions from './QuickActions';
 import RecentActivity from './RecentActivity';
 import WeeklySummary from './WeeklySummary';
 import DevelopmentFocus from './DevelopmentFocus';
+import AssessmentInsights from './AssessmentInsights';
+import { AssessmentProvider } from '../../contexts/AssessmentContext';
 import { getMockDataByCustomerId, testScenarios } from '../../data/mockProfessionalData';
 
 const DashboardGrid = ({ children, className = '' }) => {
@@ -237,6 +239,37 @@ const ProfessionalDashboard = ({ customerId: propCustomerId, mockMode = false, t
     salesExecution: competencyAreas.find(a => a.name === 'Sales Execution')?.current || 0
   };
 
+  // Prepare assessment data for context provider
+  const assessmentCustomerData = {
+    assessment: {
+      performance: {
+        level: dashboardData.assessmentData?.performance_level || dashboardData.assessmentData?.performance?.level,
+        isHighPriority: dashboardData.assessmentData?.is_high_priority || dashboardData.assessmentData?.performance?.isHighPriority
+      },
+      scores: {
+        overall: dashboardData.assessmentData?.overall_score || dashboardData.assessmentData?.scores?.overall,
+        buyerUnderstanding: dashboardData.assessmentData?.buyer_understanding_score || dashboardData.assessmentData?.scores?.buyerUnderstanding,
+        techToValue: dashboardData.assessmentData?.tech_to_value_score || dashboardData.assessmentData?.scores?.techToValue
+      },
+      revenue: {
+        opportunity: dashboardData.assessmentData?.revenue_opportunity || dashboardData.assessmentData?.revenue?.opportunity,
+        roiMultiplier: dashboardData.assessmentData?.roi_multiplier || dashboardData.assessmentData?.revenue?.roiMultiplier,
+        impactTimeline: dashboardData.assessmentData?.impact_timeline || dashboardData.assessmentData?.revenue?.impactTimeline
+      },
+      challenges: {
+        total: dashboardData.assessmentData?.total_challenges || dashboardData.assessmentData?.challenges?.total,
+        critical: dashboardData.assessmentData?.critical_challenges || dashboardData.assessmentData?.challenges?.critical,
+        highPriority: dashboardData.assessmentData?.high_priority_challenges || dashboardData.assessmentData?.challenges?.highPriority
+      },
+      strategy: {
+        focusArea: dashboardData.assessmentData?.focus_area || dashboardData.assessmentData?.strategy?.focusArea || 'Technical Translation',
+        primaryRecommendation: dashboardData.assessmentData?.primary_recommendation || dashboardData.assessmentData?.strategy?.primaryRecommendation,
+        recommendationType: dashboardData.assessmentData?.recommendation_type || dashboardData.assessmentData?.strategy?.recommendationType
+      }
+    },
+    competencyBaselines: dashboardData.competencyBaselines
+  };
+
   // Determine action availability based on competency scores
   const actions = [
     {
@@ -276,27 +309,28 @@ const ProfessionalDashboard = ({ customerId: propCustomerId, mockMode = false, t
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Professional Dashboard Header */}
-      <DashboardHeader 
-        customerName={customer.name}
-        companyName={customer.company}
-        competencyLevel={customer.competencyLevel}
-        isAdmin={customer.isAdmin}
-      />
-      
-      {/* Phase 4: Interactive Filters */}
-      <InteractiveFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearAll={clearAllFilters}
-        filteredResults={getFilteredActivities()}
-        totalResults={recentActivities?.length || 0}
-      />
-      
-      {/* Phase 5: Enhanced Five-Section Dashboard Grid */}
-      <DashboardGrid>
-        {/* First Row: Development Focus (Prominent Stealth Gamification) */}
+    <AssessmentProvider customerData={assessmentCustomerData}>
+      <div className="min-h-screen bg-gray-900">
+        {/* Professional Dashboard Header */}
+        <DashboardHeader 
+          customerName={customer.name}
+          companyName={customer.company}
+          competencyLevel={customer.competencyLevel}
+          isAdmin={customer.isAdmin}
+        />
+        
+        {/* Phase 4: Interactive Filters */}
+        <InteractiveFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearAll={clearAllFilters}
+          filteredResults={getFilteredActivities()}
+          totalResults={recentActivities?.length || 0}
+        />
+        
+        {/* Phase 5: Enhanced Five-Section Dashboard Grid with Assessment Context */}
+        <DashboardGrid>
+        {/* First Row: Development Focus (Assessment-Driven Stealth Gamification with Context) */}
         <DevelopmentFocus 
           developmentData={developmentFocus}
           competencyScores={competencyScores}
@@ -305,10 +339,12 @@ const ProfessionalDashboard = ({ customerId: propCustomerId, mockMode = false, t
           className="lg:col-span-2"
         />
         
-        {/* Competency Gauges */}
+        {/* Assessment-Driven Competency Gauges */}
         <CompetencyGauges 
           competencyAreas={competencyAreas}
           nextUnlock={nextUnlock}
+          competencyBaselines={dashboardData.competencyBaselines}
+          assessmentData={dashboardData.assessmentData}
           onGaugeClick={handleGaugeClick}
           className=""
         />
@@ -334,6 +370,14 @@ const ProfessionalDashboard = ({ customerId: propCustomerId, mockMode = false, t
         />
       </DashboardGrid>
       
+      {/* Assessment Insights Section - Full Width */}
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AssessmentInsights 
+          assessmentData={dashboardData.assessmentData}
+          className=""
+        />
+      </div>
+      
       {/* Development Info (remove in production) */}
       {process.env.NODE_ENV === 'development' && (
         <div className="max-w-7xl mx-auto px-6 pb-6">
@@ -352,12 +396,19 @@ const ProfessionalDashboard = ({ customerId: propCustomerId, mockMode = false, t
               <div>Active Filters: {Object.values(filters).filter(f => f !== 'all').length}</div>
               <div>Filtered Activities: {getFilteredActivities().length} of {recentActivities?.length || 0}</div>
               <div>Stealth Gamification: 100% Professional Presentation</div>
+              <div>Assessment Score: {dashboardData.assessmentData?.overall_score || 'N/A'}</div>
+              <div>Performance Level: {dashboardData.assessmentData?.performance_level || 'N/A'}</div>
+              <div>Revenue Opportunity: ${dashboardData.assessmentData?.revenue_opportunity?.toLocaleString() || 'N/A'}</div>
+              <div>Personalized Recommendations: {dashboardData.personalizedRecommendations?.length || 0}</div>
+              <div>Messaging Tone: {dashboardData.personalizedMessaging?.tone || 'N/A'}</div>
+              <div>Assessment-Driven: {dashboardData.personalizedMessaging ? 'Yes' : 'No'}</div>
               {testScenario && <div>Test Scenario: {testScenarios[testScenario]?.name}</div>}
             </div>
           </div>
         </div>
       )}
     </div>
+    </AssessmentProvider>
   );
 };
 

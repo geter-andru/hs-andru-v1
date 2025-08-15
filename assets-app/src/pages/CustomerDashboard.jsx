@@ -7,9 +7,12 @@ import ICPDisplay from '../components/tools/ICPDisplay';
 import CostCalculator from '../components/tools/CostCalculator';
 import BusinessCaseBuilder from '../components/tools/BusinessCaseBuilder';
 import ResultsDashboard from '../components/results/ResultsDashboard';
+import CompetencyDashboard from '../components/competency/CompetencyDashboard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { Callout } from '../components/common/ContentDisplay';
 import { authService } from '../services/authService';
+import { AssessmentProvider } from '../contexts/AssessmentContext';
+import { airtableService } from '../services/airtableService';
 
 const CustomerDashboard = () => {
   const { customerId } = useParams();
@@ -20,6 +23,10 @@ const CustomerDashboard = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Assessment data state
+  const [assessmentData, setAssessmentData] = useState(null);
+  const [loadingAssessment, setLoadingAssessment] = useState(false);
   
   // Handle authentication
   useEffect(() => {
@@ -51,6 +58,9 @@ const CustomerDashboard = () => {
         authService.generateSession(result.customerData, token);
         setIsAuthenticated(true);
         
+        // Load assessment data after authentication
+        await loadAssessmentData(customerId, token);
+        
       } catch (error) {
         console.error('Authentication error:', error);
         setAuthError(error.message);
@@ -64,10 +74,34 @@ const CustomerDashboard = () => {
     if (existingSession && existingSession.customerId === customerId) {
       setIsAuthenticated(true);
       setAuthLoading(false);
+      
+      // Load assessment data for existing session
+      loadAssessmentData(customerId, existingSession.accessToken);
     } else {
       authenticateUser();
     }
   }, [customerId, location.search]);
+
+  // Load assessment data
+  const loadAssessmentData = async (custId, accessToken) => {
+    try {
+      setLoadingAssessment(true);
+      const customerWithAssessment = await airtableService.fetchCustomerWithAssessment(custId, accessToken);
+      setAssessmentData(customerWithAssessment);
+    } catch (error) {
+      console.warn('Could not load assessment data:', error);
+      // Set minimal assessment data as fallback
+      setAssessmentData({
+        name: 'Customer',
+        company: 'Company',
+        assessment: null,
+        competencyBaselines: null,
+        competencyProgress: {}
+      });
+    } finally {
+      setLoadingAssessment(false);
+    }
+  };
   
   // Workflow management hook (only after authentication)
   const {
@@ -91,6 +125,7 @@ const CustomerDashboard = () => {
   // Get current active tab from route
   const getActiveTab = () => {
     if (location.pathname.includes('welcome') || location.pathname === `/customer/${customerId}`) return 'welcome';
+    if (location.pathname.includes('dashboard') && !location.pathname.includes('cost-calculator') && !location.pathname.includes('business-case') && !location.pathname.includes('icp') && !location.pathname.includes('results')) return 'competency';
     if (location.pathname.includes('cost-calculator')) return 'cost';
     if (location.pathname.includes('business-case')) return 'business_case';
     if (location.pathname.includes('results')) return 'results';
@@ -105,14 +140,18 @@ const CustomerDashboard = () => {
     
     // Map route to tool name for tracking
     const toolName = tabRoute === 'cost-calculator' ? 'cost' : 
-                    tabRoute === 'business-case' ? 'business_case' : tabRoute;
+                    tabRoute === 'business-case' ? 'business_case' :
+                    tabRoute === 'competency' ? 'dashboard' : tabRoute;
     
-    // Start tool timer
-    startTool(toolName);
-    setCurrentTool(toolName);
+    // Start tool timer (only for actual tools, not dashboard)
+    if (toolName !== 'dashboard' && toolName !== 'competency') {
+      startTool(toolName);
+      setCurrentTool(toolName);
+    }
     
     // Navigate to route
-    navigate(`/customer/${customerId}/dashboard/${tabRoute}${queryString}`);
+    const route = tabRoute === 'competency' ? 'dashboard' : `dashboard/${tabRoute}`;
+    navigate(`/customer/${customerId}/${route}${queryString}`);
   };
 
   // Initialize workflow on mount
@@ -227,6 +266,13 @@ const CustomerDashboard = () => {
             onStartEngagement={toolCallbacks.onWelcomeComplete}
           />
         );
+
+      case 'competency':
+        return (
+          <CompetencyDashboard 
+            customerData={assessmentData}
+          />
+        );
         
       case 'icp':
         return (
@@ -311,10 +357,10 @@ const CustomerDashboard = () => {
   }
 
   // Workflow loading state
-  if (!isAuthenticated || loading) {
+  if (!isAuthenticated || loading || loadingAssessment) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <LoadingSpinner message="Loading workflow progress..." />
+        <LoadingSpinner message={loadingAssessment ? "Loading personalized platform..." : "Loading workflow progress..."} />
       </div>
     );
   }
@@ -334,43 +380,64 @@ const CustomerDashboard = () => {
   const showWelcomeExperience = activeTab === 'welcome';
 
   return (
-    <div className="min-h-screen bg-black">
-      {showWelcomeExperience ? (
-        // Full-screen welcome experience with DashboardLayout built-in
-        <div className="tool-content">
-          {renderCurrentTool()}
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
-          {/* Workflow Progress Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Business Assessment Platform
-            </h1>
-            <p className="text-gray-400">
-              {workflowProgress?.company_name && `Company: ${workflowProgress.company_name} • `}
-              Progress: {workflowProgress?.completion_percentage || 0}% Complete
-            </p>
-          </div>
-
-          {/* Enhanced Navigation */}
-          <div className="mb-8">
-            <EnhancedTabNavigation 
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              workflowData={workflowProgress}
-              workflowStatus={workflowStatus}
-              completionPercentage={workflowProgress?.completion_percentage || 0}
-            />
-          </div>
-          
-          {/* Tool Content Area */}
+    <AssessmentProvider customerData={assessmentData}>
+      <div className="min-h-screen bg-black">
+        {showWelcomeExperience ? (
+          // Full-screen welcome experience with DashboardLayout built-in
           <div className="tool-content">
             {renderCurrentTool()}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            {/* Assessment-Enhanced Header */}
+            <div className="mb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    Business Assessment Platform
+                  </h1>
+                  <p className="text-gray-400">
+                    {workflowProgress?.company_name && `Company: ${workflowProgress.company_name} • `}
+                    Progress: {workflowProgress?.completion_percentage || 0}% Complete
+                  </p>
+                </div>
+                
+                {/* Assessment Status Indicators */}
+                {assessmentData?.assessment && (
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="text-blue-400">
+                      Level: {assessmentData.assessment.performance?.level || 'Not Available'}
+                    </div>
+                    <div className="text-green-400">
+                      Focus: {assessmentData.assessment.strategy?.focusArea || 'General'}
+                    </div>
+                    <div className="text-purple-400">
+                      Revenue: ${Math.round((assessmentData.assessment.revenue?.opportunity || 750000) / 1000)}K
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Enhanced Navigation */}
+            <div className="mb-8">
+              <EnhancedTabNavigation 
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                workflowData={workflowProgress}
+                workflowStatus={workflowStatus}
+                completionPercentage={workflowProgress?.completion_percentage || 0}
+                assessmentData={assessmentData}
+              />
+            </div>
+            
+            {/* Tool Content Area */}
+            <div className="tool-content">
+              {renderCurrentTool()}
+            </div>
+          </div>
+        )}
       
       {/* Debug Info (remove in production) */}
       {process.env.NODE_ENV === 'development' && !showWelcomeExperience && (
@@ -388,7 +455,8 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AssessmentProvider>
   );
 };
 

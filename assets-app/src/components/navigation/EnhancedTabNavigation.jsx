@@ -4,6 +4,7 @@ import {
   Calculator, 
   FileText, 
   BarChart3,
+  BookOpen,
   Lock, 
   CheckCircle, 
   Clock, 
@@ -32,6 +33,20 @@ const EnhancedTabNavigation = ({
 
   // Tab configuration with competency-based progressive access
   const tabConfig = [
+    {
+      id: 'competency',
+      name: 'Professional Development',
+      icon: BookOpen,
+      step: 0,
+      description: 'Personalized competency tracking and professional growth',
+      professionalLevel: 'Assessment-Driven',
+      competencyArea: 'Professional Development',
+      isAvailable: () => true, // Always available - assessment-driven dashboard
+      isCompleted: () => false, // Never truly "completed" - ongoing development
+      getBadge: () => null,
+      getUnlockReason: () => 'Assessment-driven professional development dashboard',
+      route: 'competency'
+    },
     {
       id: 'icp',
       name: 'ICP Analysis',

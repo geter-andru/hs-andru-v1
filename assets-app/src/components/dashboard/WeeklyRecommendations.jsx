@@ -1,5 +1,6 @@
 import React from 'react';
 import { Target, MessageCircle, TrendingUp, Star, Clock, Zap, ArrowRight } from 'lucide-react';
+import { useAssessment } from '../../contexts/AssessmentContext';
 
 // Professional icons for categories (stealth gamification)
 const CATEGORY_ICONS = {
@@ -33,8 +34,20 @@ const CATEGORY_COLORS = {
   }
 };
 
-// Priority styling (psychological urgency without gaming aesthetics)
+// Priority styling (assessment-driven psychological urgency)
 const PRIORITY_STYLES = {
+  critical: {
+    border: 'border-l-red-500',
+    bg: 'bg-red-900/20',
+    badge: 'bg-red-600 text-white',
+    label: 'Critical'
+  },
+  strategic: {
+    border: 'border-l-purple-400',
+    bg: 'bg-purple-900/15',
+    badge: 'bg-purple-600 text-white',
+    label: 'Strategic'
+  },
   high: {
     border: 'border-l-red-400',
     bg: 'bg-red-900/15',
@@ -129,10 +142,12 @@ const WeeklyRecommendations = ({
   onStartSession,
   className = '' 
 }) => {
-  // Sort recommendations by priority for optimal psychological flow
+  // Get personalized messaging from assessment context
+  const { personalizedMessaging, getFocusAreaMessage, getRevenueOpportunity } = useAssessment();
+  // Sort recommendations by priority for optimal psychological flow (assessment-driven)
   const sortedRecommendations = [...recommendations].sort((a, b) => {
-    const priorityOrder = { high: 3, medium: 2, low: 1 };
-    return priorityOrder[b.priority] - priorityOrder[a.priority];
+    const priorityOrder = { critical: 5, strategic: 4, high: 3, medium: 2, low: 1 };
+    return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
   });
 
   const handleStartRecommendation = (recommendation) => {
@@ -150,10 +165,10 @@ const WeeklyRecommendations = ({
         <div>
           <h4 className="text-white font-semibold flex items-center space-x-2">
             <Zap size={18} className="text-amber-400" />
-            <span>Recommended This Week</span>
+            <span>{getFocusAreaMessage()?.focusArea ? `${getFocusAreaMessage().focusArea} Priorities` : 'Recommended This Week'}</span>
           </h4>
           <p className="text-purple-200 text-sm mt-1">
-            Systematic development priorities for maximum impact
+            {personalizedMessaging?.welcomeMessage?.secondary || `Strategic development priorities for $${Math.round(getRevenueOpportunity()/1000)}K revenue impact`}
           </p>
         </div>
         

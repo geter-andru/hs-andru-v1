@@ -122,6 +122,52 @@ const DEFAULT_DAILY_OBJECTIVES = {
   last_generated: null
 };
 
+// Default Assessment data structure for comprehensive customer evaluation
+const DEFAULT_ASSESSMENT_DATA = {
+  // Assessment Scores
+  overall_score: 0,
+  performance_level: "Foundation",
+  buyer_understanding_score: 0,
+  tech_to_value_score: 0,
+  percentile: 0,
+  
+  // Challenge Analysis
+  total_challenges: 0,
+  critical_challenges: 0,
+  high_priority_challenges: 0,
+  challenge_breakdown: [],
+  
+  // Recommendations & Strategy
+  primary_recommendation: "",
+  recommendation_type: "foundation_building",
+  focus_area: "customer_analysis",
+  urgency_factors: [],
+  strategic_priorities: [],
+  
+  // Revenue Impact
+  revenue_opportunity: 0,
+  roi_multiplier: 1.0,
+  is_high_priority: false,
+  lead_priority: "standard",
+  impact_timeline: "medium_term",
+  
+  // Product Information
+  business_model: "",
+  product_name: "",
+  product_description: "",
+  distinguishing_feature: "",
+  competitive_positioning: "",
+  
+  // Assessment Metadata
+  completed_date: null,
+  duration_minutes: 0,
+  conversion_stage: "discovery",
+  source: "direct_assessment",
+  browser: "",
+  user_agent: "",
+  completion_context: {}
+};
+
 // Create axios instance with default config
 const airtableClient = axios.create({
   baseURL: `${BASE_URL}/${BASE_ID}`,
@@ -228,6 +274,8 @@ export const airtableService = {
             // Enhanced ICP fields for personalized analysis
             detailedIcpAnalysis: this.parseJsonField(record.fields['Detailed ICP Analysis']),
             targetBuyerPersonas: this.parseJsonField(record.fields['Target Buyer Personas']),
+            // Assessment fields - comprehensive customer evaluation data
+            assessmentData: this.parseAssessmentFields(record.fields),
             createdAt: record.fields['Created At'],
             lastAccessed: record.fields['Last Accessed']
           };
@@ -269,6 +317,8 @@ export const airtableService = {
         // Enhanced ICP fields for personalized analysis
         detailedIcpAnalysis: this.parseJsonField(record.fields['Detailed ICP Analysis']),
         targetBuyerPersonas: this.parseJsonField(record.fields['Target Buyer Personas']),
+        // Assessment fields - comprehensive customer evaluation data
+        assessmentData: this.parseAssessmentFields(record.fields),
         createdAt: record.fields['Created At'],
         lastAccessed: record.fields['Last Accessed']
       };
@@ -444,6 +494,62 @@ export const airtableService = {
       current_date: new Date().toISOString().split('T')[0],
       last_updated: new Date().toISOString()
     };
+  },
+  getDefaultAssessmentData() {
+    return {
+      ...DEFAULT_ASSESSMENT_DATA,
+      completed_date: new Date().toISOString(),
+      last_updated: new Date().toISOString()
+    };
+  },
+  // Parse Assessment fields from Airtable record
+  parseAssessmentFields(fields) {
+    try {
+      return {
+        // Assessment Scores
+        overall_score: fields['Assessment Overall Score'] || 0,
+        performance_level: fields['Assessment Performance Level'] || "Foundation",
+        buyer_understanding_score: fields['Assessment Buyer Understanding Score'] || 0,
+        tech_to_value_score: fields['Assessment Tech-to-Value Score'] || 0,
+        percentile: fields['Assessment Percentile'] || 0,
+        
+        // Challenge Analysis
+        total_challenges: fields['Assessment Total Challenges'] || 0,
+        critical_challenges: fields['Assessment Critical Challenges'] || 0,
+        high_priority_challenges: fields['Assessment High Priority Challenges'] || 0,
+        
+        // Recommendations & Strategy
+        primary_recommendation: fields['Assessment Primary Recommendation'] || "",
+        recommendation_type: fields['Assessment Recommendation Type'] || "foundation_building",
+        focus_area: fields['Assessment Focus Area'] || "customer_analysis",
+        urgency_factors: fields['Assessment Urgency Factors'] || "",
+        
+        // Revenue Impact
+        revenue_opportunity: fields['Assessment Revenue Opportunity'] || 0,
+        roi_multiplier: fields['Assessment ROI Multiplier'] || 1.0,
+        is_high_priority: fields['Assessment Is High Priority'] || false,
+        lead_priority: fields['Assessment Lead Priority'] || "standard",
+        
+        // Product Information
+        business_model: fields['Assessment Business Model'] || "",
+        product_name: fields['Assessment Product Name'] || "",
+        product_description: fields['Assessment Product Description'] || "",
+        distinguishing_feature: fields['Assessment Distinguishing Feature'] || "",
+        
+        // Assessment Metadata
+        completed_date: fields['Assessment Completed Date'] || null,
+        duration_minutes: fields['Assessment Duration (minutes)'] || 0,
+        conversion_stage: fields['Assessment Conversion Stage'] || "discovery",
+        source: fields['Assessment Source'] || "direct_assessment",
+        browser: fields['Assessment Browser'] || "",
+        
+        // Internal tracking
+        last_updated: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error parsing Assessment fields:', error);
+      return this.getDefaultAssessmentData();
+    }
   },
 
   // Update workflow progress
@@ -1959,6 +2065,8 @@ export const airtableService = {
         // Enhanced ICP fields for personalized analysis
         detailedIcpAnalysis: this.parseJsonField(record.fields['Detailed ICP Analysis']),
         targetBuyerPersonas: this.parseJsonField(record.fields['Target Buyer Personas']),
+        // Assessment fields - comprehensive customer evaluation data
+        assessmentData: this.parseAssessmentFields(record.fields),
         createdAt: record.fields['Created At'],
         lastAccessed: record.fields['Last Accessed']
       };
@@ -2108,11 +2216,324 @@ export const airtableService = {
       competencyProgress: () => this.getDefaultCompetencyProgress(),
       toolAccessStatus: () => this.getDefaultToolAccessStatus(),
       professionalMilestones: () => this.getDefaultProfessionalMilestones(),
-      dailyObjectives: () => this.getDefaultDailyObjectives()
+      dailyObjectives: () => this.getDefaultDailyObjectives(),
+      assessmentData: () => this.getDefaultAssessmentData()
     };
     
     const getter = defaultGetters[type];
     return getter ? getter() : {};
+  },
+
+  // Fetch customer with complete assessment data for personalization
+  async fetchCustomerWithAssessment(customerId, accessToken) {
+    try {
+      const cacheKey = `assessment_${customerId}_${accessToken}`;
+      
+      // Check cache first
+      const cachedData = customerAssetsCache.get(cacheKey);
+      if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Using cached assessment data for: ${customerId}`);
+        }
+        return cachedData.data;
+      }
+
+      // Fetch complete customer data with assessment fields
+      const sanitizedToken = accessToken.replace(/'/g, "''").replace(/\\/g, "\\\\");
+      const response = await airtableClient.get('/Customer Assets', {
+        params: {
+          filterByFormula: `AND({Customer ID} = '${customerId}', {Access Token} = '${sanitizedToken}')`,
+          maxRecords: 1
+        }
+      });
+
+      if (response.data.records.length === 0) {
+        throw new Error('Customer not found or invalid token');
+      }
+
+      const customer = response.data.records[0].fields;
+      
+      // Structure data with assessment-driven personalization
+      const customerData = {
+        // Basic customer data
+        customerId: customer['Customer ID'],
+        name: customer['Customer Name'],
+        email: customer['Email'] || customer['email'],
+        company: customer['Company'] || customer['company'],
+        paymentStatus: customer['Payment Status'],
+        contentStatus: customer['Content Status'],
+        
+        // Content data
+        icpContent: this.parseJsonField(customer['ICP Content']),
+        calculatorContent: this.parseJsonField(customer['Cost Calculator Content']),
+        businessCaseContent: this.parseJsonField(customer['Business Case Content']),
+        
+        // Comprehensive assessment data
+        assessment: {
+          scores: {
+            overall: customer['Assessment Overall Score'] || 50,
+            buyerUnderstanding: customer['Assessment Buyer Understanding Score'] || 50,
+            techToValue: customer['Assessment Tech-to-Value Score'] || 50,
+            percentile: customer['Assessment Percentile'] || 50
+          },
+          performance: {
+            level: customer['Assessment Performance Level'] || 'Average',
+            isHighPriority: customer['Assessment Is High Priority'] || false,
+            leadPriority: customer['Assessment Lead Priority'] || 'Medium'
+          },
+          challenges: {
+            total: customer['Assessment Total Challenges'] || 0,
+            critical: customer['Assessment Critical Challenges'] || 0,
+            highPriority: customer['Assessment High Priority Challenges'] || 0
+          },
+          strategy: {
+            primaryRecommendation: customer['Assessment Primary Recommendation'] || '',
+            recommendationType: customer['Assessment Recommendation Type'] || '',
+            focusArea: customer['Assessment Focus Area'] || '',
+            urgencyFactors: customer['Assessment Urgency Factors'] || ''
+          },
+          revenue: {
+            opportunity: customer['Assessment Revenue Opportunity'] || 500000,
+            roiMultiplier: customer['Assessment ROI Multiplier'] || 4
+          },
+          product: {
+            businessModel: customer['Assessment Business Model'] || '',
+            name: customer['Assessment Product Name'] || '',
+            description: customer['Assessment Product Description'] || '',
+            distinguishingFeature: customer['Assessment Distinguishing Feature'] || ''
+          },
+          metadata: {
+            completedDate: customer['Assessment Completed Date'] || null,
+            duration: customer['Assessment Duration (minutes)'] || 0,
+            conversionStage: customer['Assessment Conversion Stage'] || '',
+            source: customer['Assessment Source'] || '',
+            browser: customer['Assessment Browser'] || ''
+          }
+        },
+        
+        // Assessment-driven competency baselines
+        competencyBaselines: {
+          customerAnalysis: customer['Assessment Buyer Understanding Score'] || 50,
+          valueCommunication: customer['Assessment Tech-to-Value Score'] || 50,
+          salesExecution: customer['Assessment Overall Score'] || 50
+        },
+        
+        // Current competency progress with personalized targets
+        competencyProgress: this.personalizeCompetencyProgress(
+          this.parseJsonField(customer['Competency Progress']) || this.getDefaultCompetencyProgress(),
+          customer['Assessment Overall Score'] || 50
+        ),
+        
+        // Tool access with assessment-based unlocks
+        toolAccessStatus: this.personalizeToolAccess(
+          this.parseJsonField(customer['Tool Access Status']) || this.getDefaultToolAccessStatus(),
+          customer['Assessment Performance Level'] || 'Average'
+        ),
+        
+        // Professional milestones
+        professionalMilestones: this.parseJsonField(customer['Professional Milestones']) || this.getDefaultProfessionalMilestones(),
+        
+        // Daily objectives personalized to assessment needs
+        dailyObjectives: this.personalizeDailyObjectives(
+          this.parseJsonField(customer['Daily Objectives']) || this.getDefaultDailyObjectives(),
+          customer['Assessment Focus Area'] || 'customer_analysis'
+        )
+      };
+
+      // Cache the enriched data
+      customerAssetsCache.set(cacheKey, {
+        data: customerData,
+        timestamp: Date.now()
+      });
+
+      return customerData;
+    } catch (error) {
+      console.error('Error fetching customer with assessment:', error);
+      throw error;
+    }
+  },
+
+  // Personalize competency progress based on assessment scores
+  personalizeCompetencyProgress(progress, assessmentScore) {
+    const personalizedProgress = { ...progress };
+    
+    // Set initial competency tier based on assessment
+    if (assessmentScore >= 80) {
+      personalizedProgress.competency_tier = 'Advanced';
+      personalizedProgress.next_tier_threshold = 10000;
+    } else if (assessmentScore >= 60) {
+      personalizedProgress.competency_tier = 'Proficient';
+      personalizedProgress.next_tier_threshold = 5000;
+    } else if (assessmentScore >= 40) {
+      personalizedProgress.competency_tier = 'Developing';
+      personalizedProgress.next_tier_threshold = 2500;
+    } else {
+      personalizedProgress.competency_tier = 'Foundation';
+      personalizedProgress.next_tier_threshold = 1000;
+    }
+    
+    return personalizedProgress;
+  },
+
+  // Personalize tool access based on assessment performance
+  personalizeToolAccess(toolAccess, performanceLevel) {
+    const personalizedAccess = { ...toolAccess };
+    
+    // Unlock tools based on performance level
+    const performanceLevels = {
+      'Excellent': { icp: true, cost: true, business: true },
+      'Good': { icp: true, cost: true, business: false },
+      'Average': { icp: true, cost: false, business: false },
+      'Needs Work': { icp: true, cost: false, business: false },
+      'Critical': { icp: true, cost: false, business: false }
+    };
+    
+    const unlocks = performanceLevels[performanceLevel] || performanceLevels['Average'];
+    
+    personalizedAccess.icp_analysis.access = unlocks.icp;
+    personalizedAccess.cost_calculator.access = unlocks.cost;
+    personalizedAccess.business_case_builder.access = unlocks.business;
+    
+    return personalizedAccess;
+  },
+
+  // Personalize daily objectives based on assessment focus area
+  personalizeDailyObjectives(objectives, focusArea) {
+    const personalizedObjectives = { ...objectives };
+    
+    // Generate objectives based on focus area
+    const focusObjectives = {
+      'customer_analysis': [
+        { id: 'ca1', title: 'Complete buyer persona analysis', points: 15, category: 'customerAnalysis' },
+        { id: 'ca2', title: 'Document customer pain points', points: 10, category: 'customerAnalysis' }
+      ],
+      'value_communication': [
+        { id: 'vc1', title: 'Create value proposition statement', points: 20, category: 'valueCommunication' },
+        { id: 'vc2', title: 'Develop ROI calculation model', points: 15, category: 'valueCommunication' }
+      ],
+      'sales_execution': [
+        { id: 'se1', title: 'Refine sales process documentation', points: 15, category: 'salesExecution' },
+        { id: 'se2', title: 'Practice objection handling', points: 10, category: 'salesExecution' }
+      ]
+    };
+    
+    personalizedObjectives.objectives_for_today = focusObjectives[focusArea] || focusObjectives['customer_analysis'];
+    
+    return personalizedObjectives;
+  },
+
+  // Get personalized messaging based on assessment
+  getPersonalizedMessaging(assessment) {
+    const { performance, revenue, strategy, challenges } = assessment;
+    
+    const messagingMap = {
+      'Critical': {
+        urgency: 'immediate',
+        tone: 'supportive',
+        focus: 'foundational capabilities',
+        revenueMessage: `Critical revenue optimization opportunity: $${Math.round(revenue.opportunity/1000)}K at risk`,
+        encouragement: 'Every professional journey starts with a single step. Your commitment to improvement is commendable.',
+        nextStep: 'Focus on foundational customer understanding to build systematic capabilities'
+      },
+      'Needs Work': {
+        urgency: 'high',
+        tone: 'encouraging',
+        focus: 'systematic improvement',
+        revenueMessage: `Significant revenue opportunity: $${Math.round(revenue.opportunity/1000)}K potential gain`,
+        encouragement: 'You\'ve identified key areas for growth. Let\'s build systematic capabilities together.',
+        nextStep: 'Strengthen your buyer understanding and value communication skills'
+      },
+      'Average': {
+        urgency: 'moderate',
+        tone: 'professional',
+        focus: 'competitive advantages',
+        revenueMessage: `Revenue optimization opportunity: $${Math.round(revenue.opportunity/1000)}K additional potential`,
+        encouragement: 'You\'re on the right track. Let\'s refine your approach for competitive advantage.',
+        nextStep: 'Advance your technical value translation capabilities'
+      },
+      'Good': {
+        urgency: 'strategic',
+        tone: 'confident',
+        focus: 'advanced optimization',
+        revenueMessage: `Strategic revenue enhancement: $${Math.round(revenue.opportunity/1000)}K optimization potential`,
+        encouragement: 'Your strong foundation enables advanced strategic initiatives.',
+        nextStep: 'Optimize your sales execution for maximum impact'
+      },
+      'Excellent': {
+        urgency: 'maintenance',
+        tone: 'expert',
+        focus: 'market leadership',
+        revenueMessage: `Market leadership opportunity: $${Math.round(revenue.opportunity/1000)}K competitive advantage`,
+        encouragement: 'Your expertise positions you for market leadership.',
+        nextStep: 'Maintain excellence while exploring innovative approaches'
+      }
+    };
+    
+    return messagingMap[performance.level] || messagingMap['Average'];
+  },
+
+  // Generate personalized recommendations based on assessment
+  generatePersonalizedRecommendations(assessment) {
+    const { scores, challenges, strategy } = assessment;
+    const recommendations = [];
+    
+    // Buyer understanding recommendations
+    if (scores.buyerUnderstanding < 70) {
+      recommendations.push({
+        id: 'rec_buyer_1',
+        title: 'Master Buyer Psychology Framework',
+        description: 'Develop systematic understanding of enterprise buyer decision-making patterns',
+        points: 25,
+        category: 'customerAnalysis',
+        priority: 'high',
+        timeEstimate: '30 min',
+        expectedOutcome: 'Improved customer conversation quality'
+      });
+    }
+    
+    // Tech-to-value recommendations
+    if (scores.techToValue < 70) {
+      recommendations.push({
+        id: 'rec_value_1',
+        title: 'Build Value Translation Capabilities',
+        description: 'Learn to translate technical features into quantifiable business outcomes',
+        points: 30,
+        category: 'valueCommunication',
+        priority: 'high',
+        timeEstimate: '25 min',
+        expectedOutcome: 'Enhanced value proposition clarity'
+      });
+    }
+    
+    // Sales execution recommendations
+    if (scores.overall < 70) {
+      recommendations.push({
+        id: 'rec_sales_1',
+        title: 'Strengthen Sales Process Foundation',
+        description: 'Implement systematic approach to managing complex B2B sales cycles',
+        points: 20,
+        category: 'salesExecution',
+        priority: 'medium',
+        timeEstimate: '20 min',
+        expectedOutcome: 'Improved sales cycle efficiency'
+      });
+    }
+    
+    // Add critical challenge-specific recommendations
+    if (challenges.critical > 0) {
+      recommendations.push({
+        id: 'rec_critical_1',
+        title: 'Address Critical Business Challenges',
+        description: strategy.primaryRecommendation || 'Focus on immediate revenue-impacting improvements',
+        points: 40,
+        category: strategy.focusArea || 'customerAnalysis',
+        priority: 'critical',
+        timeEstimate: '45 min',
+        expectedOutcome: 'Resolution of critical business obstacles'
+      });
+    }
+    
+    return recommendations.slice(0, 3); // Return top 3 recommendations
   },
 
   // Enhanced health check with gamification fields
@@ -2180,5 +2601,215 @@ export const airtableService = {
       console.error('Error in batch update:', error);
       throw error;
     }
+  },
+
+  // Enhanced function to fetch customer data with assessment information
+  async fetchCustomerWithAssessment(customerId, token) {
+    try {
+      // Get basic customer data using existing function
+      const customerData = await this.getCustomerData(customerId, token);
+      
+      if (!customerData) {
+        throw new Error('Customer not found');
+      }
+
+      // Parse assessment data if available
+      let assessmentData = null;
+      let competencyBaselines = null;
+
+      // Check if customer has assessment-related fields
+      if (customerData.detailed_icp_analysis) {
+        try {
+          const icpAnalysis = JSON.parse(customerData.detailed_icp_analysis);
+          
+          // Extract assessment data from ICP analysis or create mock assessment
+          assessmentData = this.createAssessmentFromICP(icpAnalysis, customerData);
+          competencyBaselines = this.generateCompetencyBaselines(assessmentData);
+        } catch (parseError) {
+          console.warn('Could not parse ICP analysis for assessment:', parseError);
+          assessmentData = this.createDefaultAssessment(customerData);
+          competencyBaselines = this.generateDefaultBaselines();
+        }
+      } else {
+        // Create default assessment data
+        assessmentData = this.createDefaultAssessment(customerData);
+        competencyBaselines = this.generateDefaultBaselines();
+      }
+
+      // Parse competency progress if available
+      let competencyProgress = {};
+      if (customerData.competency_progress) {
+        try {
+          const progress = JSON.parse(customerData.competency_progress);
+          competencyProgress = {
+            customerAnalysis: progress.customer_analysis || 0,
+            valueCommunication: progress.business_communication || 0,
+            salesExecution: progress.revenue_strategy || 0
+          };
+        } catch (parseError) {
+          console.warn('Could not parse competency progress:', parseError);
+          competencyProgress = { customerAnalysis: 0, valueCommunication: 0, salesExecution: 0 };
+        }
+      }
+
+      // Return enhanced customer data with assessment context
+      return {
+        ...customerData,
+        assessment: assessmentData,
+        competencyBaselines,
+        competencyProgress,
+        // Ensure these fields exist for the Assessment Context
+        name: customerData.customer_name || customerData.name || 'Customer',
+        company: customerData.company || 'Company',
+        email: customerData.email
+      };
+
+    } catch (error) {
+      console.error('Error fetching customer with assessment:', error);
+      throw new Error(`Failed to load customer assessment data: ${error.message}`);
+    }
+  },
+
+  // Create assessment data from ICP analysis
+  createAssessmentFromICP(icpAnalysis, customerData) {
+    // Try to extract meaningful assessment data from existing ICP content
+    const performance = this.assessPerformanceFromData(customerData);
+    const challenges = this.identifyChallengesFromData(icpAnalysis, customerData);
+    const strategy = this.generateStrategyFromData(challenges, performance);
+    const revenue = this.calculateRevenueOpportunity(performance, customerData);
+
+    return {
+      performance,
+      scores: {
+        overall: performance.score || 50,
+        buyerUnderstanding: this.calculateBuyerScore(icpAnalysis),
+        techToValue: this.calculateTechValueScore(customerData)
+      },
+      revenue,
+      challenges: challenges.list,
+      strategy
+    };
+  },
+
+  // Create default assessment for customers without detailed data
+  createDefaultAssessment(customerData) {
+    const isAdmin = customerData.customer_id === 'CUST_4';
+    
+    if (isAdmin) {
+      return {
+        performance: { level: 'Good', isHighPriority: false, score: 75 },
+        scores: { overall: 75, buyerUnderstanding: 80, techToValue: 70 },
+        revenue: { opportunity: 1200000, roiMultiplier: 4.5, impactTimeline: '3-6 months' },
+        challenges: ['Competitive Positioning Challenge'],
+        strategy: {
+          focusArea: 'Competitive Positioning',
+          primaryRecommendation: 'Leverage advanced competitive intelligence for market leadership',
+          recommendationType: 'advanced_optimization'
+        }
+      };
+    }
+
+    return {
+      performance: { level: 'Developing', isHighPriority: false, score: 45 },
+      scores: { overall: 45, buyerUnderstanding: 40, techToValue: 50 },
+      revenue: { opportunity: 750000, roiMultiplier: 3.2, impactTimeline: '6-12 months' },
+      challenges: ['Buyer Conversations Challenge', 'Technical Translation Challenge'],
+      strategy: {
+        focusArea: 'Technical Translation',
+        primaryRecommendation: 'Focus on systematic technical-to-business value translation',
+        recommendationType: 'systematic_development'
+      }
+    };
+  },
+
+  // Generate competency baselines from assessment
+  generateCompetencyBaselines(assessmentData) {
+    const baseScore = assessmentData.scores?.overall || 50;
+    const variance = 10; // Allow some variation between competencies
+    
+    return {
+      customerAnalysis: Math.max(20, Math.min(70, baseScore - variance + Math.random() * variance)),
+      valueCommunication: Math.max(20, Math.min(70, baseScore + Math.random() * variance - variance/2)),
+      salesExecution: Math.max(20, Math.min(70, baseScore + variance/2 - Math.random() * variance))
+    };
+  },
+
+  // Generate default baselines
+  generateDefaultBaselines() {
+    return {
+      customerAnalysis: 42,
+      valueCommunication: 38,
+      salesExecution: 35
+    };
+  },
+
+  // Helper functions for assessment creation
+  assessPerformanceFromData(customerData) {
+    // Simple heuristic based on available data
+    if (customerData.customer_id === 'CUST_4') {
+      return { level: 'Good', isHighPriority: false, score: 75 };
+    }
+    
+    const hasContent = customerData.icp_content || customerData.cost_calculator_content;
+    const score = hasContent ? 55 : 45;
+    const level = score >= 70 ? 'Good' : score >= 55 ? 'Average' : 'Developing';
+    
+    return { level, isHighPriority: score < 40, score };
+  },
+
+  identifyChallengesFromData(icpAnalysis, customerData) {
+    const challenges = [];
+    
+    // Default challenges based on customer type
+    if (customerData.customer_id === 'CUST_4') {
+      challenges.push('Competitive Positioning Challenge');
+    } else {
+      challenges.push('Buyer Conversations Challenge', 'Technical Translation Challenge');
+    }
+    
+    return {
+      list: challenges,
+      total: challenges.length,
+      critical: challenges.length > 2 ? 1 : 0,
+      highPriority: challenges.length
+    };
+  },
+
+  generateStrategyFromData(challenges, performance) {
+    const focusAreas = {
+      'Buyer Conversations Challenge': 'Buyer Psychology',
+      'Technical Translation Challenge': 'Technical Translation',
+      'Competitive Positioning Challenge': 'Competitive Positioning'
+    };
+    
+    const primaryChallenge = challenges.list[0];
+    const focusArea = focusAreas[primaryChallenge] || 'Technical Translation';
+    
+    return {
+      focusArea,
+      primaryRecommendation: `Focus on ${focusArea.toLowerCase()} development and systematic improvement`,
+      recommendationType: performance.score < 50 ? 'systematic_development' : 'advanced_optimization'
+    };
+  },
+
+  calculateRevenueOpportunity(performance, customerData) {
+    const baseOpportunity = customerData.customer_id === 'CUST_4' ? 1200000 : 750000;
+    const multiplier = performance.score / 50; // Scale based on performance
+    
+    return {
+      opportunity: Math.round(baseOpportunity * multiplier),
+      roiMultiplier: 3.0 + (performance.score / 100),
+      impactTimeline: performance.score > 60 ? '3-6 months' : '6-12 months'
+    };
+  },
+
+  calculateBuyerScore(icpAnalysis) {
+    // Simple heuristic - could be enhanced with real ICP analysis
+    return icpAnalysis?.segments?.length > 0 ? 60 : 40;
+  },
+
+  calculateTechValueScore(customerData) {
+    // Simple heuristic based on content availability
+    return customerData.cost_calculator_content ? 65 : 45;
   }
 };

@@ -2,13 +2,47 @@ import React from 'react';
 import CircularCompetencyGauge from './CircularCompetencyGauge';
 import NextUnlockIndicator from './NextUnlockIndicator';
 
-const CompetencyGauges = ({ competencyAreas, nextUnlock, onGaugeClick, className = '' }) => {
+const CompetencyGauges = ({ 
+  competencyAreas, 
+  nextUnlock, 
+  competencyBaselines,
+  assessmentData,
+  onGaugeClick, 
+  className = '' 
+}) => {
   // Handle gauge click for future detailed views
   const handleGaugeClick = (competencyName) => {
     console.log(`Opening detailed view for ${competencyName} competency`);
     if (onGaugeClick) {
       onGaugeClick(competencyName);
     }
+  };
+
+  // Calculate assessment-driven targets based on performance level
+  const getPersonalizedTarget = (competencyName) => {
+    if (!assessmentData?.performance) return 70;
+    
+    const performanceTargets = {
+      'Critical': 40,
+      'Needs Work': 60,
+      'Average': 70,
+      'Good': 85,
+      'Excellent': 95
+    };
+    
+    return performanceTargets[assessmentData.performance.level] || 70;
+  };
+
+  // Get assessment-driven baseline if available
+  const getBaselineScore = (competencyName) => {
+    const competencyMap = {
+      'Customer Analysis': 'customerAnalysis',
+      'Value Communication': 'valueCommunication', 
+      'Sales Execution': 'salesExecution'
+    };
+    
+    const key = competencyMap[competencyName];
+    return competencyBaselines?.[key] || null;
   };
 
   return (
@@ -18,21 +52,28 @@ const CompetencyGauges = ({ competencyAreas, nextUnlock, onGaugeClick, className
         Professional Competency Development
       </h3>
       
-      {/* Dynamic Circular Gauges Grid - Responsive Business Intelligence Layout */}
+      {/* Assessment-Driven Circular Gauges Grid - Personalized Business Intelligence Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        {competencyAreas.map((competency) => (
-          <CircularCompetencyGauge 
-            key={competency.name}
-            name={competency.name}
-            currentScore={competency.current}
-            targetScore={70}
-            level={competency.level}
-            color={competency.color}
-            unlockBenefit={competency.unlockBenefit}
-            description={competency.description}
-            onClick={handleGaugeClick}
-          />
-        ))}
+        {competencyAreas.map((competency) => {
+          const baselineScore = getBaselineScore(competency.name);
+          const personalizedTarget = getPersonalizedTarget(competency.name);
+          
+          return (
+            <CircularCompetencyGauge 
+              key={competency.name}
+              name={competency.name}
+              currentScore={competency.current}
+              targetScore={personalizedTarget}
+              baselineScore={baselineScore}
+              level={competency.level}
+              color={competency.color}
+              unlockBenefit={competency.unlockBenefit}
+              description={competency.description}
+              onClick={handleGaugeClick}
+              assessmentDriven={!!assessmentData}
+            />
+          );
+        })}
       </div>
       
       {/* Professional Progression Indicator */}
@@ -41,11 +82,21 @@ const CompetencyGauges = ({ competencyAreas, nextUnlock, onGaugeClick, className
         className="mt-6"
       />
       
-      {/* Professional Development Context */}
+      {/* Assessment-Driven Development Context */}
       <div className="mt-6 pt-4 border-t border-gray-700">
         <div className="flex justify-between items-center text-xs text-gray-400">
-          <span>Professional development tracking and tool access management</span>
-          <span>Target: 70+ for tool unlock</span>
+          <span>
+            {assessmentData 
+              ? `Assessment-driven development tracking (${assessmentData.performance?.level || 'Average'} level)`
+              : 'Professional development tracking and tool access management'
+            }
+          </span>
+          <span>
+            {assessmentData 
+              ? `Target: ${getPersonalizedTarget('Customer Analysis')}+ for optimization`
+              : 'Target: 70+ for tool unlock'
+            }
+          </span>
         </div>
       </div>
       

@@ -284,6 +284,112 @@ export const mockCustomerData = {
     nextLevel: "Value Communication Developing",
     pointsToNextLevel: 90,
     weeklyVelocity: 32
+  },
+
+  // Assessment-driven competency baselines
+  competencyBaselines: {
+    customerAnalysis: 72,  // From buyer understanding score
+    valueCommunication: 58,  // From tech-to-value score
+    salesExecution: 67  // From overall score
+  },
+
+  // Personalized messaging based on assessment
+  personalizedMessaging: {
+    urgency: 'high',
+    tone: 'encouraging', 
+    focus: 'systematic improvement',
+    revenueMessage: 'Significant revenue opportunity: $250K potential gain',
+    encouragement: 'You\'ve identified key areas for growth. Let\'s build systematic capabilities together.',
+    nextStep: 'Strengthen your buyer understanding and value communication skills'
+  },
+
+  // Assessment-driven personalized recommendations
+  personalizedRecommendations: [
+    {
+      id: 'rec_buyer_1',
+      title: 'Master Buyer Psychology Framework',
+      description: 'Develop systematic understanding of enterprise buyer decision-making patterns',
+      points: 25,
+      category: 'customerAnalysis',
+      priority: 'high',
+      timeEstimate: '30 min',
+      expectedOutcome: 'Improved customer conversation quality'
+    },
+    {
+      id: 'rec_value_1', 
+      title: 'Build Value Translation Capabilities',
+      description: 'Learn to translate technical features into quantifiable business outcomes',
+      points: 30,
+      category: 'valueCommunication',
+      priority: 'high',
+      timeEstimate: '25 min',
+      expectedOutcome: 'Enhanced value proposition clarity'
+    },
+    {
+      id: 'rec_sales_1',
+      title: 'Strengthen Sales Process Foundation',
+      description: 'Implement systematic approach to managing complex B2B sales cycles',
+      points: 20,
+      category: 'salesExecution',
+      priority: 'medium',
+      timeEstimate: '20 min',
+      expectedOutcome: 'Improved sales cycle efficiency'
+    }
+  ],
+
+  // Assessment data - comprehensive customer evaluation results
+  assessmentData: {
+    // Assessment Scores
+    overall_score: 67,
+    performance_level: "Developing",
+    buyer_understanding_score: 72,
+    tech_to_value_score: 58,
+    percentile: 73,
+    
+    // Challenge Analysis
+    total_challenges: 8,
+    critical_challenges: 2,
+    high_priority_challenges: 3,
+    challenge_breakdown: [
+      "Limited technical value articulation",
+      "Inconsistent customer discovery process",
+      "Difficulty quantifying business impact"
+    ],
+    
+    // Recommendations & Strategy
+    primary_recommendation: "Focus on systematic customer analysis methodology to improve buyer understanding and value communication consistency",
+    recommendation_type: "skill_development",
+    focus_area: "customer_analysis",
+    urgency_factors: ["Revenue growth dependency", "Competitive market pressure"],
+    strategic_priorities: ["Customer discovery improvement", "Value proposition refinement", "Sales process systematization"],
+    
+    // Revenue Impact
+    revenue_opportunity: 250000,
+    roi_multiplier: 2.3,
+    is_high_priority: true,
+    lead_priority: "high",
+    impact_timeline: "3-6 months",
+    
+    // Product Information
+    business_model: "B2B SaaS Analytics Platform",
+    product_name: "TechFlow Analytics Suite",
+    product_description: "Advanced data analytics platform for enterprise sales teams with predictive modeling and customer intelligence capabilities",
+    distinguishing_feature: "Real-time customer behavior prediction with 94% accuracy",
+    competitive_positioning: "Premium analytics solution for data-driven sales organizations",
+    
+    // Assessment Metadata
+    completed_date: "2024-08-12T14:30:00Z",
+    duration_minutes: 18,
+    conversion_stage: "evaluation",
+    source: "self_assessment",
+    browser: "Chrome 126.0",
+    user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    completion_context: {
+      session_quality: "high",
+      engagement_level: 8.5,
+      completion_rate: 100,
+      question_depth: "comprehensive"
+    }
   }
 };
 
@@ -515,6 +621,112 @@ export const mockAdminData = {
     nextLevel: null,
     pointsToNextLevel: 0,
     weeklyVelocity: 285
+  },
+
+  // Assessment-driven competency baselines for expert user
+  competencyBaselines: {
+    customerAnalysis: 96,  // From buyer understanding score
+    valueCommunication: 92,  // From tech-to-value score
+    salesExecution: 94  // From overall score
+  },
+
+  // Personalized messaging for expert level
+  personalizedMessaging: {
+    urgency: 'maintenance',
+    tone: 'expert',
+    focus: 'market leadership',
+    revenueMessage: 'Market leadership opportunity: $2.5M competitive advantage',
+    encouragement: 'Your expertise positions you for market leadership.',
+    nextStep: 'Maintain excellence while exploring innovative approaches'
+  },
+
+  // Expert-level personalized recommendations
+  personalizedRecommendations: [
+    {
+      id: 'rec_leadership_1',
+      title: 'Strategic Account Portfolio Review',
+      description: 'Comprehensive analysis of top 5 enterprise accounts with expansion opportunity identification',
+      points: 50,
+      category: 'customerAnalysis',
+      priority: 'strategic',
+      timeEstimate: '45 min',
+      expectedOutcome: 'Strategic account growth opportunities identified'
+    },
+    {
+      id: 'rec_mentorship_1',
+      title: 'Advanced Team Mentorship Program',
+      description: 'Develop and implement systematic coaching methodology for revenue intelligence',
+      points: 40,
+      category: 'valueCommunication',
+      priority: 'medium',
+      timeEstimate: '60 min',
+      expectedOutcome: 'Enhanced team capability development'
+    },
+    {
+      id: 'rec_innovation_1',
+      title: 'Market Innovation Framework',
+      description: 'Design next-generation approaches to competitive differentiation and market positioning',
+      points: 60,
+      category: 'salesExecution',
+      priority: 'strategic',
+      timeEstimate: '90 min',
+      expectedOutcome: 'Advanced competitive methodology development'
+    }
+  ],
+
+  // Assessment data - expert-level customer evaluation results
+  assessmentData: {
+    // Assessment Scores
+    overall_score: 94,
+    performance_level: "Expert",
+    buyer_understanding_score: 96,
+    tech_to_value_score: 92,
+    percentile: 98,
+    
+    // Challenge Analysis
+    total_challenges: 2,
+    critical_challenges: 0,
+    high_priority_challenges: 0,
+    challenge_breakdown: [
+      "Advanced competitive differentiation opportunities",
+      "Executive stakeholder expansion potential"
+    ],
+    
+    // Recommendations & Strategy
+    primary_recommendation: "Leverage expertise to mentor team members and scale systematic revenue intelligence across organization",
+    recommendation_type: "strategic_leadership",
+    focus_area: "organizational_development",
+    urgency_factors: ["Team development opportunity", "Competitive advantage scaling"],
+    strategic_priorities: ["Team mentorship", "Process standardization", "Advanced methodology development"],
+    
+    // Revenue Impact
+    revenue_opportunity: 2500000,
+    roi_multiplier: 5.8,
+    is_high_priority: true,
+    lead_priority: "strategic",
+    impact_timeline: "12-18 months",
+    
+    // Product Information
+    business_model: "Enterprise Revenue Intelligence Platform",
+    product_name: "Strategic Sales Intelligence Suite",
+    product_description: "Comprehensive revenue intelligence platform for enterprise organizations with advanced analytics, team management, and strategic planning capabilities",
+    distinguishing_feature: "AI-powered strategic decision support with 98% accuracy in revenue prediction",
+    competitive_positioning: "Premium enterprise solution for strategic revenue management",
+    
+    // Assessment Metadata
+    completed_date: "2024-08-10T10:15:00Z",
+    duration_minutes: 12,
+    conversion_stage: "strategic_partnership",
+    source: "expert_evaluation",
+    browser: "Chrome 126.0",
+    user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    completion_context: {
+      session_quality: "expert",
+      engagement_level: 9.8,
+      completion_rate: 100,
+      question_depth: "strategic",
+      expertise_validation: true
+    }
   }
 };
 

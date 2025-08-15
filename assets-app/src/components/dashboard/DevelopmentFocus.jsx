@@ -3,6 +3,7 @@ import { Play, BookOpen, Sparkles, TrendingUp } from 'lucide-react';
 import NextUnlockProgress from './NextUnlockProgress';
 import WeeklyRecommendations from './WeeklyRecommendations';
 import RecentMilestones from './RecentMilestones';
+import { useAssessment } from '../../contexts/AssessmentContext';
 
 // Professional level definitions for stealth gamification
 const COMPETENCY_LEVELS = {
@@ -90,9 +91,29 @@ const DevelopmentFocus = ({
 }) => {
   const [isStartingSession, setIsStartingSession] = useState(false);
 
-  // Calculate current level and next unlock (stealth gamification logic)
-  const currentLevel = getCompetencyLevel(Math.min(...Object.values(competencyScores)));
+  // Get assessment data from context
+  const {
+    assessmentData,
+    personalizedMessaging,
+    getPerformanceLevel,
+    getRevenueOpportunity,
+    getFocusAreaMessage
+  } = useAssessment();
+
+  // Calculate current level and next unlock (assessment-driven logic)
+  const assessmentScore = assessmentData?.scores?.overall || Math.min(...Object.values(competencyScores));
+  const currentLevel = getCompetencyLevel(assessmentScore);
   const nextUnlock = developmentData?.nextUnlock || getNextUnlock(competencyScores);
+  
+  // Use personalized recommendations from context or fallback to development data
+  const recommendations = developmentData?.recommendations || [];
+  
+  // Get assessment-driven messaging from context
+  const messaging = personalizedMessaging?.welcomeMessage || {
+    primary: 'Consistent development creates sustainable competitive advantage',
+    secondary: 'Continue building systematic professional capabilities',
+    urgency: 'moderate'
+  };
   
   // Professional session start handler
   const handleStartDevelopmentSession = async () => {
@@ -183,10 +204,11 @@ const DevelopmentFocus = ({
           pointsNeeded={nextUnlock.pointsNeeded}
         />
         
-        {/* Weekly Recommendations (Action-Oriented Psychology) */}
+        {/* Assessment-Driven Recommendations (Personalized Action Psychology) */}
         <WeeklyRecommendations 
-          recommendations={developmentData?.recommendations || []}
+          recommendations={recommendations}
           onStartSession={handleStartRecommendation}
+          personalizedMessaging={messaging}
         />
         
         {/* Recent Milestones (Achievement Recognition Psychology) */}
@@ -232,16 +254,22 @@ const DevelopmentFocus = ({
           </div>
         </button>
         
-        {/* Professional Encouragement */}
+        {/* Assessment-Driven Professional Encouragement */}
         <div className="mt-3 text-center">
           <p className="text-purple-200 text-sm">
-            Consistent development creates sustainable competitive advantage
+            {messaging.primary}
           </p>
           <div className="mt-1 text-xs text-purple-300">
+            {messaging.secondary}
+          </div>
+          <div className="mt-1 text-xs text-purple-400">
             {nextUnlock.pointsNeeded > 0 
               ? `${nextUnlock.pointsNeeded} points until next capability unlock`
               : 'All professional capabilities unlocked'
             }
+          </div>
+          <div className="mt-1 text-xs text-purple-500">
+            Revenue Opportunity: ${Math.round(getRevenueOpportunity()/1000)}K | Performance: {getPerformanceLevel()}
           </div>
         </div>
       </div>
