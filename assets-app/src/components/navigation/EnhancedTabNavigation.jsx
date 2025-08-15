@@ -184,7 +184,7 @@ const EnhancedTabNavigation = ({
     }, interval);
 
     return () => clearInterval(timer);
-  }, [workflowData]);
+  }, [workflowData, animatedProgress, calculateProgress]);
 
   // Get tab status
   const getTabStatus = (tab) => {

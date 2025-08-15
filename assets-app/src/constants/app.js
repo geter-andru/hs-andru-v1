@@ -81,7 +81,7 @@ export const RANKS = {
 // Form validation patterns
 export const VALIDATION = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^\+?[\d\s\-\(\)]+$/,
+  phone: /^\+?[\d\s\-()]+$/,
   currency: /^\d+(\.\d{2})?$/,
   percentage: /^(100(\.0{1,2})?|\d{1,2}(\.\d{1,2})?)$/,
   

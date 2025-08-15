@@ -212,10 +212,12 @@ export const LinkButton = ({
 };
 
 // Export all components
-export default {
+const ButtonComponents = {
   PrimaryButton,
   SecondaryButton,
   IconButton,
   LinkButton,
   LoadingSpinner
 };
+
+export default ButtonComponents;

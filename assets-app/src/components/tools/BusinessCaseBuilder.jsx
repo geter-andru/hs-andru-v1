@@ -539,7 +539,7 @@ const BusinessCaseBuilder = () => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [formData, activeTemplate, session]);
+  }, [formData, activeTemplate, session, saveProgress]);
 
   // Helper function to render form fields with auto-population indicators
   const renderFormField = (field, label, placeholder, type = 'text', isTextarea = false) => {

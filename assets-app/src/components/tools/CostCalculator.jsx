@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ContentDisplay, { Callout } from '../common/ContentDisplay';
-import LoadingSpinner, { CardSkeleton } from '../common/LoadingSpinner';
+import { CardSkeleton } from '../common/LoadingSpinner';
 import AsyncErrorBoundary, { useAsyncError } from '../common/AsyncErrorBoundary';
 import DashboardLayout from '../layout/DashboardLayout';
 import SidebarSection from '../layout/SidebarSection';
@@ -11,12 +11,12 @@ import ImplementationGuidance from '../guidance/ImplementationGuidance';
 import SuccessMetricsPanel from '../guidance/SuccessMetricsPanel';
 import ExportStrategyGuide from '../guidance/ExportStrategyGuide';
 import NavigationControls from '../navigation/NavigationControls';
-import { PrimaryButton, SecondaryButton } from '../ui/ButtonComponents';
+import { PrimaryButton } from '../ui/ButtonComponents';
 import useNavigation from '../../hooks/useNavigation';
 import { airtableService } from '../../services/airtableService';
 import { authService } from '../../services/authService';
 import { COMPONENT_STYLES, COLORS } from '../../constants/theme';
-import { TIMING, SCORES, BUSINESS, VALIDATION } from '../../constants/app';
+import { BUSINESS } from '../../constants/app';
 
 const CostCalculator = () => {
   const { onCostCalculated } = useOutletContext() || {};
@@ -28,7 +28,7 @@ const CostCalculator = () => {
   const [error, setError] = useState(null);
   const [calculations, setCalculations] = useState(null);
   const [autoPopulated, setAutoPopulated] = useState(new Set());
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime] = useState(Date.now());
   const [isNavigating, setIsNavigating] = useState(false);
   const [formData, setFormData] = useState({
     currentRevenue: '',
@@ -191,7 +191,7 @@ const CostCalculator = () => {
     if (session) {
       loadCostData();
     }
-  }, [session]);
+  }, [session, throwError]);
 
   // Auto-populate fields using ICP Analysis data
   const autoPopulateFromICP = () => {

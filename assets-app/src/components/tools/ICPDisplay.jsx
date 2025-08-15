@@ -331,7 +331,7 @@ const ICPDisplay = () => {
       setLoading(false);
       setError('No session available');
     }
-  }, [session]);
+  }, [session, throwError]);
 
   const handleFrameworkUpdate = (framework) => {
     setIcpFramework(framework);
