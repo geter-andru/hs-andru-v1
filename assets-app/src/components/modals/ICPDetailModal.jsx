@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, ChevronRight, Download, FileText, Users, AlertTriangle,
   Target, BarChart3, Star, CheckCircle, Play, Eye,

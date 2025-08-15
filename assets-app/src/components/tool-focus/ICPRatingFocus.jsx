@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { airtableService } from '../../services/airtableService';
 
 const ICPRatingFocus = ({ customerId, onProgressionComplete, onInteraction }) => {
