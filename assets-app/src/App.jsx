@@ -33,6 +33,9 @@ function App() {
             <Route path="/customer/:customerId/dashboard/*" element={<CustomerDashboard />} />
             <Route path="/customer/:customerId" element={<CustomerDashboard />} />
             
+            {/* Root Route - Simplified Platform */}
+            <Route path="/" element={<SimplifiedPlatform />} />
+            
             {/* Test Routes */}
             <Route path="/test" element={<Phase1Test />} />
             <Route path="/test-launcher" element={<TestLauncher />} />
@@ -42,8 +45,8 @@ function App() {
             <Route path="/test-simplified" element={<SimplifiedPlatformTest />} />
             <Route path="/test-phase3" element={<Phase3ExportTest />} />
             
-            {/* Default - redirect to admin demo */}
-            <Route path="*" element={<CustomerDashboard />} />
+            {/* Default - redirect to simplified platform */}
+            <Route path="*" element={<SimplifiedPlatform />} />
           </Routes>
         </div>
       </Router>
