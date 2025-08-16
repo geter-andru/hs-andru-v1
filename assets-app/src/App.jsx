@@ -26,12 +26,13 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
-            {/* Simplified Platform Routes */}
+            {/* Customer Routes - Default to Simplified Platform */}
             <Route path="/customer/:customerId/simplified/*" element={<SimplifiedPlatform />} />
+            <Route path="/customer/:customerId" element={<SimplifiedPlatform />} />
             
-            {/* Customer Dashboard Routes */}
+            {/* Full Revenue Intelligence Infrastructure Routes */}
+            <Route path="/customer/:customerId/full/*" element={<CustomerDashboard />} />
             <Route path="/customer/:customerId/dashboard/*" element={<CustomerDashboard />} />
-            <Route path="/customer/:customerId" element={<CustomerDashboard />} />
             
             {/* Root Route - Simplified Platform */}
             <Route path="/" element={<SimplifiedPlatform />} />
