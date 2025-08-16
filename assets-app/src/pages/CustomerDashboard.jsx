@@ -12,6 +12,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { Callout } from '../components/common/ContentDisplay';
 import { authService } from '../services/authService';
 import { AssessmentProvider } from '../contexts/AssessmentContext';
+import { FeatureFlagProvider } from '../contexts/FeatureFlagContext';
+import PlatformSwitcher from '../components/platform-switcher/PlatformSwitcher';
 import { airtableService } from '../services/airtableService';
 
 const CustomerDashboard = () => {
@@ -360,7 +362,7 @@ const CustomerDashboard = () => {
   if (!isAuthenticated || loading || loadingAssessment) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <LoadingSpinner message={loadingAssessment ? "Loading personalized platform..." : "Loading workflow progress..."} />
+        <LoadingSpinner message={loadingAssessment ? "Loading Revenue Intelligence Infrastructure..." : "Loading export capabilities..."} />
       </div>
     );
   }
@@ -380,8 +382,13 @@ const CustomerDashboard = () => {
   const showWelcomeExperience = activeTab === 'welcome';
 
   return (
-    <AssessmentProvider customerData={assessmentData}>
-      <div className="min-h-screen bg-black">
+    <FeatureFlagProvider customerId={customerId}>
+      <AssessmentProvider customerData={assessmentData}>
+        <div className="relative">
+          {/* Platform Switcher */}
+          <PlatformSwitcher customerId={customerId} />
+          
+          <div className="min-h-screen bg-black">
         {showWelcomeExperience ? (
           // Full-screen welcome experience with DashboardLayout built-in
           <div className="tool-content">
@@ -395,11 +402,11 @@ const CustomerDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <h1 className="text-3xl font-bold text-white mb-2">
-                    Business Assessment Platform
+                    Revenue Intelligence Infrastructure
                   </h1>
                   <p className="text-gray-400">
-                    {workflowProgress?.company_name && `Company: ${workflowProgress.company_name} • `}
-                    Progress: {workflowProgress?.completion_percentage || 0}% Complete
+                    {workflowProgress?.company_name && `${workflowProgress.company_name} • `}
+                    Export-ready intelligence for your tech stack
                   </p>
                 </div>
                 
@@ -455,8 +462,10 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
-      </div>
-    </AssessmentProvider>
+          </div>
+        </div>
+      </AssessmentProvider>
+    </FeatureFlagProvider>
   );
 };
 

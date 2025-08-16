@@ -218,9 +218,9 @@ const ResultsDashboard = ({
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Executive Results Dashboard</h1>
+              <h1 className="text-2xl font-bold text-white mb-2">Export Dashboard</h1>
               <p className="text-gray-300">
-                Analysis completed for {companyName} • {analysisDate.toLocaleDateString()}
+                Revenue Intelligence ready for {companyName} • Export to your tech stack
               </p>
             </div>
             <div className="flex items-center space-x-3">

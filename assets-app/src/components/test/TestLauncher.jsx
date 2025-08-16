@@ -5,6 +5,7 @@ import DashboardTest from './DashboardTest';
 import Phase1Test from './Phase1Test';
 import Phase4Test from './Phase4Test';
 import WelcomeExperienceTest from './WelcomeExperienceTest';
+import SimplifiedPlatformTest from './SimplifiedPlatformTest';
 
 const TestLauncher = () => {
   const [activeTest, setActiveTest] = useState(null);
@@ -50,6 +51,14 @@ const TestLauncher = () => {
       component: WelcomeExperienceTest,
       priority: 'medium',
       estimatedTime: '5 minutes'
+    },
+    {
+      id: 'simplified-platform',
+      name: 'Simplified Platform',
+      description: 'Test simplified platform components and feature flags',
+      component: SimplifiedPlatformTest,
+      priority: 'critical',
+      estimatedTime: '8 minutes'
     }
   ];
 

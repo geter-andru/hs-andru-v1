@@ -166,10 +166,10 @@ const CompetencyDashboard = ({ customerData }) => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Professional Development Dashboard</h2>
+            <h2 className="text-xl font-semibold">Revenue Intelligence Development</h2>
             <p className="text-blue-100 mt-1">
               Level: {getCompetencyLevel(competencyBaselines?.customerAnalysis || 50)} • 
-              Focus Area: {assessmentData?.strategy?.focusArea || 'Comprehensive Development'}
+              Focus Area: Export-ready {assessmentData?.strategy?.focusArea || 'Revenue Intelligence'}
             </p>
           </div>
           <div className="text-right">

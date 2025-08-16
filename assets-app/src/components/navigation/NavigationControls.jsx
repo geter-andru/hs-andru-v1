@@ -73,14 +73,14 @@ const NavigationControls = ({
 
 const getPhaseDisplay = (phase) => {
   const phases = {
-    'welcome': 'Welcome & Overview',
+    'welcome': 'Revenue Intelligence Welcome',
     'icp-analysis': 'ICP Analysis',
     'cost-calculator': 'Cost Calculator', 
     'business-case': 'Business Case Builder',
     'integration': 'Integration Complete',
     'results': 'Results Dashboard'
   };
-  return phases[phase] || 'Business Intelligence Platform';
+  return phases[phase] || 'Revenue Intelligence Infrastructure';
 };
 
 export default NavigationControls;

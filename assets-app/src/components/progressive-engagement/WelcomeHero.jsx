@@ -1,8 +1,8 @@
 /**
- * WelcomeHero Component - Phase 1: Initial Welcome Experience
+ * WelcomeHero Component - Revenue Intelligence Infrastructure Welcome
  * 
- * Restructured with new DashboardLayout for optimal page layout and focus.
- * Features personalized ICP content as primary "wow moment" with contextual sidebar.
+ * Positions platform as infrastructure that amplifies existing AI, CRM, and sales automation tools.
+ * Features personalized analysis with immediate export capabilities for user's tech stack.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -215,7 +215,7 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           animate={{ opacity: 1 }}
         >
           <div className="animate-pulse text-gray-400">
-            Preparing your strategic intelligence...
+            Preparing your Revenue Intelligence Infrastructure...
           </div>
         </motion.div>
       </div>
@@ -258,7 +258,7 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
             from {personalizedData.company}
           </p>
           <p className="text-base sm:text-lg text-blue-300 font-medium">
-            Your Strategic Revenue Intelligence is ready.
+            Your Revenue Intelligence Infrastructure is ready to amplify your existing tools.
           </p>
         </motion.div>
 
@@ -271,13 +271,14 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
       >
         <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-2xl p-8 border border-blue-700/30 backdrop-blur-sm">
           <p className="text-lg text-gray-200 mb-4 leading-relaxed">
-            Based on your strategic requirements, we've identified{' '}
-            <span className="text-blue-300 font-semibold">3 critical opportunities</span>{' '}
-            worth <span className="text-green-400 font-bold text-xl">${personalizedData.estimatedValue}K</span>{' '}
-            in potential revenue impact.
+            Transform your analysis into <span className="text-blue-300 font-semibold">actionable assets</span> for{' '}
+            <span className="text-purple-300 font-semibold">Claude/ChatGPT</span>, <span className="text-green-400 font-semibold">CRM platforms</span>, and{' '}
+            <span className="text-orange-400 font-semibold">sales automation tools</span> — worth{' '}
+            <span className="text-yellow-400 font-bold text-xl">${personalizedData.estimatedValue}K</span>{' '}
+            in implementation value.
           </p>
           <p className="text-blue-300 font-medium text-lg">
-            Let's start with your biggest opportunity...
+            Export-ready intelligence for your existing tech stack...
           </p>
         </div>
       </motion.div>
@@ -290,25 +291,25 @@ const WelcomeHero = ({ customerId, customerData, onStartEngagement }) => {
           transition={{ delay: 0.6, duration: 0.6 }}
         >
           <HighlightCard 
-            icon="🎯"
-            title="WHO TO TARGET"
-            content="Your specific ideal customer profile"
-            action="See detailed scoring criteria"
+            icon="🤖"
+            title="AI AMPLIFICATION"
+            content="Claude/ChatGPT prompts for immediate implementation"
+            action="Generate AI-ready intelligence"
             onClick={() => handleHighlightClick('icp-analysis')}
           />
           <HighlightCard 
-            icon="💰"
-            title="DEAL CHARACTERISTICS" 
-            content="Typical deal size and buying process"
-            action="View financial analysis"
+            icon="📊"
+            title="CRM INTEGRATION" 
+            content="HubSpot/Salesforce fields and workflow automation"
+            action="Export prospect intelligence"
             onClick={() => handleHighlightClick('cost-calculator')}
           />
           <HighlightCard 
-            icon="🚫"
-            title="WHO TO AVOID"
-            content="Save time and resources"
-            action="Understand buying vs technical interest"
-            onClick={() => handleHighlightClick('icp-analysis')}
+            icon="⚡"
+            title="SALES AUTOMATION"
+            content="Outreach/SalesLoft sequences and campaign assets"
+            action="Deploy systematic engagement"
+            onClick={() => handleHighlightClick('business-case')}
           />
         </motion.div>
 

@@ -75,7 +75,7 @@ const WelcomeExperienceTest = () => {
             from {personalizedData.company}
           </p>
           <p className="text-base sm:text-lg text-blue-300 font-medium">
-            Your Strategic Revenue Intelligence is ready.
+            Your Revenue Intelligence Infrastructure is ready to amplify your existing tools.
           </p>
         </motion.div>
 
@@ -88,13 +88,14 @@ const WelcomeExperienceTest = () => {
         >
           <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-2xl p-8 border border-blue-700/30">
             <p className="text-lg text-gray-200 mb-4 leading-relaxed">
-              Based on your strategic requirements, we've identified{' '}
-              <span className="text-blue-300 font-semibold">3 critical opportunities</span>{' '}
-              worth <span className="text-green-400 font-bold text-xl">${personalizedData.estimatedValue}K</span>{' '}
-              in potential revenue impact.
+              Transform your analysis into <span className="text-blue-300 font-semibold">actionable assets</span> for{' '}
+              <span className="text-purple-300 font-semibold">Claude/ChatGPT</span>, <span className="text-green-400 font-semibold">CRM platforms</span>, and{' '}
+              <span className="text-orange-400 font-semibold">sales automation tools</span> — worth{' '}
+              <span className="text-yellow-400 font-bold text-xl">${personalizedData.estimatedValue}K</span>{' '}
+              in implementation value.
             </p>
             <p className="text-blue-300 font-medium text-lg">
-              Let's start with your biggest opportunity...
+              Export-ready intelligence for your existing tech stack...
             </p>
           </div>
         </motion.div>
